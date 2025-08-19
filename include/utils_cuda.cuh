@@ -16,9 +16,9 @@
 #include <builtin_types.h>
 #include <math.h>
 
-constexpr int BLOCK_SIZE_X = 8;
-constexpr int BLOCK_SIZE_Y = 8;
-constexpr int BLOCK_SIZE_Z = 8;
+constexpr int BLOCK_SIZE_X = 32;
+constexpr int BLOCK_SIZE_Y = 4;
+constexpr int BLOCK_SIZE_Z = 4;
 
 constexpr int TILE_X = BLOCK_SIZE_X + 2;
 constexpr int TILE_Y = BLOCK_SIZE_Y + 2;

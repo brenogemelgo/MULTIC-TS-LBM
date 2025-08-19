@@ -13,9 +13,9 @@ __global__ void gpuPhi(LBMFields d) {
     const idx_t idx3 = gpu_idx_global3(x,y,z);
 
     const float phi = d.g[gpu_idx_global4(x,y,z,0)] + d.g[gpu_idx_global4(x,y,z,1)] + 
-                          d.g[gpu_idx_global4(x,y,z,2)] + d.g[gpu_idx_global4(x,y,z,3)] + 
-                          d.g[gpu_idx_global4(x,y,z,4)] + d.g[gpu_idx_global4(x,y,z,5)] + 
-                          d.g[gpu_idx_global4(x,y,z,6)];
+                        d.g[gpu_idx_global4(x,y,z,2)] + d.g[gpu_idx_global4(x,y,z,3)] + 
+                        d.g[gpu_idx_global4(x,y,z,4)] + d.g[gpu_idx_global4(x,y,z,5)] + 
+                        d.g[gpu_idx_global4(x,y,z,6)];
         
     d.phi[idx3] = phi;
 }
@@ -152,41 +152,41 @@ __global__ void gpuCollisionStream(LBMFields d) {
 
     const idx_t idx3 = gpu_idx_global3(x,y,z);
         
-    float pop[FLINKS];
-    pop[0] = from_dtype(d.f[gpu_idx_global4(x,y,z,0)]);
-    pop[1] = from_dtype(d.f[gpu_idx_global4(x,y,z,1)]);
-    pop[2] = from_dtype(d.f[gpu_idx_global4(x,y,z,2)]);
-    pop[3] = from_dtype(d.f[gpu_idx_global4(x,y,z,3)]);
-    pop[4] = from_dtype(d.f[gpu_idx_global4(x,y,z,4)]);
-    pop[5] = from_dtype(d.f[gpu_idx_global4(x,y,z,5)]); 
-    pop[6] = from_dtype(d.f[gpu_idx_global4(x,y,z,6)]);
-    pop[7] = from_dtype(d.f[gpu_idx_global4(x,y,z,7)]);
-    pop[8] = from_dtype(d.f[gpu_idx_global4(x,y,z,8)]);
-    pop[9] = from_dtype(d.f[gpu_idx_global4(x,y,z,9)]);
-    pop[10] = from_dtype(d.f[gpu_idx_global4(x,y,z,10)]);
-    pop[11] = from_dtype(d.f[gpu_idx_global4(x,y,z,11)]);
-    pop[12] = from_dtype(d.f[gpu_idx_global4(x,y,z,12)]);
-    pop[13] = from_dtype(d.f[gpu_idx_global4(x,y,z,13)]);
-    pop[14] = from_dtype(d.f[gpu_idx_global4(x,y,z,14)]);
-    pop[15] = from_dtype(d.f[gpu_idx_global4(x,y,z,15)]);
-    pop[16] = from_dtype(d.f[gpu_idx_global4(x,y,z,16)]);
-    pop[17] = from_dtype(d.f[gpu_idx_global4(x,y,z,17)]);
-    pop[18] = from_dtype(d.f[gpu_idx_global4(x,y,z,18)]);
+    //float pop[FLINKS];
+    float pop_0 = from_dtype(d.f[gpu_idx_global4(x,y,z,0)]);
+    float pop_1 = from_dtype(d.f[gpu_idx_global4(x,y,z,1)]);
+    float pop_2 = from_dtype(d.f[gpu_idx_global4(x,y,z,2)]);
+    float pop_3 = from_dtype(d.f[gpu_idx_global4(x,y,z,3)]);
+    float pop_4 = from_dtype(d.f[gpu_idx_global4(x,y,z,4)]);
+    float pop_5 = from_dtype(d.f[gpu_idx_global4(x,y,z,5)]); 
+    float pop_6 = from_dtype(d.f[gpu_idx_global4(x,y,z,6)]);
+    float pop_7 = from_dtype(d.f[gpu_idx_global4(x,y,z,7)]);
+    float pop_8 = from_dtype(d.f[gpu_idx_global4(x,y,z,8)]);
+    float pop_9 = from_dtype(d.f[gpu_idx_global4(x,y,z,9)]);
+    float pop_10 = from_dtype(d.f[gpu_idx_global4(x,y,z,10)]);
+    float pop_11 = from_dtype(d.f[gpu_idx_global4(x,y,z,11)]);
+    float pop_12 = from_dtype(d.f[gpu_idx_global4(x,y,z,12)]);
+    float pop_13 = from_dtype(d.f[gpu_idx_global4(x,y,z,13)]);
+    float pop_14 = from_dtype(d.f[gpu_idx_global4(x,y,z,14)]);
+    float pop_15 = from_dtype(d.f[gpu_idx_global4(x,y,z,15)]);
+    float pop_16 = from_dtype(d.f[gpu_idx_global4(x,y,z,16)]);
+    float pop_17 = from_dtype(d.f[gpu_idx_global4(x,y,z,17)]);
+    float pop_18 = from_dtype(d.f[gpu_idx_global4(x,y,z,18)]);
     #ifdef D3Q27
-    pop[19] = from_dtype(d.f[gpu_idx_global4(x,y,z,19)]);
-    pop[20] = from_dtype(d.f[gpu_idx_global4(x,y,z,20)]);
-    pop[21] = from_dtype(d.f[gpu_idx_global4(x,y,z,21)]);
-    pop[22] = from_dtype(d.f[gpu_idx_global4(x,y,z,22)]);
-    pop[23] = from_dtype(d.f[gpu_idx_global4(x,y,z,23)]);
-    pop[24] = from_dtype(d.f[gpu_idx_global4(x,y,z,24)]);
-    pop[25] = from_dtype(d.f[gpu_idx_global4(x,y,z,25)]);
-    pop[26] = from_dtype(d.f[gpu_idx_global4(x,y,z,26)]);
+    float pop_19 = from_dtype(d.f[gpu_idx_global4(x,y,z,19)]);
+    float pop_20 = from_dtype(d.f[gpu_idx_global4(x,y,z,20)]);
+    float pop_21 = from_dtype(d.f[gpu_idx_global4(x,y,z,21)]);
+    float pop_22 = from_dtype(d.f[gpu_idx_global4(x,y,z,22)]);
+    float pop_23 = from_dtype(d.f[gpu_idx_global4(x,y,z,23)]);
+    float pop_24 = from_dtype(d.f[gpu_idx_global4(x,y,z,24)]);
+    float pop_25 = from_dtype(d.f[gpu_idx_global4(x,y,z,25)]);
+    float pop_26 = from_dtype(d.f[gpu_idx_global4(x,y,z,26)]);
     #endif // D3Q27
 
     #ifdef D3Q19
-    const float rho = (pop[0] + pop[1] + pop[2] + pop[3] + pop[4] + pop[5] + pop[6] + pop[7] + pop[8] + pop[9] + pop[10] + pop[11] + pop[12] + pop[13] + pop[14] + pop[15] + pop[16] + pop[17] + pop[18]) + 1.0f;
+    const float rho = (pop_0 + pop_1 + pop_2 + pop_3 + pop_4 + pop_5 + pop_6 + pop_7 + pop_8 + pop_9 + pop_10 + pop_11 + pop_12 + pop_13 + pop_14 + pop_15 + pop_16 + pop_17 + pop_18) + 1.0f;
     #elif defined(D3Q27)
-    const float rho = (pop[0] + pop[1] + pop[2] + pop[3] + pop[4] + pop[5] + pop[6] + pop[7] + pop[8] + pop[9] + pop[10] + pop[11] + pop[12] + pop[13] + pop[14] + pop[15] + pop[16] + pop[17] + pop[18] + pop[19] + pop[20] + pop[21] + pop[22] + pop[23] + pop[24] + pop[25] + pop[26]) + 1.0f;
+    const float rho = (pop_0 + pop_1 + pop_2 + pop_3 + pop_4 + pop_5 + pop_6 + pop_7 + pop_8 + pop_9 + pop_10 + pop_11 + pop_12 + pop_13 + pop_14 + pop_15 + pop_16 + pop_17 + pop_18 + pop_19 + pop_20 + pop_21 + pop_22 + pop_23 + pop_24 + pop_25 + pop_26) + 1.0f;
     #endif
     d.rho[idx3] = rho;
 
@@ -196,13 +196,13 @@ __global__ void gpuCollisionStream(LBMFields d) {
     const float ffz = d.ffz[idx3];
 
     #ifdef D3Q19
-    const float sum_ux = inv_rho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
-    const float sum_uy = inv_rho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
-    const float sum_uz = inv_rho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
+    const float sum_ux = inv_rho * (pop_1 - pop_2 + pop_7 - pop_8 + pop_9 - pop_10 + pop_13 - pop_14 + pop_15 - pop_16);
+    const float sum_uy = inv_rho * (pop_3 - pop_4 + pop_7 - pop_8 + pop_11 - pop_12 + pop_14 - pop_13 + pop_17 - pop_18);
+    const float sum_uz = inv_rho * (pop_5 - pop_6 + pop_9 - pop_10 + pop_11 - pop_12 + pop_16 - pop_15 + pop_18 - pop_17);
     #elif defined(D3Q27)
-    const float sum_ux = inv_rho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
-    const float sum_uy = inv_rho * (pop[3] - pop[4] + pop[7] - pop[8]  + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
-    const float sum_uz = inv_rho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
+    const float sum_ux = inv_rho * (pop_1 - pop_2 + pop_7 - pop_8 + pop_9 - pop_10 + pop_13 - pop_14 + pop_15 - pop_16 + pop_19 - pop_20 + pop_21 - pop_22 + pop_23 - pop_24 + pop_26 - pop_25);
+    const float sum_uy = inv_rho * (pop_3 - pop_4 + pop_7 - pop_8  + pop_11 - pop_12 + pop_14 - pop_13 + pop_17 - pop_18 + pop_19 - pop_20 + pop_21 - pop_22 + pop_24 - pop_23 + pop_25 - pop_26);
+    const float sum_uz = inv_rho * (pop_5 - pop_6 + pop_9 - pop_10 + pop_11 - pop_12 + pop_16 - pop_15 + pop_18 - pop_17 + pop_19 - pop_20 + pop_22 - pop_21 + pop_23 - pop_24 + pop_25 - pop_26);
     #endif
     
     const float ux = sum_ux + ffx * 0.5f * inv_rho;
@@ -228,7 +228,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     float feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*ux + 4.5f*ux*ux + 4.5f*ux*ux*ux - 3.0f*ux * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    float fneq = pop[1] - (feq - W_1);
+    float fneq = pop_1 - (feq - W_1);
     float pxx = fneq;
 
     #ifdef D3Q19
@@ -236,7 +236,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*ux + 4.5f*ux*ux - 4.5f*ux*ux*ux + 3.0f*ux * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[2] - (feq - W_1);
+    fneq = pop_2 - (feq - W_1);
     pxx += fneq;
 
     #ifdef D3Q19
@@ -244,7 +244,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*uy + 4.5f*uy*uy + 4.5f*uy*uy*uy - 3.0f*uy * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[3] - (feq - W_1);
+    fneq = pop_3 - (feq - W_1);
     float pyy = fneq;
 
     #ifdef D3Q19
@@ -252,7 +252,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*uy + 4.5f*uy*uy - 4.5f*uy*uy*uy + 3.0f*uy * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[4] - (feq - W_1);
+    fneq = pop_4 - (feq - W_1);
     pyy += fneq;
 
     #ifdef D3Q19
@@ -260,7 +260,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*uz + 4.5f*uz*uz + 4.5f*uz*uz*uz - 3.0f*uz * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[5] - (feq - W_1);
+    fneq = pop_5 - (feq - W_1);
     float pzz = fneq;
 
     #ifdef D3Q19
@@ -268,7 +268,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*uz + 4.5f*uz*uz - 4.5f*uz*uz*uz + 3.0f*uz * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[6] - (feq - W_1);
+    fneq = pop_6 - (feq - W_1);
     pzz += fneq;
 
     // SECOND ORDER TERMS
@@ -277,7 +277,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uy) + 4.5f*(ux + uy)*(ux + uy) + 4.5f*(ux + uy)*(ux + uy)*(ux + uy) - 3.0f*(ux + uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[7] - (feq - W_2);
+    fneq = pop_7 - (feq - W_2);
     pxx += fneq; 
     pyy += fneq; 
     float pxy = fneq;
@@ -287,7 +287,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(ux + uy) + 4.5f*(ux + uy)*(ux + uy) - 4.5f*(ux + uy)*(ux + uy)*(ux + uy) + 3.0f*(ux + uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[8] - (feq - W_2);
+    fneq = pop_8 - (feq - W_2);
     pxx += fneq; 
     pyy += fneq; 
     pxy += fneq;
@@ -297,7 +297,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uz) + 4.5f*(ux + uz)*(ux + uz) + 4.5f*(ux + uz)*(ux + uz)*(ux + uz) - 3.0f*(ux + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[9] - (feq - W_2);
+    fneq = pop_9 - (feq - W_2);
     pxx += fneq; 
     pzz += fneq; 
     float pxz = fneq;
@@ -307,7 +307,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(ux + uz) + 4.5f*(ux + uz)*(ux + uz) - 4.5f*(ux + uz)*(ux + uz)*(ux + uz) + 3.0f*(ux + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[10] - (feq - W_2);
+    fneq = pop_10 - (feq - W_2);
     pxx += fneq; 
     pzz += fneq; 
     pxz += fneq;
@@ -317,7 +317,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy + uz) + 4.5f*(uy + uz)*(uy + uz) + 4.5f*(uy + uz)*(uy + uz)*(uy + uz) - 3.0f*(uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[11] - (feq - W_2);
+    fneq = pop_11 - (feq - W_2);
     pyy += fneq;
     pzz += fneq; 
     float pyz = fneq;
@@ -327,7 +327,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(uy + uz) + 4.5f*(uy + uz)*(uy + uz) - 4.5f*(uy + uz)*(uy + uz)*(uy + uz) + 3.0f*(uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[12] - (feq - W_2);
+    fneq = pop_12 - (feq - W_2);
     pyy += fneq; 
     pzz += fneq; 
     pyz += fneq;
@@ -337,7 +337,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uy) + 4.5f*(ux - uy)*(ux - uy) + 4.5f*(ux - uy)*(ux - uy)*(ux - uy) - 3.0f*(ux - uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[13] - (feq - W_2);
+    fneq = pop_13 - (feq - W_2);
     pxx += fneq; 
     pyy += fneq; 
     pxy -= fneq;
@@ -347,7 +347,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - ux) + 4.5f*(uy - ux)*(uy - ux) + 4.5f*(uy - ux)*(uy - ux)*(uy - ux) - 3.0f*(uy - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[14] - (feq - W_2);
+    fneq = pop_14 - (feq - W_2);
     pxx += fneq; 
     pyy += fneq; 
     pxy -= fneq;
@@ -357,7 +357,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uz) + 4.5f*(ux - uz)*(ux - uz) + 4.5f*(ux - uz)*(ux - uz)*(ux - uz) - 3.0f*(ux - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[15] - (feq - W_2);
+    fneq = pop_15 - (feq - W_2);
     pxx += fneq; 
     pzz += fneq; 
     pxz -= fneq;
@@ -367,7 +367,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - ux) + 4.5f*(uz - ux)*(uz - ux) + 4.5f*(uz - ux)*(uz - ux)*(uz - ux) - 3.0f*(uz - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[16] - (feq - W_2);
+    fneq = pop_16 - (feq - W_2);
     pxx += fneq; 
     pzz += fneq; 
     pxz -= fneq;
@@ -377,7 +377,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - uz) + 4.5f*(uy - uz)*(uy - uz) + 4.5f*(uy - uz)*(uy - uz)*(uy - uz) - 3.0f*(uy - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[17] - (feq - W_2);
+    fneq = pop_17 - (feq - W_2);
     pyy += fneq; 
     pzz += fneq; 
     pyz -= fneq;
@@ -387,7 +387,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - uy) + 4.5f*(uz - uy)*(uz - uy) + 4.5f*(uz - uy)*(uz - uy)*(uz - uy) - 3.0f*(uz - uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop[18] - (feq - W_2);
+    fneq = pop_18 - (feq - W_2);
     pyy += fneq; 
     pzz += fneq; 
     pyz -= fneq;
@@ -395,7 +395,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     // THIRD ORDER TERMS
     #ifdef D3Q27
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uy + uz) + 4.5f*(ux + uy + uz)*(ux + uy + uz) + 4.5f*(ux + uy + uz)*(ux + uy + uz)*(ux + uy + uz) - 3.0f*(ux + uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop[19] - (feq - W_3);
+    fneq = pop_19 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -404,7 +404,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz += fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(ux + uy + uz) + 4.5f*(ux + uy + uz)*(ux + uy + uz) - 4.5f*(ux + uy + uz)*(ux + uy + uz)*(ux + uy + uz) + 3.0f*(ux + uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop[20] - (feq - W_3);
+    fneq = pop_20 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -413,7 +413,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz += fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uy - uz) + 4.5f*(ux + uy - uz)*(ux + uy - uz) + 4.5f*(ux + uy - uz)*(ux + uy - uz)*(ux + uy - uz) - 3.0f*(ux + uy - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));    
-    fneq = pop[21] - (feq - W_3);
+    fneq = pop_21 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -422,7 +422,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - uy - ux) + 4.5f*(uz - uy - ux)*(uz - uy - ux) + 4.5f*(uz - uy - ux)*(uz - uy - ux)*(uz - uy - ux) - 3.0f*(uz - uy - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop[22] - (feq - W_3);
+    fneq = pop_22 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -431,7 +431,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq; 
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uy + uz) + 4.5f*(ux - uy + uz)*(ux - uy + uz) + 4.5f*(ux - uy + uz)*(ux - uy + uz)*(ux - uy + uz) - 3.0f*(ux - uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop[23] - (feq - W_3);
+    fneq = pop_23 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -440,7 +440,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - ux - uz) + 4.5f*(uy - ux - uz)*(uy - ux - uz) + 4.5f*(uy - ux - uz)*(uy - ux - uz)*(uy - ux - uz) - 3.0f*(uy - ux - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop[24] - (feq - W_3);
+    fneq = pop_24 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -449,7 +449,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - ux + uz) + 4.5f*(uy - ux + uz)*(uy - ux + uz) + 4.5f*(uy - ux + uz)*(uy - ux + uz)*(uy - ux + uz) - 3.0f*(uy - ux + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop[25] - (feq - W_3);
+    fneq = pop_25 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -458,7 +458,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz += fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uy - uz) + 4.5f*(ux - uy - uz)*(ux - uy - uz) + 4.5f*(ux - uy - uz)*(ux - uy - uz)*(ux - uy - uz) - 3.0f*(ux - uy - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop[26] - (feq - W_3);
+    fneq = pop_26 - (feq - W_3);
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;

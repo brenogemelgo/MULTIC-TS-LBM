@@ -6,7 +6,7 @@ __device__ __forceinline__ idx_t gpu_idx_global3(const int x, const int y, const
 }
 
 __device__ __forceinline__ idx_t gpu_idx_global4(const int x, const int y, const int z, const int Q) {
-    return x + y * NX + z * STRIDE + Q * STRIDE * NZ;
+    return Q * PLANE + gpu_idx_global3(x,y,z);
 }
 
 __device__ __forceinline__ idx_t gpu_idx_shared3(const int tx, const int ty, const int tz) {

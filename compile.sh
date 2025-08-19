@@ -18,7 +18,10 @@ fi
 if [ "$VELOCITY_SET" = "D3Q27" ]; then
     MAXRREG=128
 elif [ "$VELOCITY_SET" = "D3Q19" ]; then
-    MAXRREG=104
+    MAXRREG=68 
+    # under this value there seems 
+    # to be phantom spills that the 
+    # compiler does not report
 fi
 
 BASE_DIR=$(dirname "$0")

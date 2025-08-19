@@ -15,20 +15,20 @@ int main(int argc, char* argv[]) {
 
     // ================================================================================================== //
 
-    dim3 threadsPerBlock(BLOCK_SIZE_X,BLOCK_SIZE_Y,BLOCK_SIZE_Z);
+    dim3 threadsPerBlock(32,2,2);
     dim3 numBlocks((NX + threadsPerBlock.x - 1) / threadsPerBlock.x,
                    (NY + threadsPerBlock.y - 1) / threadsPerBlock.y,
                    (NZ + threadsPerBlock.z - 1) / threadsPerBlock.z);
 
-    dim3 threadsPerBlockX(BLOCK_SIZE_X*4,BLOCK_SIZE_Y*4);
+    dim3 threadsPerBlockX(32,32);
     dim3 numBlocksX((NY + threadsPerBlockX.x - 1) / threadsPerBlockX.x, 
                     (NZ + threadsPerBlockX.y - 1) / threadsPerBlockX.y);
 
-    dim3 threadsPerBlockY(BLOCK_SIZE_X*4,BLOCK_SIZE_Y*4);
+    dim3 threadsPerBlockY(32,32);
     dim3 numBlocksY((NX + threadsPerBlockY.x - 1) / threadsPerBlockY.x, 
                     (NZ + threadsPerBlockY.y - 1) / threadsPerBlockY.y);                
                    
-    dim3 threadsPerBlockZ(BLOCK_SIZE_X*4,BLOCK_SIZE_Y*4);  
+    dim3 threadsPerBlockZ(32,32);  
     dim3 numBlocksZ((NX + threadsPerBlockZ.x - 1) / threadsPerBlockZ.x,
                     (NY + threadsPerBlockZ.y - 1) / threadsPerBlockZ.y);
                     
