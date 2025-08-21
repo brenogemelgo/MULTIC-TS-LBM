@@ -1,67 +1,95 @@
 #pragma once
 
 #include <cuda_runtime.h>
-#include <cstdio>
-#include <cstdlib>
+#include <builtin_types.h>  
+
 #include <iostream>
 #include <vector>
-#include <fstream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <iomanip>
 #include <chrono>
 #include <stdexcept>
-#include <stdio.h>
-#include <stdlib.h>
-#include <builtin_types.h>
-#include <math.h>
 
-constexpr int BLOCK_SIZE_X = 32;
-constexpr int BLOCK_SIZE_Y = 4;
-constexpr int BLOCK_SIZE_Z = 4;
+#include <cstdio>   
+#include <cstdlib> 
+#include <cstdint>
+#include <cmath>    
 
-constexpr int TILE_X = BLOCK_SIZE_X + 2;
-constexpr int TILE_Y = BLOCK_SIZE_Y + 2;
-constexpr int TILE_Z = BLOCK_SIZE_Z + 2;
+inline constexpr unsigned BLOCK_SIZE_X = 32u;
+inline constexpr unsigned BLOCK_SIZE_Y = 4u;
+inline constexpr unsigned BLOCK_SIZE_Z = 4u;
 
-constexpr size_t DYNAMIC_SHARED_SIZE = 0;
+inline constexpr int HALO   = 1;
+inline constexpr int TILE_X = static_cast<int>(BLOCK_SIZE_X) + 2*HALO;
+inline constexpr int TILE_Y = static_cast<int>(BLOCK_SIZE_Y) + 2*HALO;
+inline constexpr int TILE_Z = static_cast<int>(BLOCK_SIZE_Z) + 2*HALO;
 
-#define FP16_COMPRESSION
+inline constexpr size_t DYNAMIC_SHARED_SIZE = 0;
 
-#ifdef FP16_COMPRESSION
+#define ENABLE_FP16
+
+#ifdef ENABLE_FP16
+
     #include <cuda_fp16.h>
-    typedef __half dtype_t;
-    #define to_dtype __float2half
-    #define from_dtype __half2float
+    using pop_t = __half;
+
+    __host__ __device__ __forceinline__
+    pop_t to_pop(float x) { return __float2half(x); }
+
+    __host__ __device__ __forceinline__
+    float from_pop(pop_t x) { return __half2float(x); }
+
+    __host__ __device__ __forceinline__
+    __half2 to_pop2(float x0, float x1) { return __float22half2_rn(make_float2(x0, x1)); }
+
+    __host__ __device__ __forceinline__
+    float2 from_pop2(__half2 h2) { return __half22float2(h2); }
+
 #else
-    typedef float dtype_t;
-    #define to_dtype(x) (x)
-    #define from_dtype(x) (x)
-#endif // FP16_COMPRESSION
 
-typedef int ci_t;
-typedef uint32_t idx_t;
+    using pop_t = float;
 
-#define checkCudaErrors(err)      __checkCudaErrors(err, #err, __FILE__, __LINE__)
-#define getLastCudaError(msg)     __getLastCudaError(msg, __FILE__, __LINE__)
+    __host__ __device__ __forceinline__
+    pop_t to_pop(float x) { return x; }
 
-inline void __checkCudaErrors(cudaError_t err, const char* const func, const char* const file, const int line) {
+    __host__ __device__ __forceinline__
+    float from_pop(pop_t x) { return x; }
+
+#endif
+
+using ci_t  = int; // int8_t
+using idx_t = uint32_t;
+
+#define checkCudaErrors(err)  __checkCudaErrors((err), #err, __FILE__, __LINE__)
+#define getLastCudaError(msg) __getLastCudaError((msg), __FILE__, __LINE__)
+
+inline void __checkCudaErrors(cudaError_t err,
+                              const char* const func,
+                              const char* const file,
+                              const int line) noexcept
+{
     if (err != cudaSuccess) {
         fprintf(stderr, "CUDA error at %s(%d) \"%s\": [%d] %s.\n",
                 file, line, func, (int)err, cudaGetErrorString(err));
         fflush(stderr);
-        exit(EXIT_FAILURE);
+        std::abort();
     }
 }
 
-inline void __getLastCudaError(const char* const errorMessage, const char* const file, const int line) {
+inline void __getLastCudaError(const char* const errorMessage,
+                               const char* const file,
+                               const int line) noexcept
+{
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
-        fprintf(stderr, "CUDA error at %s(%d): [%d] %s.\n",
-                file, line, (int)err, cudaGetErrorString(err));
+        fprintf(stderr, "CUDA error at %s(%d): [%d] %s. Context: %s\n",
+                file, line, (int)err, cudaGetErrorString(err), errorMessage);
         fflush(stderr);
-        exit(EXIT_FAILURE);
+        std::abort();
     }
 }
+
 
 

@@ -1,4 +1,4 @@
-#include "kernels.cuh"
+#pragma once
 
 #ifdef JET_CASE
 
@@ -32,7 +32,7 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
     float fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                                 d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                                 d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],5);
-    d.f[gpu_idx_global4(x,y,z+1,5)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x,y,z+1,5)] = to_pop(feq + OMCO * fneq_reg);
 
     feq = gpu_compute_truncated_equilibria(1.0f,0.0f,0.0f,uz_in,5);
     d.g[gpu_idx_global4(x,y,z+1,5)] = feq;
@@ -42,28 +42,28 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],9);
-    d.f[gpu_idx_global4(x+1,y,z+1,9)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x+1,y,z+1,9)] = to_pop(feq + OMCO * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x,y+1,z+1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],0.0f,0.0f,uz_in,11);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],11);
-    d.f[gpu_idx_global4(x,y+1,z+1,11)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x,y+1,z+1,11)] = to_pop(feq + OMCO * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x-1,y,z+1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],0.0f,0.0f,uz_in,16);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],16);
-    d.f[gpu_idx_global4(x-1,y,z+1,16)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x-1,y,z+1,16)] = to_pop(feq + OMCO * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x,y-1,z+1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],0.0f,0.0f,uz_in,18);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],18);
-    d.f[gpu_idx_global4(x,y-1,z+1,18)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x,y-1,z+1,18)] = to_pop(feq + OMCO * fneq_reg);
 
     #ifdef D3Q27
     neighbor_idx = gpu_idx_global3(x+1,y+1,z+1);
@@ -71,28 +71,28 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],19);
-    d.f[gpu_idx_global4(x+1,y+1,z+1,19)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x+1,y+1,z+1,19)] = to_pop(feq + OMCO * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x-1,y-1,z+1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],0.0f,0.0f,uz_in,22);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],22);
-    d.f[gpu_idx_global4(x-1,y-1,z+1,22)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x-1,y-1,z+1,22)] = to_pop(feq + OMCO * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x+1,y-1,z+1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],0.0f,0.0f,uz_in,23);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],23);
-    d.f[gpu_idx_global4(x+1,y-1,z+1,23)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x+1,y-1,z+1,23)] = to_pop(feq + OMCO * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x-1,y+1,z+1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],0.0f,0.0f,uz_in,25);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],25);
-    d.f[gpu_idx_global4(x-1,y+1,z+1,25)] = to_dtype(feq + OMCO * fneq_reg);
+    d.f[gpu_idx_global4(x-1,y+1,z+1,25)] = to_pop(feq + OMCO * fneq_reg);
     #endif // D3Q27
 }
 
@@ -121,7 +121,7 @@ __global__ void gpuApplyOutflow(LBMFields d) {
     float fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                                 d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                                 d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],6);
-    d.f[gpu_idx_global4(x,y,z-1,6)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x,y,z-1,6)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     feq = gpu_compute_truncated_equilibria(d.phi[neighbor_idx],ux_out,uy_out,uz_out,6);
     d.g[gpu_idx_global4(x,y,z-1,6)] = feq;
@@ -131,28 +131,28 @@ __global__ void gpuApplyOutflow(LBMFields d) {
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],10);
-    d.f[gpu_idx_global4(x-1,y,z-1,10)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x-1,y,z-1,10)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x,y-1,z-1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],ux_out,uy_out,uz_out,12);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],12);
-    d.f[gpu_idx_global4(x,y-1,z-1,12)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x,y-1,z-1,12)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x+1,y,z-1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],ux_out,uy_out,uz_out,15);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],15);
-    d.f[gpu_idx_global4(x+1,y,z-1,15)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x+1,y,z-1,15)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x,y+1,z-1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],ux_out,uy_out,uz_out,17);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],17);
-    d.f[gpu_idx_global4(x,y+1,z-1,17)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x,y+1,z-1,17)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     #ifdef D3Q27
     neighbor_idx = gpu_idx_global3(x-1,y-1,z-1);
@@ -160,28 +160,28 @@ __global__ void gpuApplyOutflow(LBMFields d) {
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],20);
-    d.f[gpu_idx_global4(x-1,y-1,z-1,20)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x-1,y-1,z-1,20)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x+1,y+1,z-1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],ux_out,uy_out,uz_out,21);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],21);
-    d.f[gpu_idx_global4(x+1,y+1,z-1,21)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x+1,y+1,z-1,21)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x-1,y+1,z-1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],ux_out,uy_out,uz_out,24);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],24);
-    d.f[gpu_idx_global4(x-1,y+1,z-1,24)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x-1,y+1,z-1,24)] = to_pop(feq + OMCO_MAX * fneq_reg);
 
     neighbor_idx = gpu_idx_global3(x+1,y-1,z-1);
     feq = gpu_compute_equilibria(d.rho[neighbor_idx],ux_out,uy_out,uz_out,26);
     fneq_reg = gpu_compute_non_equilibria(d.pxx[neighbor_idx],d.pyy[neighbor_idx],d.pzz[neighbor_idx],
                                           d.pxy[neighbor_idx],d.pxz[neighbor_idx],d.pyz[neighbor_idx],
                                           d.ux[neighbor_idx],d.uy[neighbor_idx],d.uz[neighbor_idx],26);
-    d.f[gpu_idx_global4(x+1,y-1,z-1,26)] = to_dtype(feq + OMCO_MAX * fneq_reg);
+    d.f[gpu_idx_global4(x+1,y-1,z-1,26)] = to_pop(feq + OMCO_MAX * fneq_reg);
     #endif // D3Q27
 }
 
@@ -198,15 +198,15 @@ __global__ void gpuApplyPeriodicX(LBMFields d) {
     const idx_t bR = gpu_idx_global3(NX-2,y,z);
 
     // positive x contributions
-    copy_dirs<dtype_t,1,7,9,13,15>(d.f,bL,bR);   
+    copy_dirs<pop_t,1,7,9,13,15>(d.f,bL,bR);   
     #ifdef D3Q27
-    copy_dirs<dtype_t,19,21,23,26>(d.f,bL,bR);
+    copy_dirs<pop_t,19,21,23,26>(d.f,bL,bR);
     #endif // D3Q27
 
     // negative x contributions
-    copy_dirs<dtype_t,2,8,10,14,16>(d.f,bR,bL); 
+    copy_dirs<pop_t,2,8,10,14,16>(d.f,bR,bL); 
     #ifdef D3Q27
-    copy_dirs<dtype_t,20,22,24,25>(d.f,bR,bL);
+    copy_dirs<pop_t,20,22,24,25>(d.f,bR,bL);
     #endif // D3Q27
 
     d.g[1*PLANE+bL] = d.g[1*PLANE+bR];
@@ -228,15 +228,15 @@ __global__ void gpuApplyPeriodicY(LBMFields d) {
     const idx_t bT = gpu_idx_global3(x,NY-2,z);
 
     // positive y contributions
-    copy_dirs<dtype_t,3,7,11,14,17>(d.f,bB,bT);
+    copy_dirs<pop_t,3,7,11,14,17>(d.f,bB,bT);
     #ifdef D3Q27
-    copy_dirs<dtype_t,19,21,24,25>(d.f,bB,bT);
+    copy_dirs<pop_t,19,21,24,25>(d.f,bB,bT);
     #endif // D3Q27
 
     // negative y contributions
-    copy_dirs<dtype_t,4,8,12,13,18>(d.f,bT,bB);
+    copy_dirs<pop_t,4,8,12,13,18>(d.f,bT,bB);
     #ifdef D3Q27
-    copy_dirs<dtype_t,20,22,23,26>(d.f,bT,bB);
+    copy_dirs<pop_t,20,22,23,26>(d.f,bT,bB);
     #endif // D3Q27
 
     d.g[3*PLANE+bB] = d.g[3*PLANE+bT];
@@ -250,6 +250,4 @@ __global__ void gpuApplyPeriodicY(LBMFields d) {
 // still undefined
 
 #endif // FLOW_CASE
-
-// ============================================================================================================== //
 

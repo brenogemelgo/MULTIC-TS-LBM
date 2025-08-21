@@ -66,8 +66,8 @@ run_pipeline() {
     echo -e "${YELLOW}Going to ${CYAN}${BASE_DIR}/post${RESET}"
     cd "${BASE_DIR}/post" || { echo -e "${RED}Error: Directory ${CYAN}${BASE_DIR}/post${RED} not found!${RESET}"; exit 1; }
 
-    echo -e "${BLUE}Executing: ${CYAN}./run_post.sh ${ID} ${VELOCITY_SET}${RESET}"
-    ./run_post.sh "${ID}" "${VELOCITY_SET}" || { echo -e "${RED}Error executing run_post.sh${RESET}"; exit 1; }
+    echo -e "${BLUE}Executing: ${CYAN}./runPost.sh ${ID} ${VELOCITY_SET}${RESET}"
+    ./runPost.sh "${ID}" "${VELOCITY_SET}" || { echo -e "${RED}Error executing runPost.sh${RESET}"; exit 1; }
 
     echo -e "${GREEN}Process completed successfully!${RESET}"
 }

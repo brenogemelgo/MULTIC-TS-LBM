@@ -16,7 +16,7 @@ struct LBMFields {
     float *pxx, *pyy, *pzz, *pxy, *pxz, *pyz;
     float *ind, *normx, *normy, *normz;
     float *ffx, *ffy, *ffz;
-    dtype_t *f; float *g; 
+    pop_t *f; float *g; 
 };
 extern LBMFields lbm;
 
@@ -24,6 +24,7 @@ extern LBMFields lbm;
 struct DerivedFields {
     float *vorticity_mag;
     float *velocity_mag;
+    float *pressure;
 };
 extern DerivedFields dfields;
 #endif // D_FIELDS

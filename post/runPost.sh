@@ -17,4 +17,4 @@ else
     PYTHON_CMD="python"
 fi
 
-$PYTHON_CMD process_steps.py "$ID" "$VELOCITY_SET"
+$PYTHON_CMD processSteps.py "$ID" "$VELOCITY_SET"

@@ -1,4 +1,4 @@
-#include "kernels.cuh"
+#pragma once
 
 __global__ void gpuInitFields(LBMFields d) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;

@@ -1,4 +1,5 @@
-#include "kernels.cuh"
+#include "device_header.cuh"
+#include "device_functions.cuh"
 
 __constant__ float W[FLINKS];
 __constant__ float W_G[GLINKS];
@@ -18,7 +19,7 @@ DerivedFields dfields;
 
 void initDeviceVars() {
     size_t SIZE =        NX * NY * NZ          * sizeof(float);            
-    size_t F_DIST_SIZE = NX * NY * NZ * FLINKS * sizeof(dtype_t);
+    size_t F_DIST_SIZE = NX * NY * NZ * FLINKS * sizeof(pop_t);
     size_t G_DIST_SIZE = NX * NY * NZ * GLINKS * sizeof(float); 
 
     checkCudaErrors(cudaMalloc(&lbm.rho,   SIZE));
@@ -47,6 +48,7 @@ void initDeviceVars() {
     #ifdef D_FIELDS
     checkCudaErrors(cudaMalloc(&dfields.vorticity_mag, SIZE));
     checkCudaErrors(cudaMalloc(&dfields.velocity_mag,  SIZE));
+    checkCudaErrors(cudaMalloc(&dfields.pressure,      SIZE));
     #endif // D_FIELDS
 
     // initialization with cudamemset, currently using a kernel
@@ -81,4 +83,3 @@ void initDeviceVars() {
 
     getLastCudaError("initDeviceVars: post-initialization");
 }
-

@@ -1,6 +1,6 @@
-from get_sim_info import *
-from grid_to_vtk import *
-from get_sim_info import __macr_names__
+from getSimInfo import *
+from gridToVTK import *
+from getSimInfo import __macr_names__
 import math
 import sys
 import os

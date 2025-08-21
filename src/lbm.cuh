@@ -1,4 +1,4 @@
-#include "kernels.cuh"
+#pragma once
 
 __global__ void gpuPhi(LBMFields d) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -153,34 +153,34 @@ __global__ void gpuCollisionStream(LBMFields d) {
     const idx_t idx3 = gpu_idx_global3(x,y,z);
         
     //float pop[FLINKS];
-    float pop_0 = from_dtype(d.f[gpu_idx_global4(x,y,z,0)]);
-    float pop_1 = from_dtype(d.f[gpu_idx_global4(x,y,z,1)]);
-    float pop_2 = from_dtype(d.f[gpu_idx_global4(x,y,z,2)]);
-    float pop_3 = from_dtype(d.f[gpu_idx_global4(x,y,z,3)]);
-    float pop_4 = from_dtype(d.f[gpu_idx_global4(x,y,z,4)]);
-    float pop_5 = from_dtype(d.f[gpu_idx_global4(x,y,z,5)]); 
-    float pop_6 = from_dtype(d.f[gpu_idx_global4(x,y,z,6)]);
-    float pop_7 = from_dtype(d.f[gpu_idx_global4(x,y,z,7)]);
-    float pop_8 = from_dtype(d.f[gpu_idx_global4(x,y,z,8)]);
-    float pop_9 = from_dtype(d.f[gpu_idx_global4(x,y,z,9)]);
-    float pop_10 = from_dtype(d.f[gpu_idx_global4(x,y,z,10)]);
-    float pop_11 = from_dtype(d.f[gpu_idx_global4(x,y,z,11)]);
-    float pop_12 = from_dtype(d.f[gpu_idx_global4(x,y,z,12)]);
-    float pop_13 = from_dtype(d.f[gpu_idx_global4(x,y,z,13)]);
-    float pop_14 = from_dtype(d.f[gpu_idx_global4(x,y,z,14)]);
-    float pop_15 = from_dtype(d.f[gpu_idx_global4(x,y,z,15)]);
-    float pop_16 = from_dtype(d.f[gpu_idx_global4(x,y,z,16)]);
-    float pop_17 = from_dtype(d.f[gpu_idx_global4(x,y,z,17)]);
-    float pop_18 = from_dtype(d.f[gpu_idx_global4(x,y,z,18)]);
+    float pop_0 = from_pop(d.f[gpu_idx_global4(x,y,z,0)]);
+    float pop_1 = from_pop(d.f[gpu_idx_global4(x,y,z,1)]);
+    float pop_2 = from_pop(d.f[gpu_idx_global4(x,y,z,2)]);
+    float pop_3 = from_pop(d.f[gpu_idx_global4(x,y,z,3)]);
+    float pop_4 = from_pop(d.f[gpu_idx_global4(x,y,z,4)]);
+    float pop_5 = from_pop(d.f[gpu_idx_global4(x,y,z,5)]); 
+    float pop_6 = from_pop(d.f[gpu_idx_global4(x,y,z,6)]);
+    float pop_7 = from_pop(d.f[gpu_idx_global4(x,y,z,7)]);
+    float pop_8 = from_pop(d.f[gpu_idx_global4(x,y,z,8)]);
+    float pop_9 = from_pop(d.f[gpu_idx_global4(x,y,z,9)]);
+    float pop_10 = from_pop(d.f[gpu_idx_global4(x,y,z,10)]);
+    float pop_11 = from_pop(d.f[gpu_idx_global4(x,y,z,11)]);
+    float pop_12 = from_pop(d.f[gpu_idx_global4(x,y,z,12)]);
+    float pop_13 = from_pop(d.f[gpu_idx_global4(x,y,z,13)]);
+    float pop_14 = from_pop(d.f[gpu_idx_global4(x,y,z,14)]);
+    float pop_15 = from_pop(d.f[gpu_idx_global4(x,y,z,15)]);
+    float pop_16 = from_pop(d.f[gpu_idx_global4(x,y,z,16)]);
+    float pop_17 = from_pop(d.f[gpu_idx_global4(x,y,z,17)]);
+    float pop_18 = from_pop(d.f[gpu_idx_global4(x,y,z,18)]);
     #ifdef D3Q27
-    float pop_19 = from_dtype(d.f[gpu_idx_global4(x,y,z,19)]);
-    float pop_20 = from_dtype(d.f[gpu_idx_global4(x,y,z,20)]);
-    float pop_21 = from_dtype(d.f[gpu_idx_global4(x,y,z,21)]);
-    float pop_22 = from_dtype(d.f[gpu_idx_global4(x,y,z,22)]);
-    float pop_23 = from_dtype(d.f[gpu_idx_global4(x,y,z,23)]);
-    float pop_24 = from_dtype(d.f[gpu_idx_global4(x,y,z,24)]);
-    float pop_25 = from_dtype(d.f[gpu_idx_global4(x,y,z,25)]);
-    float pop_26 = from_dtype(d.f[gpu_idx_global4(x,y,z,26)]);
+    float pop_19 = from_pop(d.f[gpu_idx_global4(x,y,z,19)]);
+    float pop_20 = from_pop(d.f[gpu_idx_global4(x,y,z,20)]);
+    float pop_21 = from_pop(d.f[gpu_idx_global4(x,y,z,21)]);
+    float pop_22 = from_pop(d.f[gpu_idx_global4(x,y,z,22)]);
+    float pop_23 = from_pop(d.f[gpu_idx_global4(x,y,z,23)]);
+    float pop_24 = from_pop(d.f[gpu_idx_global4(x,y,z,24)]);
+    float pop_25 = from_pop(d.f[gpu_idx_global4(x,y,z,25)]);
+    float pop_26 = from_pop(d.f[gpu_idx_global4(x,y,z,26)]);
     #endif // D3Q27
 
     #ifdef D3Q19
@@ -481,138 +481,138 @@ __global__ void gpuCollisionStream(LBMFields d) {
     feq = gpu_compute_equilibria(rho,ux,uy,uz,0);
     float force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,0);
     float fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,0);
-    d.f[gpu_idx_global4(x,y,z,0)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y,z,0)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,1);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,1);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,1);
-    d.f[gpu_idx_global4(x+1,y,z,1)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y,z,1)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,2);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,2);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,2);
-    d.f[gpu_idx_global4(x-1,y,z,2)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x-1,y,z,2)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,3);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,3);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,3);
-    d.f[gpu_idx_global4(x,y+1,z,3)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y+1,z,3)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,4);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,4);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,4);
-    d.f[gpu_idx_global4(x,y-1,z,4)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y-1,z,4)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,5);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,5);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,5);
-    d.f[gpu_idx_global4(x,y,z+1,5)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y,z+1,5)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,6);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,6);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,6);
-    d.f[gpu_idx_global4(x,y,z-1,6)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y,z-1,6)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,7);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,7);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,7);
-    d.f[gpu_idx_global4(x+1,y+1,z,7)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y+1,z,7)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,8);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,8);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,8);
-    d.f[gpu_idx_global4(x-1,y-1,z,8)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x-1,y-1,z,8)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,9);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,9);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,9);
-    d.f[gpu_idx_global4(x+1,y,z+1,9)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y,z+1,9)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,10);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,10);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,10);
-    d.f[gpu_idx_global4(x-1,y,z-1,10)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x-1,y,z-1,10)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,11);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,11);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,11);
-    d.f[gpu_idx_global4(x,y+1,z+1,11)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y+1,z+1,11)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,12);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,12);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,12);
-    d.f[gpu_idx_global4(x,y-1,z-1,12)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y-1,z-1,12)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,13);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,13);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,13);
-    d.f[gpu_idx_global4(x+1,y-1,z,13)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y-1,z,13)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,14);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,14);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,14);
-    d.f[gpu_idx_global4(x-1,y+1,z,14)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x-1,y+1,z,14)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,15);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,15);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,15);
-    d.f[gpu_idx_global4(x+1,y,z-1,15)] = to_dtype(feq + omco_loc * fneq_reg + force_corr); 
+    d.f[gpu_idx_global4(x+1,y,z-1,15)] = to_pop(feq + omco_loc * fneq_reg + force_corr); 
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,16);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,16);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,16);
-    d.f[gpu_idx_global4(x-1,y,z+1,16)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x-1,y,z+1,16)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,17);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,17);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,17);
-    d.f[gpu_idx_global4(x,y+1,z-1,17)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y+1,z-1,17)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,18);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,18);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,18);
-    d.f[gpu_idx_global4(x,y-1,z+1,18)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x,y-1,z+1,18)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     #ifdef D3Q27
     feq = gpu_compute_equilibria(rho,ux,uy,uz,19);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,19);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,19);
-    d.f[gpu_idx_global4(x+1,y+1,z+1,19)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y+1,z+1,19)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,20);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,20);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,20);
-    d.f[gpu_idx_global4(x-1,y-1,z-1,20)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x-1,y-1,z-1,20)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,21);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,21);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,21);
-    d.f[gpu_idx_global4(x+1,y+1,z-1,21)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y+1,z-1,21)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,22);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,22);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,22);
-    d.f[gpu_idx_global4(x-1,y-1,z+1,22)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);    
+    d.f[gpu_idx_global4(x-1,y-1,z+1,22)] = to_pop(feq + omco_loc * fneq_reg + force_corr);    
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,23);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,23);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,23);
-    d.f[gpu_idx_global4(x+1,y-1,z+1,23)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y-1,z+1,23)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,24);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,24);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,24);
-    d.f[gpu_idx_global4(x-1,y+1,z-1,24)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x-1,y+1,z-1,24)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
 
     feq = gpu_compute_equilibria(rho,ux,uy,uz,25);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,25);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,25);
-    d.f[gpu_idx_global4(x-1,y+1,z+1,25)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);    
+    d.f[gpu_idx_global4(x-1,y+1,z+1,25)] = to_pop(feq + omco_loc * fneq_reg + force_corr);    
     
     feq = gpu_compute_equilibria(rho,ux,uy,uz,26);
     force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,26);
     fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,26);
-    d.f[gpu_idx_global4(x+1,y-1,z-1,26)] = to_dtype(feq + omco_loc * fneq_reg + force_corr);
+    d.f[gpu_idx_global4(x+1,y-1,z-1,26)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
     #endif // D3Q27
 }
 

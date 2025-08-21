@@ -1,5 +1,5 @@
 from pyevtk.hl import gridToVTK
-from get_sim_info import *
+from getSimInfo import *
 
 def save_vtk_3d(macrs_dict, path, filename_write, points=True, norm_val=1):
 

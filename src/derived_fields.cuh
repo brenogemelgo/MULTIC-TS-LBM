@@ -1,4 +1,4 @@
-#include "kernels.cuh"
+#pragma once
 
 #ifdef D_FIELDS
 __global__ void gpuDerivedFields(LBMFields lbm, DerivedFields dfields) {
