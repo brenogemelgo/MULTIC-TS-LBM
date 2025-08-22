@@ -6,9 +6,9 @@
 #define JET_CASE
 //#define DROPLET_CASE
 
-//#define RUN_MODE
+#define RUN_MODE
 //#define SAMPLE_MODE
-#define DEBUG_MODE
+//#define DEBUG_MODE
 
 #ifdef RUN_MODE
     constexpr int MACRO_SAVE = 100;
@@ -23,8 +23,8 @@
 
 #ifdef JET_CASE
     // domain size
-    constexpr int MESH = 128;
-    constexpr int DIAM = 20;
+    constexpr int MESH = 64;
+    constexpr int DIAM = 10;
     constexpr int NX   = MESH;
     constexpr int NY   = MESH;
     constexpr int NZ   = MESH*2;

@@ -106,5 +106,72 @@ static inline constexpr unsigned div_up(unsigned n, unsigned d) {
     return (n + d - 1u) / d;
 }
 
+__host__ __forceinline__ void initDeviceVars() {
+    size_t SIZE =        NX * NY * NZ          * sizeof(float);            
+    size_t F_DIST_SIZE = NX * NY * NZ * FLINKS * sizeof(pop_t);
+    size_t G_DIST_SIZE = NX * NY * NZ * GLINKS * sizeof(float); 
+
+    checkCudaErrors(cudaMalloc(&lbm.rho,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.ux,    SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.uy,    SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.uz,    SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxx,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pyy,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pzz,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxy,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxz,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pyz,   SIZE));
+
+    checkCudaErrors(cudaMalloc(&lbm.phi,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.ind,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.normx, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.normy, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.normz, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.ffx,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.ffy,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.ffz,   SIZE));
+
+    checkCudaErrors(cudaMalloc(&lbm.f,     F_DIST_SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.g,     G_DIST_SIZE));
+
+    #ifdef D_FIELDS
+    checkCudaErrors(cudaMalloc(&dfields.vorticity_mag, SIZE));
+    checkCudaErrors(cudaMalloc(&dfields.velocity_mag,  SIZE));
+    checkCudaErrors(cudaMalloc(&dfields.pressure,      SIZE));
+    #endif // D_FIELDS
+
+    // initialization with cudamemset, currently using a kernel
+    /*
+    checkCudaErrors(cudaMemset(lbm.pxx,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.pyy,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.pzz,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.pxy,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.pxz,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.pyz,   0, SIZE));
+
+    checkCudaErrors(cudaMemset(lbm.ux,    0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.uy,    0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.uz,    0, SIZE));
+
+    checkCudaErrors(cudaMemset(lbm.phi,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.ffx,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.ffy,   0, SIZE));
+    checkCudaErrors(cudaMemset(lbm.ffz,   0, SIZE));
+    */
+
+    checkCudaErrors(cudaMemcpyToSymbol(W,   &H_W,   FLINKS * sizeof(float)));
+    checkCudaErrors(cudaMemcpyToSymbol(W_G, &H_W_G, GLINKS * sizeof(float)));
+
+    checkCudaErrors(cudaMemcpyToSymbol(CIX,   &H_CIX,   FLINKS * sizeof(ci_t)));
+    checkCudaErrors(cudaMemcpyToSymbol(CIY,   &H_CIY,   FLINKS * sizeof(ci_t)));
+    checkCudaErrors(cudaMemcpyToSymbol(CIZ,   &H_CIZ,   FLINKS * sizeof(ci_t)));
+
+    #ifdef PERTURBATION
+        checkCudaErrors(cudaMemcpyToSymbol(PERTURBATION_DATA, &H_PERTURBATION, 200 * sizeof(float)));
+    #endif
+
+    getLastCudaError("initDeviceVars: post-initialization");
+}
+
 
 

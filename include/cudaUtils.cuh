@@ -25,8 +25,6 @@ inline constexpr int TILE_X = static_cast<int>(BLOCK_SIZE_X) + 2*HALO;
 inline constexpr int TILE_Y = static_cast<int>(BLOCK_SIZE_Y) + 2*HALO;
 inline constexpr int TILE_Z = static_cast<int>(BLOCK_SIZE_Z) + 2*HALO;
 
-inline constexpr size_t DYNAMIC_SHARED_SIZE = 0;
-
 #define ENABLE_FP16
 
 #ifdef ENABLE_FP16

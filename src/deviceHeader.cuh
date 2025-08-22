@@ -29,8 +29,6 @@ struct DerivedFields {
 extern DerivedFields dfields;
 #endif // D_FIELDS
 
-void initDeviceVars();
-
 __device__ __forceinline__ idx_t global3(const int x, const int y, const int z) {
     return x + y * NX + z * STRIDE;
 }

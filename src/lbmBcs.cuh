@@ -186,13 +186,10 @@ __global__ void gpuApplyOutflow(LBMFields d) {
 }
 
 __global__ void gpuApplyPeriodicX(LBMFields d) {
-    const int y = threadIdx.x + blockIdx.x * blockDim.x;
+    const int y = threadIdx.x + blockIdx.x * blockDim.x;              
     const int z = threadIdx.y + blockIdx.y * blockDim.y;
     
-    //if (y <= 0 || y >= NY-1 || z <= 0 || z >= NZ-1) return;
-    if (y >= NY || z >= NZ || 
-        y == 0 || y == NY-1 || 
-        z == 0 || z == NZ-1) return;
+    if (y <= 0 || y >= NY-1 || z <= 0 || z >= NZ-1) return;
 
     const idx_t bL = global3(1,y,z);
     const idx_t bR = global3(NX-2,y,z);
@@ -219,10 +216,7 @@ __global__ void gpuApplyPeriodicY(LBMFields d) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int z = threadIdx.y + blockIdx.y * blockDim.y;
     
-    //if (x <= 0 || x >= NX-1 || z <= 0 || z >= NZ-1) return;
-    if (x >= NX || z >= NZ || 
-        x == 0 || x == NX-1 || 
-        z == 0 || z == NZ-1) return;
+    if (x <= 0 || x >= NX-1 || z <= 0 || z >= NZ-1) return;
 
     const idx_t bB = global3(x,1,z);
     const idx_t bT = global3(x,NY-2,z);

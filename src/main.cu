@@ -26,11 +26,6 @@ int main(int argc, char* argv[]) {
                      div_up(static_cast<unsigned>(NY), block.y),
                      div_up(static_cast<unsigned>(NZ), block.z));
 
-    //const dim3 blockIn(32u, 2u, 2u);
-    //const dim3 gridIn(div_up(static_cast<unsigned>(NX-2), blockIn.x),
-    //                  div_up(static_cast<unsigned>(NY-2), blockIn.y),
-    //                  div_up(static_cast<unsigned>(NZ-2), blockIn.z));
-
     const dim3 blockX(32u, 32u, 1u);
     const dim3 gridX (div_up(static_cast<unsigned>(NY), blockX.x),
                       div_up(static_cast<unsigned>(NZ), blockX.y),
@@ -46,7 +41,7 @@ int main(int argc, char* argv[]) {
                       div_up(static_cast<unsigned>(NY), blockZ.y),
                       1u);
 
-    const size_t shmem_bytes = DYNAMIC_SHARED_SIZE;
+    const size_t shmem_bytes = 0;
 
     cudaStream_t mainStream{};
     checkCudaErrors(cudaStreamCreate(&mainStream));
