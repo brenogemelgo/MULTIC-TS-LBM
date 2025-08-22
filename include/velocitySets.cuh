@@ -1,6 +1,5 @@
 #pragma once
-
-#include "utils_cuda.cuh"
+#include "cudaUtils.cuh"
 
 #ifdef D3Q19 //              0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 
     const ci_t H_CIX[19] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0 };

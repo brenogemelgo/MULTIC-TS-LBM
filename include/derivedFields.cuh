@@ -1,5 +1,7 @@
 #pragma once
 
+//#define D_FIELDS
+
 #ifdef D_FIELDS
 __global__ void gpuDerivedFields(LBMFields lbm, DerivedFields dfields) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;

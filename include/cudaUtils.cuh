@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cuda_runtime.h>
 #include <builtin_types.h>  
 

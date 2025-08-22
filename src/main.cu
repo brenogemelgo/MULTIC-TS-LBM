@@ -1,10 +1,11 @@
-#include "device_header.cuh"
-#include "device_functions.cuh"
-#include "initial_conditions.cuh"
+#include "deviceHeader.cuh"
+#include "lbmInit.cuh"
 #include "lbm.cuh"
-#include "derived_fields.cuh"
-#include "boundary_conditions.cuh"
-#include "host_functions.cuh"
+#include "lbmBcs.cuh"
+#include "../include/hostFunctions.cuh"
+#ifdef D_FIELDS
+#include "../include/derivedFields.cuh"
+#endif // D_FIELDS
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
@@ -18,10 +19,17 @@ int main(int argc, char* argv[]) {
     //computeAndPrintOccupancy(); 
     initDeviceVars();
     
-    const dim3 block(32u, 2u, 2u);
+    // for near perfect coalescing use 32 tpb in x. 
+    // y and z should be tweaked as needed, larger graphic cards can use larger y,z blocks
+    const dim3 block(32u, 2u, 2u); 
     const dim3 grid (div_up(static_cast<unsigned>(NX), block.x),
                      div_up(static_cast<unsigned>(NY), block.y),
                      div_up(static_cast<unsigned>(NZ), block.z));
+
+    //const dim3 blockIn(32u, 2u, 2u);
+    //const dim3 gridIn(div_up(static_cast<unsigned>(NX-2), blockIn.x),
+    //                  div_up(static_cast<unsigned>(NY-2), blockIn.y),
+    //                  div_up(static_cast<unsigned>(NZ-2), blockIn.z));
 
     const dim3 blockX(32u, 32u, 1u);
     const dim3 gridX (div_up(static_cast<unsigned>(NY), blockX.x),
@@ -65,7 +73,7 @@ int main(int argc, char* argv[]) {
 
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (int STEP = 0; STEP <= NSTEPS; ++STEP) {
-        //std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
+        std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
 
         // ======================== NORMALS AND FORCES ======================== //
 
@@ -112,9 +120,8 @@ int main(int argc, char* argv[]) {
 
         // ================================================================================= //
 
-        //checkCudaErrors(cudaDeviceSynchronize());
+        checkCudaErrors(cudaDeviceSynchronize());
 
-        /*
         if (STEP % MACRO_SAVE == 0) {
 
             copyAndSaveToBinary(lbm.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
@@ -123,11 +130,11 @@ int main(int argc, char* argv[]) {
             #ifdef D_FIELDS
             copyAndSaveToBinary(dfields.vorticity_mag, PLANE, SIM_DIR, SIM_ID, STEP, "vorticity_mag");
             copyAndSaveToBinary(dfields.velocity_mag,  PLANE, SIM_DIR, SIM_ID, STEP, "velocity_mag");
+            copyAndSaveToBinary(dfields.pressure,      PLANE, SIM_DIR, SIM_ID, STEP, "pressure");
             #endif // D_FIELDS
             std::cout << "Step " << STEP << ": Binaries saved in " << SIM_DIR << "\n";
 
         }
-            */
     }
 
     const auto END_TIME = std::chrono::high_resolution_clock::now();

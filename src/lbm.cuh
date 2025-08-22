@@ -10,13 +10,9 @@ __global__ void gpuPhi(LBMFields d) {
         y == 0 || y == NY-1 || 
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = gpu_idx_global3(x,y,z);
+    const idx_t idx3 = global3(x,y,z);
 
-    const float phi = d.g[gpu_idx_global4(x,y,z,0)] + d.g[gpu_idx_global4(x,y,z,1)] + 
-                        d.g[gpu_idx_global4(x,y,z,2)] + d.g[gpu_idx_global4(x,y,z,3)] + 
-                        d.g[gpu_idx_global4(x,y,z,4)] + d.g[gpu_idx_global4(x,y,z,5)] + 
-                        d.g[gpu_idx_global4(x,y,z,6)];
-        
+    const float phi = d.g[idx3] + d.g[PLANE+idx3] + d.g[PLANE2+idx3] + d.g[PLANE3+idx3] + d.g[PLANE4+idx3] + d.g[PLANE5+idx3] + d.g[PLANE6+idx3];
     d.phi[idx3] = phi;
 }
 
@@ -30,56 +26,56 @@ __global__ void gpuNormals(LBMFields d) {
         y == 0 || y == NY-1 || 
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = gpu_idx_global3(x,y,z);
+    const idx_t idx3 = global3(x,y,z);
 
-    float w_sum_grad_x = W_1 * (d.phi[gpu_idx_global3(x+1,y,z)]   - d.phi[gpu_idx_global3(x-1,y,z)])  +
-                         W_2 * (d.phi[gpu_idx_global3(x+1,y+1,z)] - d.phi[gpu_idx_global3(x-1,y-1,z)] +
-                                d.phi[gpu_idx_global3(x+1,y,z+1)] - d.phi[gpu_idx_global3(x-1,y,z-1)] +
-                                d.phi[gpu_idx_global3(x+1,y-1,z)] - d.phi[gpu_idx_global3(x-1,y+1,z)] +
-                                d.phi[gpu_idx_global3(x+1,y,z-1)] - d.phi[gpu_idx_global3(x-1,y,z+1)]);
+    float sumGradX = W_1 * (d.phi[global3(x+1,y,z)]   - d.phi[global3(x-1,y,z)])  +
+                     W_2 * (d.phi[global3(x+1,y+1,z)] - d.phi[global3(x-1,y-1,z)] +
+                            d.phi[global3(x+1,y,z+1)] - d.phi[global3(x-1,y,z-1)] +
+                            d.phi[global3(x+1,y-1,z)] - d.phi[global3(x-1,y+1,z)] +
+                            d.phi[global3(x+1,y,z-1)] - d.phi[global3(x-1,y,z+1)]);
 
-    float w_sum_grad_y = W_1 * (d.phi[gpu_idx_global3(x,y+1,z)]   - d.phi[gpu_idx_global3(x,y-1,z)])  +
-                         W_2 * (d.phi[gpu_idx_global3(x+1,y+1,z)] - d.phi[gpu_idx_global3(x-1,y-1,z)] +
-                                d.phi[gpu_idx_global3(x,y+1,z+1)] - d.phi[gpu_idx_global3(x,y-1,z-1)] +
-                                d.phi[gpu_idx_global3(x-1,y+1,z)] - d.phi[gpu_idx_global3(x+1,y-1,z)] +
-                                d.phi[gpu_idx_global3(x,y+1,z-1)] - d.phi[gpu_idx_global3(x,y-1,z+1)]);
+    float sumGradY = W_1 * (d.phi[global3(x,y+1,z)]   - d.phi[global3(x,y-1,z)])  +
+                     W_2 * (d.phi[global3(x+1,y+1,z)] - d.phi[global3(x-1,y-1,z)] +
+                            d.phi[global3(x,y+1,z+1)] - d.phi[global3(x,y-1,z-1)] +
+                            d.phi[global3(x-1,y+1,z)] - d.phi[global3(x+1,y-1,z)] +
+                            d.phi[global3(x,y+1,z-1)] - d.phi[global3(x,y-1,z+1)]);
 
-    float w_sum_grad_z = W_1 * (d.phi[gpu_idx_global3(x,y,z+1)]   - d.phi[gpu_idx_global3(x,y,z-1)])  +
-                         W_2 * (d.phi[gpu_idx_global3(x+1,y,z+1)] - d.phi[gpu_idx_global3(x-1,y,z-1)] +
-                                d.phi[gpu_idx_global3(x,y+1,z+1)] - d.phi[gpu_idx_global3(x,y-1,z-1)] +
-                                d.phi[gpu_idx_global3(x-1,y,z+1)] - d.phi[gpu_idx_global3(x+1,y,z-1)] +
-                                d.phi[gpu_idx_global3(x,y-1,z+1)] - d.phi[gpu_idx_global3(x,y+1,z-1)]);
+    float sumGradZ = W_1 * (d.phi[global3(x,y,z+1)]   - d.phi[global3(x,y,z-1)])  +
+                     W_2 * (d.phi[global3(x+1,y,z+1)] - d.phi[global3(x-1,y,z-1)] +
+                            d.phi[global3(x,y+1,z+1)] - d.phi[global3(x,y-1,z-1)] +
+                            d.phi[global3(x-1,y,z+1)] - d.phi[global3(x+1,y,z-1)] +
+                            d.phi[global3(x,y-1,z+1)] - d.phi[global3(x,y+1,z-1)]);
     #ifdef D3Q27
-    w_sum_grad_x += W_3 * (d.phi[gpu_idx_global3(x+1,y+1,z+1)] - d.phi[gpu_idx_global3(x-1,y-1,z-1)] +
-                           d.phi[gpu_idx_global3(x+1,y+1,z-1)] - d.phi[gpu_idx_global3(x-1,y-1,z+1)] +
-                           d.phi[gpu_idx_global3(x+1,y-1,z+1)] - d.phi[gpu_idx_global3(x-1,y+1,z-1)] +
-                           d.phi[gpu_idx_global3(x+1,y-1,z-1)] - d.phi[gpu_idx_global3(x-1,y+1,z+1)]);
+    sumGradX += W_3 * (d.phi[global3(x+1,y+1,z+1)] - d.phi[global3(x-1,y-1,z-1)] +
+                       d.phi[global3(x+1,y+1,z-1)] - d.phi[global3(x-1,y-1,z+1)] +
+                       d.phi[global3(x+1,y-1,z+1)] - d.phi[global3(x-1,y+1,z-1)] +
+                       d.phi[global3(x+1,y-1,z-1)] - d.phi[global3(x-1,y+1,z+1)]);
 
-    w_sum_grad_y += W_3 * (d.phi[gpu_idx_global3(x+1,y+1,z+1)] - d.phi[gpu_idx_global3(x-1,y-1,z-1)] +
-                           d.phi[gpu_idx_global3(x+1,y+1,z-1)] - d.phi[gpu_idx_global3(x-1,y-1,z+1)] +
-                           d.phi[gpu_idx_global3(x-1,y+1,z-1)] - d.phi[gpu_idx_global3(x+1,y-1,z+1)] +
-                           d.phi[gpu_idx_global3(x-1,y+1,z+1)] - d.phi[gpu_idx_global3(x+1,y-1,z-1)]);
+    sumGradY += W_3 * (d.phi[global3(x+1,y+1,z+1)] - d.phi[global3(x-1,y-1,z-1)] +
+                       d.phi[global3(x+1,y+1,z-1)] - d.phi[global3(x-1,y-1,z+1)] +
+                       d.phi[global3(x-1,y+1,z-1)] - d.phi[global3(x+1,y-1,z+1)] +
+                       d.phi[global3(x-1,y+1,z+1)] - d.phi[global3(x+1,y-1,z-1)]);
 
-    w_sum_grad_z += W_3 * (d.phi[gpu_idx_global3(x+1,y+1,z+1)] - d.phi[gpu_idx_global3(x-1,y-1,z-1)] +
-                           d.phi[gpu_idx_global3(x-1,y-1,z+1)] - d.phi[gpu_idx_global3(x+1,y+1,z-1)] +
-                           d.phi[gpu_idx_global3(x+1,y-1,z+1)] - d.phi[gpu_idx_global3(x-1,y+1,z-1)] +
-                           d.phi[gpu_idx_global3(x-1,y+1,z+1)] - d.phi[gpu_idx_global3(x+1,y-1,z-1)]);
+    sumGradZ += W_3 * (d.phi[global3(x+1,y+1,z+1)] - d.phi[global3(x-1,y-1,z-1)] +
+                       d.phi[global3(x-1,y-1,z+1)] - d.phi[global3(x+1,y+1,z-1)] +
+                       d.phi[global3(x+1,y-1,z+1)] - d.phi[global3(x-1,y+1,z-1)] +
+                       d.phi[global3(x-1,y+1,z+1)] - d.phi[global3(x+1,y-1,z-1)]);
     #endif // D3Q27
         
-    const float grad_phi_x = 3.0f * w_sum_grad_x;
-    const float grad_phi_y = 3.0f * w_sum_grad_y;
-    const float grad_phi_z = 3.0f * w_sum_grad_z;
+    const float gradX = 3.0f * sumGradX;
+    const float gradY = 3.0f * sumGradY;
+    const float gradZ = 3.0f * sumGradZ;
     
-    const float ind_val = sqrtf(grad_phi_x*grad_phi_x + grad_phi_y*grad_phi_y + grad_phi_z*grad_phi_z);
-    const float inv_ind = 1.0f / (ind_val + 1e-9f);
-    const float normx = grad_phi_x * inv_ind;
-    const float normy = grad_phi_y * inv_ind;
-    const float normz = grad_phi_z * inv_ind;
+    const float ind = sqrtf(gradX*gradX + gradY*gradY + gradZ*gradZ);
+    const float invInd = 1.0f / (ind + 1e-9f);
+    const float normX = gradX * invInd;
+    const float normY = gradY * invInd;
+    const float normZ = gradZ * invInd;
 
-    d.ind[idx3] = ind_val;
-    d.normx[idx3] = normx;
-    d.normy[idx3] = normy;
-    d.normz[idx3] = normz;
+    d.ind[idx3] = ind;
+    d.normx[idx3] = normX;
+    d.normy[idx3] = normY;
+    d.normz[idx3] = normZ;
 }
 
 __global__ void gpuForces(LBMFields d) {
@@ -92,52 +88,52 @@ __global__ void gpuForces(LBMFields d) {
         y == 0 || y == NY-1 || 
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = gpu_idx_global3(x,y,z);
+    const idx_t idx3 = global3(x,y,z);
 
-    const float normx = d.normx[idx3];
-    const float normy = d.normy[idx3];
-    const float normz = d.normz[idx3];
-    const float ind_val = d.ind[idx3];
+    const float normX = d.normx[idx3];
+    const float normY = d.normy[idx3];
+    const float normZ = d.normz[idx3];
+    const float ind = d.ind[idx3];
 
-    float w_sum_curv_x = W_1 * (d.normx[gpu_idx_global3(x+1,y,z)]   - d.normx[gpu_idx_global3(x-1,y,z)])  +
-                         W_2 * (d.normx[gpu_idx_global3(x+1,y+1,z)] - d.normx[gpu_idx_global3(x-1,y-1,z)] +
-                                d.normx[gpu_idx_global3(x+1,y,z+1)] - d.normx[gpu_idx_global3(x-1,y,z-1)] +
-                                d.normx[gpu_idx_global3(x+1,y-1,z)] - d.normx[gpu_idx_global3(x-1,y+1,z)] +
-                                d.normx[gpu_idx_global3(x+1,y,z-1)] - d.normx[gpu_idx_global3(x-1,y,z+1)]);
+    float sumCurvX = W_1 * (d.normx[global3(x+1,y,z)]   - d.normx[global3(x-1,y,z)])  +
+                     W_2 * (d.normx[global3(x+1,y+1,z)] - d.normx[global3(x-1,y-1,z)] +
+                            d.normx[global3(x+1,y,z+1)] - d.normx[global3(x-1,y,z-1)] +
+                            d.normx[global3(x+1,y-1,z)] - d.normx[global3(x-1,y+1,z)] +
+                            d.normx[global3(x+1,y,z-1)] - d.normx[global3(x-1,y,z+1)]);
 
-    float w_sum_curv_y = W_1 * (d.normy[gpu_idx_global3(x,y+1,z)]   - d.normy[gpu_idx_global3(x,y-1,z)])  +
-                         W_2 * (d.normy[gpu_idx_global3(x+1,y+1,z)] - d.normy[gpu_idx_global3(x-1,y-1,z)] +
-                                d.normy[gpu_idx_global3(x,y+1,z+1)] - d.normy[gpu_idx_global3(x,y-1,z-1)] +
-                                d.normy[gpu_idx_global3(x-1,y+1,z)] - d.normy[gpu_idx_global3(x+1,y-1,z)] +
-                                d.normy[gpu_idx_global3(x,y+1,z-1)] - d.normy[gpu_idx_global3(x,y-1,z+1)]);
+    float sumCurvY = W_1 * (d.normy[global3(x,y+1,z)]   - d.normy[global3(x,y-1,z)])  +
+                     W_2 * (d.normy[global3(x+1,y+1,z)] - d.normy[global3(x-1,y-1,z)] +
+                            d.normy[global3(x,y+1,z+1)] - d.normy[global3(x,y-1,z-1)] +
+                            d.normy[global3(x-1,y+1,z)] - d.normy[global3(x+1,y-1,z)] +
+                            d.normy[global3(x,y+1,z-1)] - d.normy[global3(x,y-1,z+1)]);
 
-    float w_sum_curv_z = W_1 * (d.normz[gpu_idx_global3(x,y,z+1)]   - d.normz[gpu_idx_global3(x,y,z-1)])  +
-                         W_2 * (d.normz[gpu_idx_global3(x+1,y,z+1)] - d.normz[gpu_idx_global3(x-1,y,z-1)] +
-                                d.normz[gpu_idx_global3(x,y+1,z+1)] - d.normz[gpu_idx_global3(x,y-1,z-1)] +
-                                d.normz[gpu_idx_global3(x-1,y,z+1)] - d.normz[gpu_idx_global3(x+1,y,z-1)] +
-                                d.normz[gpu_idx_global3(x,y-1,z+1)] - d.normz[gpu_idx_global3(x,y+1,z-1)]);
+    float sumCurvZ = W_1 * (d.normz[global3(x,y,z+1)]   - d.normz[global3(x,y,z-1)])  +
+                     W_2 * (d.normz[global3(x+1,y,z+1)] - d.normz[global3(x-1,y,z-1)] +
+                            d.normz[global3(x,y+1,z+1)] - d.normz[global3(x,y-1,z-1)] +
+                            d.normz[global3(x-1,y,z+1)] - d.normz[global3(x+1,y,z-1)] +
+                            d.normz[global3(x,y-1,z+1)] - d.normz[global3(x,y+1,z-1)]);
     #ifdef D3Q27
-    w_sum_curv_x += W_3 * (d.normx[gpu_idx_global3(x+1,y+1,z+1)] - d.normx[gpu_idx_global3(x-1,y-1,z-1)] +
-                           d.normx[gpu_idx_global3(x+1,y+1,z-1)] - d.normx[gpu_idx_global3(x-1,y-1,z+1)] +
-                           d.normx[gpu_idx_global3(x+1,y-1,z+1)] - d.normx[gpu_idx_global3(x-1,y+1,z-1)] +
-                           d.normx[gpu_idx_global3(x+1,y-1,z-1)] - d.normx[gpu_idx_global3(x-1,y+1,z+1)]);
+    sumCurvX += W_3 * (d.normx[global3(x+1,y+1,z+1)] - d.normx[global3(x-1,y-1,z-1)] +
+                       d.normx[global3(x+1,y+1,z-1)] - d.normx[global3(x-1,y-1,z+1)] +
+                       d.normx[global3(x+1,y-1,z+1)] - d.normx[global3(x-1,y+1,z-1)] +
+                       d.normx[global3(x+1,y-1,z-1)] - d.normx[global3(x-1,y+1,z+1)]);
 
-    w_sum_curv_y += W_3 * (d.normy[gpu_idx_global3(x+1,y+1,z+1)] - d.normy[gpu_idx_global3(x-1,y-1,z-1)] +
-                           d.normy[gpu_idx_global3(x+1,y+1,z-1)] - d.normy[gpu_idx_global3(x-1,y-1,z+1)] +
-                           d.normy[gpu_idx_global3(x-1,y+1,z-1)] - d.normy[gpu_idx_global3(x+1,y-1,z+1)] +
-                           d.normy[gpu_idx_global3(x-1,y+1,z+1)] - d.normy[gpu_idx_global3(x+1,y-1,z-1)]);
+    sumCurvY += W_3 * (d.normy[global3(x+1,y+1,z+1)] - d.normy[global3(x-1,y-1,z-1)] +
+                       d.normy[global3(x+1,y+1,z-1)] - d.normy[global3(x-1,y-1,z+1)] +
+                       d.normy[global3(x-1,y+1,z-1)] - d.normy[global3(x+1,y-1,z+1)] +
+                       d.normy[global3(x-1,y+1,z+1)] - d.normy[global3(x+1,y-1,z-1)]);
 
-    w_sum_curv_z += W_3 * (d.normz[gpu_idx_global3(x+1,y+1,z+1)] - d.normz[gpu_idx_global3(x-1,y-1,z-1)] +
-                           d.normz[gpu_idx_global3(x-1,y-1,z+1)] - d.normz[gpu_idx_global3(x+1,y+1,z-1)] +
-                           d.normz[gpu_idx_global3(x+1,y-1,z+1)] - d.normz[gpu_idx_global3(x-1,y+1,z-1)] +
-                           d.normz[gpu_idx_global3(x-1,y+1,z+1)] - d.normz[gpu_idx_global3(x+1,y-1,z-1)]);
+    sumCurvZ += W_3 * (d.normz[global3(x+1,y+1,z+1)] - d.normz[global3(x-1,y-1,z-1)] +
+                       d.normz[global3(x-1,y-1,z+1)] - d.normz[global3(x+1,y+1,z-1)] +
+                       d.normz[global3(x+1,y-1,z+1)] - d.normz[global3(x-1,y+1,z-1)] +
+                       d.normz[global3(x-1,y+1,z+1)] - d.normz[global3(x+1,y-1,z-1)]);
     #endif // D3Q27
-    float curvature = -3.0f * (w_sum_curv_x + w_sum_curv_y + w_sum_curv_z);   
+    float curvature = -3.0f * (sumCurvX + sumCurvY + sumCurvZ);   
 
-    const float coeff_force = SIGMA * curvature;
-    d.ffx[idx3] = coeff_force * normx * ind_val;
-    d.ffy[idx3] = coeff_force * normy * ind_val;
-    d.ffz[idx3] = coeff_force * normz * ind_val;
+    const float stCurv = SIGMA * curvature;
+    d.ffx[idx3] = stCurv * normX * ind;
+    d.ffy[idx3] = stCurv * normY * ind;
+    d.ffz[idx3] = stCurv * normZ * ind;
 }
 
 __global__ void gpuCollisionStream(LBMFields d) {
@@ -150,85 +146,82 @@ __global__ void gpuCollisionStream(LBMFields d) {
         y == 0 || y == NY-1 || 
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = gpu_idx_global3(x,y,z);
+    const idx_t idx3 = global3(x,y,z);
         
-    //float pop[FLINKS];
-    float pop_0 = from_pop(d.f[gpu_idx_global4(x,y,z,0)]);
-    float pop_1 = from_pop(d.f[gpu_idx_global4(x,y,z,1)]);
-    float pop_2 = from_pop(d.f[gpu_idx_global4(x,y,z,2)]);
-    float pop_3 = from_pop(d.f[gpu_idx_global4(x,y,z,3)]);
-    float pop_4 = from_pop(d.f[gpu_idx_global4(x,y,z,4)]);
-    float pop_5 = from_pop(d.f[gpu_idx_global4(x,y,z,5)]); 
-    float pop_6 = from_pop(d.f[gpu_idx_global4(x,y,z,6)]);
-    float pop_7 = from_pop(d.f[gpu_idx_global4(x,y,z,7)]);
-    float pop_8 = from_pop(d.f[gpu_idx_global4(x,y,z,8)]);
-    float pop_9 = from_pop(d.f[gpu_idx_global4(x,y,z,9)]);
-    float pop_10 = from_pop(d.f[gpu_idx_global4(x,y,z,10)]);
-    float pop_11 = from_pop(d.f[gpu_idx_global4(x,y,z,11)]);
-    float pop_12 = from_pop(d.f[gpu_idx_global4(x,y,z,12)]);
-    float pop_13 = from_pop(d.f[gpu_idx_global4(x,y,z,13)]);
-    float pop_14 = from_pop(d.f[gpu_idx_global4(x,y,z,14)]);
-    float pop_15 = from_pop(d.f[gpu_idx_global4(x,y,z,15)]);
-    float pop_16 = from_pop(d.f[gpu_idx_global4(x,y,z,16)]);
-    float pop_17 = from_pop(d.f[gpu_idx_global4(x,y,z,17)]);
-    float pop_18 = from_pop(d.f[gpu_idx_global4(x,y,z,18)]);
+    const float pop0  = from_pop(d.f[idx3]);         // 0
+    const float pop1  = from_pop(d.f[PLANE+idx3]);   // 1
+    const float pop2  = from_pop(d.f[PLANE2+idx3]);  // 2
+    const float pop3  = from_pop(d.f[PLANE3+idx3]);  // 3
+    const float pop4  = from_pop(d.f[PLANE4+idx3]);  // 4
+    const float pop5  = from_pop(d.f[PLANE5+idx3]);  // 5 
+    const float pop6  = from_pop(d.f[PLANE6+idx3]);  // 6
+    const float pop7  = from_pop(d.f[PLANE7+idx3]);  // 7
+    const float pop8  = from_pop(d.f[PLANE8+idx3]);  // 8
+    const float pop9  = from_pop(d.f[PLANE9+idx3]);  // 9
+    const float pop10 = from_pop(d.f[PLANE10+idx3]); // 10
+    const float pop11 = from_pop(d.f[PLANE11+idx3]); // 11
+    const float pop12 = from_pop(d.f[PLANE12+idx3]); // 12
+    const float pop13 = from_pop(d.f[PLANE13+idx3]); // 13
+    const float pop14 = from_pop(d.f[PLANE14+idx3]); // 14
+    const float pop15 = from_pop(d.f[PLANE15+idx3]); // 15
+    const float pop16 = from_pop(d.f[PLANE16+idx3]); // 16
+    const float pop17 = from_pop(d.f[PLANE17+idx3]); // 17
+    const float pop18 = from_pop(d.f[PLANE18+idx3]); // 18
     #ifdef D3Q27
-    float pop_19 = from_pop(d.f[gpu_idx_global4(x,y,z,19)]);
-    float pop_20 = from_pop(d.f[gpu_idx_global4(x,y,z,20)]);
-    float pop_21 = from_pop(d.f[gpu_idx_global4(x,y,z,21)]);
-    float pop_22 = from_pop(d.f[gpu_idx_global4(x,y,z,22)]);
-    float pop_23 = from_pop(d.f[gpu_idx_global4(x,y,z,23)]);
-    float pop_24 = from_pop(d.f[gpu_idx_global4(x,y,z,24)]);
-    float pop_25 = from_pop(d.f[gpu_idx_global4(x,y,z,25)]);
-    float pop_26 = from_pop(d.f[gpu_idx_global4(x,y,z,26)]);
+    const float pop19 = from_pop(d.f[PLANE19+idx3]); // 19
+    const float pop20 = from_pop(d.f[PLANE20+idx3]); // 20
+    const float pop21 = from_pop(d.f[PLANE21+idx3]); // 21
+    const float pop22 = from_pop(d.f[PLANE22+idx3]); // 22
+    const float pop23 = from_pop(d.f[PLANE23+idx3]); // 23
+    const float pop24 = from_pop(d.f[PLANE24+idx3]); // 24
+    const float pop25 = from_pop(d.f[PLANE25+idx3]); // 25 
+    const float pop26 = from_pop(d.f[PLANE26+idx3]); // 26
     #endif // D3Q27
 
     #ifdef D3Q19
-    const float rho = (pop_0 + pop_1 + pop_2 + pop_3 + pop_4 + pop_5 + pop_6 + pop_7 + pop_8 + pop_9 + pop_10 + pop_11 + pop_12 + pop_13 + pop_14 + pop_15 + pop_16 + pop_17 + pop_18) + 1.0f;
+    const float rho = (pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18) + 1.0f;
     #elif defined(D3Q27)
-    const float rho = (pop_0 + pop_1 + pop_2 + pop_3 + pop_4 + pop_5 + pop_6 + pop_7 + pop_8 + pop_9 + pop_10 + pop_11 + pop_12 + pop_13 + pop_14 + pop_15 + pop_16 + pop_17 + pop_18 + pop_19 + pop_20 + pop_21 + pop_22 + pop_23 + pop_24 + pop_25 + pop_26) + 1.0f;
+    const float rho = (pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18 + pop19 + pop20 + pop21 + pop22 + pop23 + pop24 + pop25 + pop26) + 1.0f;
     #endif
     d.rho[idx3] = rho;
 
-    const float inv_rho = 1.0f / rho;
+    const float invRho = 1.0f / rho;
     const float ffx = d.ffx[idx3];
     const float ffy = d.ffy[idx3];
     const float ffz = d.ffz[idx3];
 
     #ifdef D3Q19
-    const float sum_ux = inv_rho * (pop_1 - pop_2 + pop_7 - pop_8 + pop_9 - pop_10 + pop_13 - pop_14 + pop_15 - pop_16);
-    const float sum_uy = inv_rho * (pop_3 - pop_4 + pop_7 - pop_8 + pop_11 - pop_12 + pop_14 - pop_13 + pop_17 - pop_18);
-    const float sum_uz = inv_rho * (pop_5 - pop_6 + pop_9 - pop_10 + pop_11 - pop_12 + pop_16 - pop_15 + pop_18 - pop_17);
+    const float sumUx = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16);
+    const float sumUy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18);
+    const float sumUz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17);
     #elif defined(D3Q27)
-    const float sum_ux = inv_rho * (pop_1 - pop_2 + pop_7 - pop_8 + pop_9 - pop_10 + pop_13 - pop_14 + pop_15 - pop_16 + pop_19 - pop_20 + pop_21 - pop_22 + pop_23 - pop_24 + pop_26 - pop_25);
-    const float sum_uy = inv_rho * (pop_3 - pop_4 + pop_7 - pop_8  + pop_11 - pop_12 + pop_14 - pop_13 + pop_17 - pop_18 + pop_19 - pop_20 + pop_21 - pop_22 + pop_24 - pop_23 + pop_25 - pop_26);
-    const float sum_uz = inv_rho * (pop_5 - pop_6 + pop_9 - pop_10 + pop_11 - pop_12 + pop_16 - pop_15 + pop_18 - pop_17 + pop_19 - pop_20 + pop_22 - pop_21 + pop_23 - pop_24 + pop_25 - pop_26);
+    const float sumUx = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16 + pop19 - pop20 + pop21 - pop22 + pop23 - pop24 + pop26 - pop25);
+    const float sumUy = invRho * (pop3 - pop4 + pop7 - pop8  + pop11 - pop12 + pop14 - pop13 + pop17 - pop18 + pop19 - pop20 + pop21 - pop22 + pop24 - pop23 + pop25 - pop26);
+    const float sumUz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17 + pop19 - pop20 + pop22 - pop21 + pop23 - pop24 + pop25 - pop26);
     #endif
     
-    const float ux = sum_ux + ffx * 0.5f * inv_rho;
-    const float uy = sum_uy + ffy * 0.5f * inv_rho;
-    const float uz = sum_uz + ffz * 0.5f * inv_rho;
+    const float ux = sumUx + ffx * 0.5f * invRho;
+    const float uy = sumUy + ffy * 0.5f * invRho;
+    const float uz = sumUz + ffz * 0.5f * invRho;
 
     d.ux[idx3] = ux; 
     d.uy[idx3] = uy; 
     d.uz[idx3] = uz;
 
-    const float inv_rho_cssq = 3.0f * inv_rho;
+    const float invRhoCssq = 3.0f * invRho;
 
-    // rest
     // #ifdef D3Q19
     // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
     // #elif defined(D3Q27)
     // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
     // #endif
 
-    // FIRST ORDER TERMS
     #ifdef D3Q19
     float feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*ux + 4.5f*ux*ux);
     #elif defined(D3Q27)
     float feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*ux + 4.5f*ux*ux + 4.5f*ux*ux*ux - 3.0f*ux * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    float fneq = pop_1 - (feq - W_1);
+    float fneq = pop1 - feq + W_1;
     float pxx = fneq;
 
     #ifdef D3Q19
@@ -236,7 +229,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*ux + 4.5f*ux*ux - 4.5f*ux*ux*ux + 3.0f*ux * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_2 - (feq - W_1);
+    fneq = pop2 - feq + W_1;
     pxx += fneq;
 
     #ifdef D3Q19
@@ -244,7 +237,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*uy + 4.5f*uy*uy + 4.5f*uy*uy*uy - 3.0f*uy * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_3 - (feq - W_1);
+    fneq = pop3 - feq + W_1;
     float pyy = fneq;
 
     #ifdef D3Q19
@@ -252,7 +245,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*uy + 4.5f*uy*uy - 4.5f*uy*uy*uy + 3.0f*uy * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_4 - (feq - W_1);
+    fneq = pop4 - feq + W_1;
     pyy += fneq;
 
     #ifdef D3Q19
@@ -260,7 +253,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*uz + 4.5f*uz*uz + 4.5f*uz*uz*uz - 3.0f*uz * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_5 - (feq - W_1);
+    fneq = pop5 - feq + W_1;
     float pzz = fneq;
 
     #ifdef D3Q19
@@ -268,16 +261,15 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*uz + 4.5f*uz*uz - 4.5f*uz*uz*uz + 3.0f*uz * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_6 - (feq - W_1);
+    fneq = pop6 - feq + W_1;
     pzz += fneq;
 
-    // SECOND ORDER TERMS
     #ifdef D3Q19
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uy) + 4.5f*(ux + uy)*(ux + uy));
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uy) + 4.5f*(ux + uy)*(ux + uy) + 4.5f*(ux + uy)*(ux + uy)*(ux + uy) - 3.0f*(ux + uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_7 - (feq - W_2);
+    fneq = pop7 - feq + W_2;
     pxx += fneq; 
     pyy += fneq; 
     float pxy = fneq;
@@ -287,7 +279,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(ux + uy) + 4.5f*(ux + uy)*(ux + uy) - 4.5f*(ux + uy)*(ux + uy)*(ux + uy) + 3.0f*(ux + uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_8 - (feq - W_2);
+    fneq = pop8 - feq + W_2;
     pxx += fneq; 
     pyy += fneq; 
     pxy += fneq;
@@ -297,7 +289,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uz) + 4.5f*(ux + uz)*(ux + uz) + 4.5f*(ux + uz)*(ux + uz)*(ux + uz) - 3.0f*(ux + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_9 - (feq - W_2);
+    fneq = pop9 - feq + W_2;
     pxx += fneq; 
     pzz += fneq; 
     float pxz = fneq;
@@ -307,7 +299,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(ux + uz) + 4.5f*(ux + uz)*(ux + uz) - 4.5f*(ux + uz)*(ux + uz)*(ux + uz) + 3.0f*(ux + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_10 - (feq - W_2);
+    fneq = pop10 - feq + W_2;
     pxx += fneq; 
     pzz += fneq; 
     pxz += fneq;
@@ -317,7 +309,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy + uz) + 4.5f*(uy + uz)*(uy + uz) + 4.5f*(uy + uz)*(uy + uz)*(uy + uz) - 3.0f*(uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_11 - (feq - W_2);
+    fneq = pop11 - feq + W_2;
     pyy += fneq;
     pzz += fneq; 
     float pyz = fneq;
@@ -327,7 +319,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(uy + uz) + 4.5f*(uy + uz)*(uy + uz) - 4.5f*(uy + uz)*(uy + uz)*(uy + uz) + 3.0f*(uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_12 - (feq - W_2);
+    fneq = pop12 - feq + W_2;
     pyy += fneq; 
     pzz += fneq; 
     pyz += fneq;
@@ -337,7 +329,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uy) + 4.5f*(ux - uy)*(ux - uy) + 4.5f*(ux - uy)*(ux - uy)*(ux - uy) - 3.0f*(ux - uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_13 - (feq - W_2);
+    fneq = pop13 - feq + W_2;
     pxx += fneq; 
     pyy += fneq; 
     pxy -= fneq;
@@ -347,7 +339,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - ux) + 4.5f*(uy - ux)*(uy - ux) + 4.5f*(uy - ux)*(uy - ux)*(uy - ux) - 3.0f*(uy - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_14 - (feq - W_2);
+    fneq = pop14 - feq + W_2;
     pxx += fneq; 
     pyy += fneq; 
     pxy -= fneq;
@@ -357,7 +349,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uz) + 4.5f*(ux - uz)*(ux - uz) + 4.5f*(ux - uz)*(ux - uz)*(ux - uz) - 3.0f*(ux - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_15 - (feq - W_2);
+    fneq = pop15 - feq + W_2;
     pxx += fneq; 
     pzz += fneq; 
     pxz -= fneq;
@@ -367,7 +359,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - ux) + 4.5f*(uz - ux)*(uz - ux) + 4.5f*(uz - ux)*(uz - ux)*(uz - ux) - 3.0f*(uz - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_16 - (feq - W_2);
+    fneq = pop16 - feq + W_2;
     pxx += fneq; 
     pzz += fneq; 
     pxz -= fneq;
@@ -377,7 +369,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - uz) + 4.5f*(uy - uz)*(uy - uz) + 4.5f*(uy - uz)*(uy - uz)*(uy - uz) - 3.0f*(uy - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_17 - (feq - W_2);
+    fneq = pop17 - feq + W_2;
     pyy += fneq; 
     pzz += fneq; 
     pyz -= fneq;
@@ -387,7 +379,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - uy) + 4.5f*(uz - uy)*(uz - uy) + 4.5f*(uz - uy)*(uz - uy)*(uz - uy) - 3.0f*(uz - uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
     #endif
-    fneq = pop_18 - (feq - W_2);
+    fneq = pop18 - feq + W_2;
     pyy += fneq; 
     pzz += fneq; 
     pyz -= fneq;
@@ -395,7 +387,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     // THIRD ORDER TERMS
     #ifdef D3Q27
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uy + uz) + 4.5f*(ux + uy + uz)*(ux + uy + uz) + 4.5f*(ux + uy + uz)*(ux + uy + uz)*(ux + uy + uz) - 3.0f*(ux + uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop_19 - (feq - W_3);
+    fneq = pop19 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -404,7 +396,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz += fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) - 3.0f*(ux + uy + uz) + 4.5f*(ux + uy + uz)*(ux + uy + uz) - 4.5f*(ux + uy + uz)*(ux + uy + uz)*(ux + uy + uz) + 3.0f*(ux + uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop_20 - (feq - W_3);
+    fneq = pop20 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -413,7 +405,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz += fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux + uy - uz) + 4.5f*(ux + uy - uz)*(ux + uy - uz) + 4.5f*(ux + uy - uz)*(ux + uy - uz)*(ux + uy - uz) - 3.0f*(ux + uy - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));    
-    fneq = pop_21 - (feq - W_3);
+    fneq = pop21 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -422,7 +414,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - uy - ux) + 4.5f*(uz - uy - ux)*(uz - uy - ux) + 4.5f*(uz - uy - ux)*(uz - uy - ux)*(uz - uy - ux) - 3.0f*(uz - uy - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop_22 - (feq - W_3);
+    fneq = pop22 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -431,7 +423,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq; 
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uy + uz) + 4.5f*(ux - uy + uz)*(ux - uy + uz) + 4.5f*(ux - uy + uz)*(ux - uy + uz)*(ux - uy + uz) - 3.0f*(ux - uy + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop_23 - (feq - W_3);
+    fneq = pop23 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -440,7 +432,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - ux - uz) + 4.5f*(uy - ux - uz)*(uy - ux - uz) + 4.5f*(uy - ux - uz)*(uy - ux - uz)*(uy - ux - uz) - 3.0f*(uy - ux - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop_24 - (feq - W_3);
+    fneq = pop24 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -449,7 +441,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz -= fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uy - ux + uz) + 4.5f*(uy - ux + uz)*(uy - ux + uz) + 4.5f*(uy - ux + uz)*(uy - ux + uz)*(uy - ux + uz) - 3.0f*(uy - ux + uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop_25 - (feq - W_3);
+    fneq = pop25 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -458,7 +450,7 @@ __global__ void gpuCollisionStream(LBMFields d) {
     pyz += fneq;
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uy - uz) + 4.5f*(ux - uy - uz)*(ux - uy - uz) + 4.5f*(ux - uy - uz)*(ux - uy - uz)*(ux - uy - uz) - 3.0f*(ux - uy - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    fneq = pop_26 - (feq - W_3);
+    fneq = pop26 - feq + W_3;
     pxx += fneq; 
     pyy += fneq; 
     pzz += fneq;
@@ -474,145 +466,145 @@ __global__ void gpuCollisionStream(LBMFields d) {
     d.pxz[idx3] = pxz;   
     d.pyz[idx3] = pyz;
 
-    const float omega_loc = gpu_local_omega(z);
-    const float omco_loc = 1.0f - omega_loc;
-    const float coeff_force = 1.0f - 0.5f * omega_loc;
+    const float omegaLocal = omegaSponge(z);
+    const float omcoLocal = 1.0f - omegaLocal;
+    const float coeffForce = 1.0f - 0.5f * omegaLocal;
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,0);
-    float force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,0);
-    float fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,0);
-    d.f[gpu_idx_global4(x,y,z,0)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,0);
+    float forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,0);
+    float fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,0);
+    d.f[global4(x,y,z,0)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,1);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,1);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,1);
-    d.f[gpu_idx_global4(x+1,y,z,1)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,1);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,1);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,1);
+    d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,2);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,2);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,2);
-    d.f[gpu_idx_global4(x-1,y,z,2)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,2);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,2);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,2);
+    d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,3);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,3);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,3);
-    d.f[gpu_idx_global4(x,y+1,z,3)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,3);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,3);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,3);
+    d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,4);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,4);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,4);
-    d.f[gpu_idx_global4(x,y-1,z,4)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,4);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,4);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,4);
+    d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,5);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,5);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,5);
-    d.f[gpu_idx_global4(x,y,z+1,5)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,5);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,5);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,5);
+    d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,6);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,6);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,6);
-    d.f[gpu_idx_global4(x,y,z-1,6)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,6);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,6);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,6);
+    d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,7);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,7);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,7);
-    d.f[gpu_idx_global4(x+1,y+1,z,7)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,7);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,7);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,7);
+    d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,8);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,8);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,8);
-    d.f[gpu_idx_global4(x-1,y-1,z,8)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,8);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,8);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,8);
+    d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,9);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,9);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,9);
-    d.f[gpu_idx_global4(x+1,y,z+1,9)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,9);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,9);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,9);
+    d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,10);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,10);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,10);
-    d.f[gpu_idx_global4(x-1,y,z-1,10)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,10);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,10);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,10);
+    d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,11);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,11);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,11);
-    d.f[gpu_idx_global4(x,y+1,z+1,11)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,11);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,11);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,11);
+    d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,12);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,12);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,12);
-    d.f[gpu_idx_global4(x,y-1,z-1,12)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,12);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,12);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,12);
+    d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,13);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,13);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,13);
-    d.f[gpu_idx_global4(x+1,y-1,z,13)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,13);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,13);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,13);
+    d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,14);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,14);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,14);
-    d.f[gpu_idx_global4(x-1,y+1,z,14)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,14);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,14);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,14);
+    d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,15);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,15);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,15);
-    d.f[gpu_idx_global4(x+1,y,z-1,15)] = to_pop(feq + omco_loc * fneq_reg + force_corr); 
+    feq = computeEquilibria(rho,ux,uy,uz,15);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,15);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,15);
+    d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneqReg + forceCorr); 
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,16);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,16);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,16);
-    d.f[gpu_idx_global4(x-1,y,z+1,16)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,16);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,16);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,16);
+    d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,17);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,17);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,17);
-    d.f[gpu_idx_global4(x,y+1,z-1,17)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,17);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,17);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,17);
+    d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,18);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,18);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,18);
-    d.f[gpu_idx_global4(x,y-1,z+1,18)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,18);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,18);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,18);
+    d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
     #ifdef D3Q27
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,19);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,19);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,19);
-    d.f[gpu_idx_global4(x+1,y+1,z+1,19)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,19);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,19);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,19);
+    d.f[global4(x+1,y+1,z+1,19)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,20);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,20);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,20);
-    d.f[gpu_idx_global4(x-1,y-1,z-1,20)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,20);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,20);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,20);
+    d.f[global4(x-1,y-1,z-1,20)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,21);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,21);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,21);
-    d.f[gpu_idx_global4(x+1,y+1,z-1,21)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,21);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,21);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,21);
+    d.f[global4(x+1,y+1,z-1,21)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,22);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,22);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,22);
-    d.f[gpu_idx_global4(x-1,y-1,z+1,22)] = to_pop(feq + omco_loc * fneq_reg + force_corr);    
+    feq = computeEquilibria(rho,ux,uy,uz,22);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,22);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,22);
+    d.f[global4(x-1,y-1,z+1,22)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);    
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,23);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,23);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,23);
-    d.f[gpu_idx_global4(x+1,y-1,z+1,23)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,23);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,23);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,23);
+    d.f[global4(x+1,y-1,z+1,23)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,24);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,24);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,24);
-    d.f[gpu_idx_global4(x-1,y+1,z-1,24)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,24);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,24);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,24);
+    d.f[global4(x-1,y+1,z-1,24)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
 
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,25);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,25);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,25);
-    d.f[gpu_idx_global4(x-1,y+1,z+1,25)] = to_pop(feq + omco_loc * fneq_reg + force_corr);    
+    feq = computeEquilibria(rho,ux,uy,uz,25);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,25);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,25);
+    d.f[global4(x-1,y+1,z+1,25)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);    
     
-    feq = gpu_compute_equilibria(rho,ux,uy,uz,26);
-    force_corr = gpu_compute_force_term(coeff_force,feq,ux,uy,uz,ffx,ffy,ffz,inv_rho_cssq,26);
-    fneq_reg = gpu_compute_non_equilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,26);
-    d.f[gpu_idx_global4(x+1,y-1,z-1,26)] = to_pop(feq + omco_loc * fneq_reg + force_corr);
+    feq = computeEquilibria(rho,ux,uy,uz,26);
+    forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,26);
+    fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,26);
+    d.f[global4(x+1,y-1,z-1,26)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
     #endif // D3Q27
 }
 
@@ -626,7 +618,7 @@ __global__ void gpuEvolvePhaseField(LBMFields d) {
         y == 0 || y == NY-1 || 
         z == 0 || z == NZ-1) return;
         
-    const idx_t idx3 = gpu_idx_global3(x,y,z);
+    const idx_t idx3 = global3(x,y,z);
 
     const float phi = d.phi[idx3];
     const float ux = d.ux[idx3];
@@ -636,32 +628,32 @@ __global__ void gpuEvolvePhaseField(LBMFields d) {
     const float normy = d.normy[idx3];
     const float normz = d.normz[idx3];
 
-    d.g[gpu_idx_global4(x,y,z,0)] = W_G_1 * phi;
+    d.g[global4(x,y,z,0)] = W_G_1 * phi;
 
-    const float phi_norm = W_G_2 * GAMMA * phi * (1.0f - phi);
-    const float mult_phi = W_G_2 * phi;
-    const float a3 = 3.0f * mult_phi;
+    const float phiNorm = W_G_2 * GAMMA * phi * (1.0f - phi);
+    const float multPhi = W_G_2 * phi;
+    const float a3 = 3.0f * multPhi;
 
-    float geq = mult_phi + a3 * ux;
-    float anti_diff = phi_norm * normx;
-    d.g[gpu_idx_global4(x+1,y,z,1)] = geq + anti_diff;
+    float geq = multPhi + a3 * ux;
+    float antiDiff = phiNorm * normx;
+    d.g[global4(x+1,y,z,1)] = geq + antiDiff;
     
-    geq = mult_phi - a3 * ux;
-    d.g[gpu_idx_global4(x-1,y,z,2)] = geq - anti_diff;
+    geq = multPhi - a3 * ux;
+    d.g[global4(x-1,y,z,2)] = geq - antiDiff;
 
-    geq = mult_phi + a3 * uy;
-    anti_diff = phi_norm * normy;
-    d.g[gpu_idx_global4(x,y+1,z,3)] = geq + anti_diff;
+    geq = multPhi + a3 * uy;
+    antiDiff = phiNorm * normy;
+    d.g[global4(x,y+1,z,3)] = geq + antiDiff;
 
-    geq = mult_phi - a3 * uy;
-    d.g[gpu_idx_global4(x,y-1,z,4)] = geq - anti_diff;
+    geq = multPhi - a3 * uy;
+    d.g[global4(x,y-1,z,4)] = geq - antiDiff;
 
-    geq = mult_phi + a3 * uz;
-    anti_diff = phi_norm * normz;
-    d.g[gpu_idx_global4(x,y,z+1,5)] = geq + anti_diff;
+    geq = multPhi + a3 * uz;
+    antiDiff = phiNorm * normz;
+    d.g[global4(x,y,z+1,5)] = geq + antiDiff;
 
-    geq = mult_phi - a3 * uz;
-    d.g[gpu_idx_global4(x,y,z-1,6)] = geq - anti_diff;
+    geq = multPhi - a3 * uz;
+    d.g[global4(x,y,z-1,6)] = geq - antiDiff;
 } 
 
 

@@ -35,13 +35,12 @@ echo "Compiling to ${EXECUTABLE}..."
 
 nvcc -O3 --restrict \
      -gencode arch=compute_${CC},code=sm_${CC} \
-     -rdc=true --ptxas-options=-v -use_fast_math \
+     -rdc=true --ptxas-options=-v -use_fast_math --fmad=true \
      -I"${SRC_DIR}" \
-     "${SRC_DIR}/device_setup.cu" \
+     "${SRC_DIR}/deviceSetup.cu" \
      "${SRC_DIR}/main.cu" \
      -maxrregcount=${MAXRREG} -D${VELOCITY_SET} \
-     -o "${EXECUTABLE}" \
-     -std=c++17
+     -o "${EXECUTABLE}" 
 
 if [ $? -eq 0 ]; then
     echo "Compilation completed successfully: ${OUTPUT_DIR}/${EXECUTABLE_NAME}"

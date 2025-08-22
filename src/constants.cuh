@@ -1,17 +1,14 @@
 #pragma once
-
-#include "../include/utils_cuda.cuh"
-#include "../include/velocity_sets.cuh"
-#include "../include/perturbation_data.cuh"
-
-//#define D_FIELDS
+#include "../include/cudaUtils.cuh"
+#include "../include/velocitySets.cuh"
+#include "../include/perturbationData.cuh"
 
 #define JET_CASE
 //#define DROPLET_CASE
 
 //#define RUN_MODE
-#define SAMPLE_MODE
-//#define DEBUG_MODE
+//#define SAMPLE_MODE
+#define DEBUG_MODE
 
 #ifdef RUN_MODE
     constexpr int MACRO_SAVE = 100;
@@ -48,8 +45,6 @@
     constexpr int NX   = MESH;
     constexpr int NY   = MESH;
     constexpr int NZ   = MESH;
-    // not used in this case, defined to avoid compilation errors
-    constexpr float U_JET = 0.05f; 
     // general model parameters
     constexpr float TAU      = 0.55f;        // relaxation time
     constexpr float GAMMA    = 0.15f * 5.0f; // sharpening of the interface
@@ -67,8 +62,38 @@ constexpr float OMEGA  = 1.0f / TAU;   // relaxation frequency
 constexpr float OOS    = 1.0f / 6.0f;  // one over six
 constexpr float OMCO   = 1.0f - OMEGA; // complementary of omega
 constexpr float CSCO   = 1.0f - CSSQ;  // complementary of cssq
+
+// indexing auxiliary constants
 constexpr idx_t PLANE  = (idx_t)NX * NY * NZ;
 constexpr idx_t STRIDE = (idx_t)NX * NY;
+
+constexpr idx_t PLANE2  = 2 * PLANE;
+constexpr idx_t PLANE3  = 3 * PLANE;
+constexpr idx_t PLANE4  = 4 * PLANE;
+constexpr idx_t PLANE5  = 5 * PLANE;
+constexpr idx_t PLANE6  = 6 * PLANE;
+constexpr idx_t PLANE7  = 7 * PLANE;
+constexpr idx_t PLANE8  = 8 * PLANE;
+constexpr idx_t PLANE9  = 9 * PLANE;
+constexpr idx_t PLANE10 = 10 * PLANE;
+constexpr idx_t PLANE11 = 11 * PLANE;
+constexpr idx_t PLANE12 = 12 * PLANE;   
+constexpr idx_t PLANE13 = 13 * PLANE;
+constexpr idx_t PLANE14 = 14 * PLANE;
+constexpr idx_t PLANE15 = 15 * PLANE;
+constexpr idx_t PLANE16 = 16 * PLANE;
+constexpr idx_t PLANE17 = 17 * PLANE;
+constexpr idx_t PLANE18 = 18 * PLANE;
+#ifdef D3Q27
+constexpr idx_t PLANE19 = 19 * PLANE;
+constexpr idx_t PLANE20 = 20 * PLANE;
+constexpr idx_t PLANE21 = 21 * PLANE;
+constexpr idx_t PLANE22 = 22 * PLANE;
+constexpr idx_t PLANE23 = 23 * PLANE;
+constexpr idx_t PLANE24 = 24 * PLANE;
+constexpr idx_t PLANE25 = 25 * PLANE;
+constexpr idx_t PLANE26 = 26 * PLANE;
+#endif // D3Q27
 
 // sponge related auxiliary constants
 constexpr float SPONGE    = float(CELLS) / float(NZ-1);                 // sponge width in normalized coordinates

@@ -1,5 +1,4 @@
-#include "device_header.cuh"
-#include "device_functions.cuh"
+#include "deviceHeader.cuh"
 
 __constant__ float W[FLINKS];
 __constant__ float W_G[GLINKS];
@@ -7,7 +6,7 @@ __constant__ float W_G[GLINKS];
 __constant__ ci_t CIX[FLINKS], CIY[FLINKS], CIZ[FLINKS];
 
 #ifdef PERTURBATION
-    __constant__ float DATAZ[200];
+__constant__ float PERTURBATION_DATA[200];
 #endif
 
 LBMFields lbm;
@@ -78,7 +77,7 @@ void initDeviceVars() {
     checkCudaErrors(cudaMemcpyToSymbol(CIZ,   &H_CIZ,   FLINKS * sizeof(ci_t)));
 
     #ifdef PERTURBATION
-        checkCudaErrors(cudaMemcpyToSymbol(DATAZ, &H_DATAZ, 200 * sizeof(float)));
+        checkCudaErrors(cudaMemcpyToSymbol(PERTURBATION_DATA, &H_PERTURBATION, 200 * sizeof(float)));
     #endif
 
     getLastCudaError("initDeviceVars: post-initialization");
