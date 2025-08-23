@@ -1,9 +1,9 @@
 #pragma once
 
 __global__ void gpuInitFields(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ) return;
 
@@ -29,9 +29,9 @@ __global__ void gpuInitFields(LBMFields d) {
 }
 
 __global__ void gpuInitJetShape(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = 0;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = 0;
 
     if (x >= NX || y >= NY) return;
 
@@ -49,9 +49,9 @@ __global__ void gpuInitJetShape(LBMFields d) {
 }
 
 __global__ void gpuInitDistributions(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ) return;
 
@@ -69,9 +69,9 @@ __global__ void gpuInitDistributions(LBMFields d) {
 
 #ifdef DROPLET_CASE
 __global__ void gpuInitDropletShape(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ || 
         x == 0 || x == NX-1 || 

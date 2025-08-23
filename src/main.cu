@@ -19,8 +19,6 @@ int main(int argc, char* argv[]) {
     //computeAndPrintOccupancy(); 
     initDeviceVars();
     
-    // for near perfect coalescing use 32 tpb in x. 
-    // y and z should be tweaked as needed, larger graphic cards can use larger y,z blocks
     const dim3 block(32u, 2u, 2u); 
     const dim3 grid (div_up(static_cast<unsigned>(NX), block.x),
                      div_up(static_cast<unsigned>(NY), block.y),
@@ -73,23 +71,18 @@ int main(int argc, char* argv[]) {
         // ======================== NORMALS AND FORCES ======================== //
 
             gpuPhi<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuPhi");
 
             gpuNormals<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuNormals");
 
             gpuForces<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuForces");
 
         // =================================================================== //
 
         // ======================== FLUID FIELD EVOLUTION ======================== //
 
             gpuCollisionStream<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuCollisionStream");
 
             gpuEvolvePhaseField<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuEvolvePhaseField");
 
         // ====================================================================== //
 
@@ -97,20 +90,15 @@ int main(int argc, char* argv[]) {
         // ============================== BOUNDARY CONDITIONS ============================== //
 
             gpuApplyInflow<<<gridZ, blockZ, shmem_bytes, mainStream>>>(lbm, STEP);
-            getLastCudaError("gpuApplyInflow");
 
             gpuApplyOutflow<<<gridZ, blockZ, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuApplyOutflow");
 
             gpuApplyPeriodicX<<<gridX, blockX, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuApplyPeriodicX");
 
             gpuApplyPeriodicY<<<gridY, blockY, shmem_bytes, mainStream>>>(lbm);
-            getLastCudaError("gpuApplyPeriodicY");
 
             #ifdef D_FIELDS
             gpuDerivedFields<<<grid, block, shmem_bytes, mainStream>>>(lbm, dfields);
-            getLastCudaError("gpuDerivedFields");
             #endif // D_FIELDS
 
         // ================================================================================= //

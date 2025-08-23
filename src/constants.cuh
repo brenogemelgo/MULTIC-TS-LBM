@@ -6,66 +6,77 @@
 #define JET_CASE
 //#define DROPLET_CASE
 
-#define RUN_MODE
+//#define RUN_MODE
 //#define SAMPLE_MODE
-//#define DEBUG_MODE
+#define DEBUG_MODE
 
 #ifdef RUN_MODE
-    constexpr int MACRO_SAVE = 100;
-    constexpr int NSTEPS = 50000;
+constexpr int MACRO_SAVE = 100;
+constexpr int NSTEPS = 50000;
 #elif defined(SAMPLE_MODE)
-    constexpr int MACRO_SAVE = 100;
-    constexpr int NSTEPS = 1000;
+constexpr int MACRO_SAVE = 100;
+constexpr int NSTEPS = 1000;
 #elif defined(DEBUG_MODE)
-    constexpr int MACRO_SAVE = 1;
-    constexpr int NSTEPS = 0;
+constexpr int MACRO_SAVE = 1;
+constexpr int NSTEPS = 0;
 #endif
 
 #ifdef JET_CASE
-    // domain size
-    constexpr int MESH = 64;
-    constexpr int DIAM = 10;
-    constexpr int NX   = MESH;
-    constexpr int NY   = MESH;
-    constexpr int NZ   = MESH*2;
-    // jet velocity
-    constexpr float U_JET = 0.05f; 
-    // adimensional parameters
-    constexpr int REYNOLDS = 5000; 
-    constexpr int WEBER    = 500; 
-    // general model parameters
-    constexpr float VISC  = (U_JET * DIAM) / REYNOLDS;      // kinematic viscosity
-    constexpr float TAU   = 0.5f + 3.0f * VISC;             // relaxation time
-    constexpr float GAMMA = 0.3f * 3.0f;                    // sharpening of the interface
-    constexpr float SIGMA = (U_JET * U_JET * DIAM) / WEBER; // surface tension coefficient
+
+constexpr int MESH = 128;
+constexpr int DIAM = 20; 
+constexpr int NX   = MESH;
+constexpr int NY   = MESH;
+constexpr int NZ   = MESH*2;
+
+constexpr float U_JET  = 0.05f; 
+constexpr int REYNOLDS = 5000; 
+constexpr int WEBER    = 500; 
+
+constexpr float VISC  = (U_JET * DIAM) / REYNOLDS;     
+constexpr float TAU   = 0.5f + 3.0f * VISC;             
+constexpr float GAMMA = 0.3f * 3.0f;                   
+constexpr float SIGMA = (U_JET * U_JET * DIAM) / WEBER; 
+
 #elif defined(DROPLET_CASE)
-    // domain size
-    constexpr int MESH = 64;
-    constexpr int RADIUS = 9; 
-    constexpr int NX   = MESH;
-    constexpr int NY   = MESH;
-    constexpr int NZ   = MESH;
-    // general model parameters
-    constexpr float TAU      = 0.55f;        // relaxation time
-    constexpr float GAMMA    = 0.15f * 5.0f; // sharpening of the interface
-    constexpr float SIGMA    = 0.1f;         // surface tension coefficient
-#endif // FLOW_CASE
 
-// sponge parameters
-constexpr float K   = 50.0f;      // gain factor 
-constexpr float P   = 3.0f;       // transition degree (polynomial)
-constexpr int CELLS = int(NZ/12); // width    
+constexpr int MESH   = 64;
+constexpr int RADIUS = 9; 
+constexpr int NX     = MESH;
+constexpr int NY     = MESH;
+constexpr int NZ     = MESH;
 
-// general model parameters and auxiliary constants
-constexpr float CSSQ   = 1.0f / 3.0f;  // square of speed of sound
-constexpr float OMEGA  = 1.0f / TAU;   // relaxation frequency
-constexpr float OOS    = 1.0f / 6.0f;  // one over six
-constexpr float OMCO   = 1.0f - OMEGA; // complementary of omega
-constexpr float CSCO   = 1.0f - CSSQ;  // complementary of cssq
+constexpr float TAU      = 0.55f;        
+constexpr float GAMMA    = 0.15f * 5.0f; 
+constexpr float SIGMA    = 0.1f;     
+    
+#endif 
 
-// indexing auxiliary constants
-constexpr idx_t PLANE  = (idx_t)NX * NY * NZ;
-constexpr idx_t STRIDE = (idx_t)NX * NY;
+constexpr float CSSQ   = 1.0f / 3.0f;  
+constexpr float OMEGA  = 1.0f / TAU;   
+constexpr float OMCO   = 1.0f - OMEGA; 
+constexpr float CSCO   = 1.0f - CSSQ;  
+
+#ifdef JET_CASE
+
+constexpr float K        = 50.0f;
+constexpr float P        = 3.0f;            
+constexpr int   CELLS    = int(NZ/12);      
+static_assert(CELLS > 0, "CELLS must be > 0");
+
+constexpr float SPONGE   = float(CELLS) / float(NZ-1);
+constexpr float Z_START  = float(NZ-1-CELLS) / float(NZ-1);
+constexpr float OMEGA_MAX= 1.0f / ((VISC * (K + 1.0f)) / CSSQ + 0.5f);
+constexpr float OMCO_MAX = 1.0f - OMEGA_MAX; 
+
+constexpr float INV_NZ_M1   = 1.0f / float(NZ-1);
+constexpr float INV_SPONGE  = 1.0f / SPONGE;
+constexpr float OMEGA_DELTA = OMEGA_MAX - OMEGA; 
+
+#endif
+
+constexpr idx_t STRIDE = NX * NY;
+constexpr idx_t PLANE  = NX * NY * NZ;
 
 constexpr idx_t PLANE2  = 2 * PLANE;
 constexpr idx_t PLANE3  = 3 * PLANE;
@@ -93,12 +104,6 @@ constexpr idx_t PLANE23 = 23 * PLANE;
 constexpr idx_t PLANE24 = 24 * PLANE;
 constexpr idx_t PLANE25 = 25 * PLANE;
 constexpr idx_t PLANE26 = 26 * PLANE;
-#endif // D3Q27
-
-// sponge related auxiliary constants
-constexpr float SPONGE    = float(CELLS) / float(NZ-1);                 // sponge width in normalized coordinates
-constexpr float Z_START   = float(NZ-1-CELLS) / float(NZ-1);            // z coordinate where the sponge starts
-constexpr float OMEGA_MAX = 1.0f / ((VISC * (K + 1.0f)) / CSSQ + 0.5f); // omega at z=max
-constexpr float OMCO_MAX  = 1.0f - OMEGA_MAX;                           // complementary of omega at z=max
+#endif // D3Q27                      
 
  

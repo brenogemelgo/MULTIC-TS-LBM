@@ -1,9 +1,9 @@
 #pragma once
 
 __global__ void gpuPhi(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ || 
         x == 0 || x == NX-1 || 
@@ -17,9 +17,9 @@ __global__ void gpuPhi(LBMFields d) {
 }
 
 __global__ void gpuNormals(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ || 
         x == 0 || x == NX-1 || 
@@ -79,9 +79,9 @@ __global__ void gpuNormals(LBMFields d) {
 }
 
 __global__ void gpuForces(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ || 
         x == 0 || x == NX-1 || 
@@ -137,9 +137,9 @@ __global__ void gpuForces(LBMFields d) {
 }
 
 __global__ void gpuCollisionStream(LBMFields d) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
     
     if (x >= NX || y >= NY || z >= NZ || 
         x == 0 || x == NX-1 || 
@@ -179,10 +179,11 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #endif // D3Q27
 
     #ifdef D3Q19
-    const float rho = (pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18) + 1.0f;
+    float rho = pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18;
     #elif defined(D3Q27)
-    const float rho = (pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18 + pop19 + pop20 + pop21 + pop22 + pop23 + pop24 + pop25 + pop26) + 1.0f;
+    float rho = pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18 + pop19 + pop20 + pop21 + pop22 + pop23 + pop24 + pop25 + pop26;
     #endif
+    rho += 1.0f; 
     d.rho[idx3] = rho;
 
     const float invRho = 1.0f / rho;
@@ -191,18 +192,18 @@ __global__ void gpuCollisionStream(LBMFields d) {
     const float ffz = d.ffz[idx3];
 
     #ifdef D3Q19
-    const float sumUx = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16);
-    const float sumUy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18);
-    const float sumUz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17);
+    float ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16);
+    float uy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18);
+    float uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17);
     #elif defined(D3Q27)
-    const float sumUx = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16 + pop19 - pop20 + pop21 - pop22 + pop23 - pop24 + pop26 - pop25);
-    const float sumUy = invRho * (pop3 - pop4 + pop7 - pop8  + pop11 - pop12 + pop14 - pop13 + pop17 - pop18 + pop19 - pop20 + pop21 - pop22 + pop24 - pop23 + pop25 - pop26);
-    const float sumUz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17 + pop19 - pop20 + pop22 - pop21 + pop23 - pop24 + pop25 - pop26);
+    float ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16 + pop19 - pop20 + pop21 - pop22 + pop23 - pop24 + pop26 - pop25);
+    float uy = invRho * (pop3 - pop4 + pop7 - pop8  + pop11 - pop12 + pop14 - pop13 + pop17 - pop18 + pop19 - pop20 + pop21 - pop22 + pop24 - pop23 + pop25 - pop26);
+    float uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17 + pop19 - pop20 + pop22 - pop21 + pop23 - pop24 + pop25 - pop26);
     #endif
     
-    const float ux = sumUx + ffx * 0.5f * invRho;
-    const float uy = sumUy + ffy * 0.5f * invRho;
-    const float uz = sumUz + ffz * 0.5f * invRho;
+    ux += ffx * 0.5f * invRho;
+    uy += ffy * 0.5f * invRho;
+    uz += ffz * 0.5f * invRho;
 
     d.ux[idx3] = ux; 
     d.uy[idx3] = uy; 
@@ -210,11 +211,8 @@ __global__ void gpuCollisionStream(LBMFields d) {
 
     const float invRhoCssq = 3.0f * invRho;
 
-    // #ifdef D3Q19
-    // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
-    // #elif defined(D3Q27)
-    // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
-    // #endif
+    // NOTE: weight compensation piggybacks on the LAST contrib of each diagonal.
+    // if order changes, move/revisit this!
 
     #ifdef D3Q19
     float feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*ux + 4.5f*ux*ux);
@@ -356,11 +354,12 @@ __global__ void gpuCollisionStream(LBMFields d) {
 
     #ifdef D3Q19
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - ux) + 4.5f*(uz - ux)*(uz - ux));
+    pxx += fneq + CSSQ; 
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - ux) + 4.5f*(uz - ux)*(uz - ux) + 4.5f*(uz - ux)*(uz - ux)*(uz - ux) - 3.0f*(uz - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
+    pxx += fneq; 
     #endif
     fneq = pop16 - feq;
-    pxx += fneq; 
     pzz += fneq; 
     pxz -= fneq;
 
@@ -376,12 +375,15 @@ __global__ void gpuCollisionStream(LBMFields d) {
 
     #ifdef D3Q19
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - uy) + 4.5f*(uz - uy)*(uz - uy));
+    fneq = pop18 - feq;
+    pyy += fneq + CSSQ; 
+    pzz += fneq + CSSQ;
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - uy) + 4.5f*(uz - uy)*(uz - uy) + 4.5f*(uz - uy)*(uz - uy)*(uz - uy) - 3.0f*(uz - uy) * 1.5f*(ux*ux + uy*uy + uz*uz));
-    #endif
     fneq = pop18 - feq;
     pyy += fneq; 
     pzz += fneq; 
+    #endif
     pyz -= fneq;
     
     // THIRD ORDER TERMS
@@ -451,18 +453,17 @@ __global__ void gpuCollisionStream(LBMFields d) {
 
     feq = W_3 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(ux - uy - uz) + 4.5f*(ux - uy - uz)*(ux - uy - uz) + 4.5f*(ux - uy - uz)*(ux - uy - uz)*(ux - uy - uz) - 3.0f*(ux - uy - uz) * 1.5f*(ux*ux + uy*uy + uz*uz));
     fneq = pop26 - feq;
-    pxx += fneq; 
-    pyy += fneq; 
-    pzz += fneq;
+    pxx += fneq + CSSQ; 
+    pyy += fneq + CSSQ; 
+    pzz += fneq + CSSQ;
     pxy -= fneq; 
     pxz -= fneq; 
     pyz += fneq;
     #endif // D3Q27
 
-    // apply weight correction
-    pxx += CSSQ;
-    pyy += CSSQ;
-    pzz += CSSQ;
+    //pxx += CSSQ;
+    //pyy += CSSQ;
+    //pzz += CSSQ;
 
     d.pxx[idx3] = pxx;
     d.pyy[idx3] = pyy;
@@ -474,6 +475,12 @@ __global__ void gpuCollisionStream(LBMFields d) {
     const float omegaLocal = omegaSponge(z);
     const float omcoLocal = 1.0f - omegaLocal;
     const float coeffForce = 1.0f - 0.5f * omegaLocal;
+
+    // #ifdef D3Q19
+    // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
+    // #elif defined(D3Q27)
+    // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
+    // #endif
 
     feq = computeEquilibria(rho,ux,uy,uz,0);
     float forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,0);
@@ -629,9 +636,6 @@ __global__ void gpuEvolvePhaseField(LBMFields d) {
     const float ux = d.ux[idx3];
     const float uy = d.uy[idx3];
     const float uz = d.uz[idx3];
-    const float normx = d.normx[idx3];
-    const float normy = d.normy[idx3];
-    const float normz = d.normz[idx3];
 
     d.g[global4(x,y,z,0)] = W_G_1 * phi;
 
@@ -640,21 +644,21 @@ __global__ void gpuEvolvePhaseField(LBMFields d) {
     const float a3 = 3.0f * multPhi;
 
     float geq = multPhi + a3 * ux;
-    float antiDiff = phiNorm * normx;
+    float antiDiff = phiNorm * d.normx[idx3];
     d.g[global4(x+1,y,z,1)] = geq + antiDiff;
     
     geq = multPhi - a3 * ux;
     d.g[global4(x-1,y,z,2)] = geq - antiDiff;
 
     geq = multPhi + a3 * uy;
-    antiDiff = phiNorm * normy;
+    antiDiff = phiNorm * d.normy[idx3];
     d.g[global4(x,y+1,z,3)] = geq + antiDiff;
 
     geq = multPhi - a3 * uy;
     d.g[global4(x,y-1,z,4)] = geq - antiDiff;
 
     geq = multPhi + a3 * uz;
-    antiDiff = phiNorm * normz;
+    antiDiff = phiNorm * d.normz[idx3];
     d.g[global4(x,y,z+1,5)] = geq + antiDiff;
 
     geq = multPhi - a3 * uz;

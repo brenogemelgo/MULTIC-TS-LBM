@@ -7,7 +7,7 @@ extern __constant__ float W_G[GLINKS];
 extern __constant__ ci_t CIX[FLINKS], CIY[FLINKS], CIZ[FLINKS];
 
 #ifdef PERTURBATION
-    extern __constant__ float PERTURBATION_DATA[200];
+extern __constant__ float PERTURBATION_DATA[200];
 #endif
  
 struct LBMFields {
@@ -16,7 +16,8 @@ struct LBMFields {
     float *pxx, *pyy, *pzz, *pxy, *pxz, *pyz;
     float *ind, *normx, *normy, *normz;
     float *ffx, *ffy, *ffz;
-    pop_t *f; float *g; 
+    pop_t *f; 
+    float *g; 
 };
 extern LBMFields lbm;
 
@@ -47,10 +48,11 @@ __device__ __forceinline__ float smoothstep(float edge0, float edge1, float x) {
 }
 
 __device__ __forceinline__ float omegaSponge(int z) {
-    float zn = float(z) / float(NZ-1);
-    float s = (zn > Z_START) ? (zn - Z_START) / SPONGE : 0.0f;
-    float ramp = powf(s,P < 0.0f ? 1.0f : P);  
-    return OMEGA * (1.0f - ramp) + OMEGA_MAX * ramp;                    
+    float zn = __int2float_rn(z) * INV_NZ_M1;
+    float s  = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
+    float s2 = s * s;
+    float ramp = s2 * s;
+    return fmaf(ramp, OMEGA_DELTA, OMEGA);
 }
 
 __device__ __forceinline__ float computeEquilibria(const float density, const float ux, const float uy, const float uz, const int Q) {
@@ -122,4 +124,7 @@ void copyDirs(T* __restrict__ arr, idx_t dst, idx_t src) {
     ((arr[Qs*PLANE+dst] = arr[Qs*PLANE+src]), ...);
 }
 
-__device__ __forceinline__ float ldgL2(const float* p) { return __ldcg(p); }
+// usage: idx_t nidx = idx3 + nbrOff(q);
+__device__ __forceinline__ idx_t nbrOff(int Q) {
+    return idx_t(CIX[Q]) + idx_t(CIY[Q]) * idx_t(NX) + idx_t(CIZ[Q]) * idx_t(STRIDE);
+}

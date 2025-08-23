@@ -107,9 +107,9 @@ static inline constexpr unsigned div_up(unsigned n, unsigned d) {
 }
 
 __host__ __forceinline__ void initDeviceVars() {
-    size_t SIZE =        NX * NY * NZ          * sizeof(float);            
-    size_t F_DIST_SIZE = NX * NY * NZ * FLINKS * sizeof(pop_t);
-    size_t G_DIST_SIZE = NX * NY * NZ * GLINKS * sizeof(float); 
+    constexpr size_t SIZE =        NX * NY * NZ          * sizeof(float);            
+    constexpr size_t F_DIST_SIZE = NX * NY * NZ * FLINKS * sizeof(pop_t);
+    constexpr size_t G_DIST_SIZE = NX * NY * NZ * GLINKS * sizeof(float); 
 
     checkCudaErrors(cudaMalloc(&lbm.rho,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ux,    SIZE));
@@ -167,7 +167,7 @@ __host__ __forceinline__ void initDeviceVars() {
     checkCudaErrors(cudaMemcpyToSymbol(CIZ,   &H_CIZ,   FLINKS * sizeof(ci_t)));
 
     #ifdef PERTURBATION
-        checkCudaErrors(cudaMemcpyToSymbol(PERTURBATION_DATA, &H_PERTURBATION, 200 * sizeof(float)));
+    checkCudaErrors(cudaMemcpyToSymbol(PERTURBATION_DATA, &H_PERTURBATION, 200 * sizeof(float)));
     #endif
 
     getLastCudaError("initDeviceVars: post-initialization");
