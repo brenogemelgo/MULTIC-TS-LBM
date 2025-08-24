@@ -90,7 +90,7 @@ The post-processing workflow is shared with https://github.com/CERNN/MR-LBM. It 
 
 ## 🧠 Project Context
 
-This code was developed as part of an undergraduate research fellowship at the Geoenergia Lab (UDESC - Balneário Camboriú Campus), under the project:
+This code was developed as part of an undergraduate research fellowship at the Geoenergia Lab (UDESC – Balneário Camboriú Campus), under the project:
 
 **"Experiment-based physical and numerical modeling of subsea oil jet dispersion (SUBJET)"**, in partnership with **Petrobras, ANP, FITEJ and SINTEF Ocean**.
 
