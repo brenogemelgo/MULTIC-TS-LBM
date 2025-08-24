@@ -83,7 +83,8 @@ The post-processing workflow is shared with https://github.com/CERNN/MR-LBM. It 
 - `deviceHeader.cuh` – core GPU data structures & device helpers (LBM fields, equilibria, forcing)   
 - `deviceSetup.cu` – defines GPU constants & global field instances    
 - `lbm.cuh` – main CUDA kernels (collision-stream, phase-field, normals, forces)  
-- `lbmBcs.cu` – boundary condition kernels (inflow, outflow, periodic)   
+- `lbmBcs.cu` – boundary condition kernels (inflow, outflow, periodic)
+- `lbmInit.cu` – initialization kernels (fields, jet/droplet shapes, distributions)
 - `main.cu` – simulation entry point (initialization, time loop, BCs, output, performance stats)   
 
 ---
