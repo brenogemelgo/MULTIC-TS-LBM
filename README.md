@@ -34,23 +34,13 @@
 * `velocity_set`: `D3Q19` | `D3Q27`
 * `id`: simulation ID (e.g., `000`)
 
-Example:
-
-```bash
-./pipeline.sh D3Q27 000
-```
-
 Pipeline: compile → simulate → post-process  
 
 ---
 
 ## 📁 Output
 
-Results → `bin/<velocity_set>/<id>/`
-
-- `.bin` field data (e.g., `phi`, `uz`)  
-- `*_info.txt` metadata  
-- `.vtr` from `exampleVTK.py`  
+Results → `bin/<velocity_set>/<id>/`  
 
 ---
 
@@ -73,7 +63,7 @@ The post-processing workflow is shared with https://github.com/CERNN/MR-LBM. It 
 ### `post/` – post-processing (Python)
 
 - `getSimInfo.py` – file discovery & metadata  
-- `gridToVtk.py` – VTK conversion (`pyevtk`)  
+- `gridToVTK.py` – VTK conversion (`pyevtk`)  
 - `processSteps.py` – batch `.vtr` generation  
 - `runPost.sh` – wrapper for `processSteps.py`  
 
