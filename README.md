@@ -73,7 +73,7 @@ Each GPU entry shows the average across multiple runs.
 
 | GPU            | D3Q19 (MLUPS) | D3Q27 (MLUPS) |
 |----------------|---------------|---------------|
-| RTX 3050 (4GB) | **710**       | –             |
+| RTX 3050 (4GB) | **710**       | **565**       |
 | RTX 4090 (24GB)| –             | –             |
 | A100 (40GB)    | –             | –             |
 

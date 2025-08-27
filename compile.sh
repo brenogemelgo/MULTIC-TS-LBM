@@ -16,7 +16,7 @@ fi
 
 # least register value without spills
 if [ "$VELOCITY_SET" = "D3Q27" ]; then
-    MAXRREG=128
+    MAXRREG=72
 elif [ "$VELOCITY_SET" = "D3Q19" ]; then
     MAXRREG=68 # under this value there seems to be phantom spills that the compiler does not report
 fi
