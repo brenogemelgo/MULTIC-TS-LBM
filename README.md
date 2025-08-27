@@ -38,12 +38,6 @@ Pipeline: compile → simulate → post-process
 
 ---
 
-## 📊 Post-Processing
-
-The post-processing workflow is shared with https://github.com/CERNN/MR-LBM. It uses Python scripts to parse binary outputs and convert them to `.vtr` files compatible with **ParaView**.
-
----
-
 ## 🧠 File Responsibilities
 
 ### `include/` – headers
@@ -66,7 +60,7 @@ The post-processing workflow is shared with https://github.com/CERNN/MR-LBM. It 
 - `bcs.cu` – boundary condition kernels (inflow, outflow, periodic)
 - `constants.cuh` – global simulation parameters (mesh, case setup, relaxation, strides)    
 - `deviceUtils.cuh` – core GPU data structures & device helpers (LBM fields, equilibria, forcing)   
-- `init.cu` – initialization kernels (fields, jet/droplet shapes, distributions)
+- `init.cuh` – initialization kernels (fields, jet/droplet shapes, distributions)
 - `lbm.cuh` – main CUDA kernels (moments, collision-stream, phase-field, normals, forces)  
 - `main.cu` – simulation entry point (initialization, time loop, output, performance stats)   
 
@@ -91,8 +85,17 @@ This code was developed as part of an undergraduate research fellowship at the G
 
 **"Experiment-based physical and numerical modeling of subsea oil jet dispersion (SUBJET)"**, in partnership with **Petrobras, ANP, FITEJ and SINTEF Ocean**.
 
+---
+
+## 📊 Credits
+
+The post-processing workflow is shared with the project [MR-LBM](https://github.com/CERNN/MR-LBM).
+
+---
+
 ## 📬 Contact
 
-For feature requests or contributions, feel free to open an issue or fork the project. You may also contact the maintainer via email at:
+For feature requests or contributions, feel free to open an issue or fork the project. 
+You may also contact the maintainer via email at:
 
 * breno.gemelgo@edu.udesc.br
