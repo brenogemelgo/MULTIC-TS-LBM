@@ -1,14 +1,5 @@
 #pragma once
 #include "constants.cuh"
-
-extern __constant__ float W[FLINKS];
-extern __constant__ float W_G[GLINKS];
-
-extern __constant__ ci_t CIX[FLINKS], CIY[FLINKS], CIZ[FLINKS];
-
-#ifdef PERTURBATION
-extern __constant__ float PERTURBATION_DATA[200];
-#endif
  
 struct LBMFields {
     float *rho, *phi;
@@ -19,16 +10,16 @@ struct LBMFields {
     pop_t *f; 
     float *g; 
 };
-extern LBMFields lbm;
+LBMFields lbm;
 
-#ifdef D_FIELDS
+#if defined(D_FIELDS)
 struct DerivedFields {
     float *vorticity_mag;
     float *velocity_mag;
     float *pressure;
 };
-extern DerivedFields dfields;
-#endif // D_FIELDS
+DerivedFields dfields;
+#endif 
 
 __device__ __forceinline__ idx_t global3(const int x, const int y, const int z) {
     return x + y * NX + z * STRIDE;
@@ -57,11 +48,11 @@ __device__ __forceinline__ float omegaSponge(int z) {
 
 __device__ __forceinline__ float computeEquilibria(const float density, const float ux, const float uy, const float uz, const int Q) {
     const float uu = 1.5f * (ux*ux + uy*uy + uz*uz);
-    #ifdef D3Q19
+    #if defined(D3Q19)
         const float eqbase = density * (-uu + (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (3.0f + 4.5f*(ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])));
     #elif defined(D3Q27)
         const float eqbase = density * (-uu + (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (3.0f + (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (4.5f + 4.5f*(ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])) - 3.0f*uu));
-    #endif // VELOCITY_SET 
+    #endif
     return W[Q] * (density + eqbase) - W[Q];
 }
 
@@ -71,7 +62,7 @@ __device__ __forceinline__ float computeTruncatedEquilibria(const float density,
 }
 
 __device__ __forceinline__ float computeNonEquilibria(const float PXX, const float PYY, const float PZZ, const float PXY, const float PXZ, const float PYZ,  const float ux, const float uy, const float uz, const int Q) {
-    #ifdef D3Q19
+    #if defined(D3Q19)
         return (W[Q] * 4.5f) * ((CIX[Q]*CIX[Q] - CSSQ) * PXX + 
                                 (CIY[Q]*CIY[Q] - CSSQ) * PYY + 
                                 (CIZ[Q]*CIZ[Q] - CSSQ) * PZZ + 
@@ -102,11 +93,11 @@ __device__ __forceinline__ float computeNonEquilibria(const float PXX, const flo
             ) +
             6.0f * (CIX[Q]*CIY[Q]*CIZ[Q]) * (PXY*uz + ux*PYZ + uy*PXZ)
         );
-    #endif // VELOCITY_SET 
+    #endif 
 }
 
 __device__ __forceinline__ float computeForceTerm(const float coeff, const float feq, const float ux, const float uy, const float uz, const float ffx, const float ffy, const float ffz, const float aux, const int Q) {
-    #ifdef D3Q19
+    #if defined(D3Q19)
         return coeff * feq * ((CIX[Q] - ux) * ffx +
                               (CIY[Q] - uy) * ffy +
                               (CIZ[Q] - uz) * ffz) * aux;
@@ -115,16 +106,11 @@ __device__ __forceinline__ float computeForceTerm(const float coeff, const float
         return coeff * W[Q] * ((3.0f * (CIX[Q] - ux) + 3.0f * cu * CIX[Q] ) * ffx +
                                (3.0f * (CIY[Q] - uy) + 3.0f * cu * CIY[Q] ) * ffy +
                                (3.0f * (CIZ[Q] - uz) + 3.0f * cu * CIZ[Q] ) * ffz);
-    #endif // VELOCITY_SET 
+    #endif 
 }
 
 template<typename T, int... Qs>
 __device__ __forceinline__
 void copyDirs(T* __restrict__ arr, idx_t dst, idx_t src) {
     ((arr[Qs*PLANE+dst] = arr[Qs*PLANE+src]), ...);
-}
-
-// usage: idx_t nidx = idx3 + nbrOff(q);
-__device__ __forceinline__ idx_t nbrOff(int Q) {
-    return idx_t(CIX[Q]) + idx_t(CIY[Q]) * idx_t(NX) + idx_t(CIZ[Q]) * idx_t(STRIDE);
 }

@@ -1,16 +1,18 @@
 #pragma once
 #include "../include/cudaUtils.cuh"
 #include "../include/velocitySets.cuh"
+#if defined(PERTURBATION)
 #include "../include/perturbationData.cuh"
+#endif
 
 #define JET_CASE
 //#define DROPLET_CASE
 
 //#define RUN_MODE
-//#define SAMPLE_MODE
-#define DEBUG_MODE
+#define SAMPLE_MODE
+//#define DEBUG_MODE
 
-#ifdef RUN_MODE
+#if defined(RUN_MODE)
 constexpr int MACRO_SAVE = 100;
 constexpr int NSTEPS = 50000;
 #elif defined(SAMPLE_MODE)
@@ -21,7 +23,7 @@ constexpr int MACRO_SAVE = 1;
 constexpr int NSTEPS = 0;
 #endif
 
-#ifdef JET_CASE
+#if defined(JET_CASE)
 
 constexpr int MESH = 128;
 constexpr int DIAM = 20; 
@@ -57,7 +59,7 @@ constexpr float OMEGA  = 1.0f / TAU;
 constexpr float OMCO   = 1.0f - OMEGA; 
 constexpr float CSCO   = 1.0f - CSSQ;  
 
-#ifdef JET_CASE
+#if defined(JET_CASE)
 
 constexpr float K        = 50.0f;
 constexpr float P        = 3.0f;            
@@ -95,7 +97,7 @@ constexpr idx_t PLANE15 = 15 * PLANE;
 constexpr idx_t PLANE16 = 16 * PLANE;
 constexpr idx_t PLANE17 = 17 * PLANE;
 constexpr idx_t PLANE18 = 18 * PLANE;
-#ifdef D3Q27
+#if defined(D3Q27)
 constexpr idx_t PLANE19 = 19 * PLANE;
 constexpr idx_t PLANE20 = 20 * PLANE;
 constexpr idx_t PLANE21 = 21 * PLANE;
@@ -104,6 +106,6 @@ constexpr idx_t PLANE23 = 23 * PLANE;
 constexpr idx_t PLANE24 = 24 * PLANE;
 constexpr idx_t PLANE25 = 25 * PLANE;
 constexpr idx_t PLANE26 = 26 * PLANE;
-#endif // D3Q27                      
+#endif                     
 
  

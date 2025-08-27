@@ -2,7 +2,8 @@
 
 //#define D_FIELDS
 
-#ifdef D_FIELDS
+#if defined(D_FIELDS)
+
 __global__ void gpuDerivedFields(LBMFields lbm, DerivedFields dfields) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -37,4 +38,5 @@ __global__ void gpuDerivedFields(LBMFields lbm, DerivedFields dfields) {
     const float velocity_mag = sqrtf(lbm.ux[idx3]*lbm.ux[idx3] + lbm.uy[idx3]*lbm.uy[idx3] + lbm.uz[idx3]*lbm.uz[idx3]);
     dfields.velocity_mag[idx3] = velocity_mag;
 }
-#endif // D_FIELDS
+
+#endif 

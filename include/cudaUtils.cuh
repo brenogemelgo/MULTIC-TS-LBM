@@ -27,7 +27,7 @@ inline constexpr int TILE_Z = static_cast<int>(BLOCK_SIZE_Z) + 2*HALO;
 
 #define ENABLE_FP16
 
-#ifdef ENABLE_FP16
+#if defined(ENABLE_FP16)
 
     #include <cuda_fp16.h>
     using pop_t = __half;

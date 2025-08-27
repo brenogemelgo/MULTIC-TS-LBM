@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef JET_CASE
+#if defined(JET_CASE)
 
 __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -19,7 +19,7 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
 
     const idx_t idx3_in = global3(x,y,z);
     const float uzIn = 
-    #ifdef PERTURBATION
+    #if defined(PERTURBATION)
         /* apply perturbation */ U_JET * (1.0f + PERTURBATION_DATA[(STEP/MACRO_SAVE)%200] * 10.0f);
     #else
         /* straightforward */ U_JET;
@@ -65,7 +65,7 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
                                    d.ux[nbrIdx],d.uy[nbrIdx],d.uz[nbrIdx],18);
     d.f[PLANE18+nbrIdx] = to_pop(feq + OMCO * fneqReg);
 
-    #ifdef D3Q27
+    #if defined(D3Q27)
     nbrIdx = global3(x+1,y+1,z+1);
     feq = computeEquilibria(d.rho[nbrIdx],0.0f,0.0f,uzIn,19);
     fneqReg = computeNonEquilibria(d.pxx[nbrIdx],d.pyy[nbrIdx],d.pzz[nbrIdx],
@@ -93,7 +93,7 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
                                    d.pxy[nbrIdx],d.pxz[nbrIdx],d.pyz[nbrIdx],
                                    d.ux[nbrIdx],d.uy[nbrIdx],d.uz[nbrIdx],25);
     d.f[PLANE25+nbrIdx] = to_pop(feq + OMCO * fneqReg);
-    #endif // D3Q27
+    #endif 
 }
 
 __global__ void gpuApplyOutflow(LBMFields d) {
@@ -154,7 +154,7 @@ __global__ void gpuApplyOutflow(LBMFields d) {
                                    d.ux[nbrIdx],d.uy[nbrIdx],d.uz[nbrIdx],17);
     d.f[PLANE17+nbrIdx] = to_pop(feq + OMCO_MAX * fneqReg);
 
-    #ifdef D3Q27
+    #if defined(D3Q27)
     nbrIdx = global3(x-1,y-1,z-1);
     feq = computeEquilibria(d.rho[nbrIdx],uxOut,uyOut,uzOut,20);
     fneqReg = computeNonEquilibria(d.pxx[nbrIdx],d.pyy[nbrIdx],d.pzz[nbrIdx],
@@ -182,7 +182,7 @@ __global__ void gpuApplyOutflow(LBMFields d) {
                                    d.pxy[nbrIdx],d.pxz[nbrIdx],d.pyz[nbrIdx],
                                    d.ux[nbrIdx],d.uy[nbrIdx],d.uz[nbrIdx],26);
     d.f[PLANE26+nbrIdx] = to_pop(feq + OMCO_MAX * fneqReg);
-    #endif // D3Q27
+    #endif 
 }
 
 __global__ void gpuApplyPeriodicX(LBMFields d) {
@@ -196,15 +196,15 @@ __global__ void gpuApplyPeriodicX(LBMFields d) {
 
     // positive x contributions
     copyDirs<pop_t,1,7,9,13,15>(d.f,bL,bR);   
-    #ifdef D3Q27
+    #if defined(D3Q27)
     copyDirs<pop_t,19,21,23,26>(d.f,bL,bR);
-    #endif // D3Q27
+    #endif 
 
     // negative x contributions
     copyDirs<pop_t,2,8,10,14,16>(d.f,bR,bL); 
-    #ifdef D3Q27
+    #if defined(D3Q27)
     copyDirs<pop_t,20,22,24,25>(d.f,bR,bL);
-    #endif // D3Q27
+    #endif 
 
     d.g[PLANE+bL] = d.g[PLANE+bR];
     d.g[2*PLANE+bR] = d.g[2*PLANE+bL];
@@ -228,15 +228,15 @@ __global__ void gpuApplyPeriodicY(LBMFields d) {
 
     // positive y contributions
     copyDirs<pop_t,3,7,11,14,17>(d.f,bB,bT);
-    #ifdef D3Q27
+    #if defined(D3Q27)
     copyDirs<pop_t,19,21,24,25>(d.f,bB,bT);
-    #endif // D3Q27
+    #endif 
 
     // negative y contributions
     copyDirs<pop_t,4,8,12,13,18>(d.f,bT,bB);
-    #ifdef D3Q27
+    #if defined(D3Q27)
     copyDirs<pop_t,20,22,23,26>(d.f,bT,bB);
-    #endif // D3Q27
+    #endif 
 
     //d.g[3*PLANE+bB] = d.g[3*PLANE+bT];
     //d.g[4*PLANE+bT] = d.g[4*PLANE+bB];
@@ -248,5 +248,5 @@ __global__ void gpuApplyPeriodicY(LBMFields d) {
 
 // still undefined
 
-#endif // FLOW_CASE
+#endif 
 

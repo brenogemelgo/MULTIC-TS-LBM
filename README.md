@@ -38,12 +38,6 @@ Pipeline: compile → simulate → post-process
 
 ---
 
-## 📁 Output
-
-Results → `bin/<velocity_set>/<id>/`  
-
----
-
 ## 📊 Post-Processing
 
 The post-processing workflow is shared with https://github.com/CERNN/MR-LBM. It uses Python scripts to parse binary outputs and convert them to `.vtr` files compatible with **ParaView**.
@@ -69,13 +63,25 @@ The post-processing workflow is shared with https://github.com/CERNN/MR-LBM. It 
 
 ### `src/` – simulation (CUDA)
 
+- `bcs.cu` – boundary condition kernels (inflow, outflow, periodic)
 - `constants.cuh` – global simulation parameters (mesh, case setup, relaxation, strides)    
-- `deviceHeader.cuh` – core GPU data structures & device helpers (LBM fields, equilibria, forcing)   
-- `deviceSetup.cu` – defines GPU constants & global field instances    
-- `lbm.cuh` – main CUDA kernels (collision-stream, phase-field, normals, forces)  
-- `lbmBcs.cu` – boundary condition kernels (inflow, outflow, periodic)
-- `lbmInit.cu` – initialization kernels (fields, jet/droplet shapes, distributions)
-- `main.cu` – simulation entry point (initialization, time loop, BCs, output, performance stats)   
+- `deviceUtils.cuh` – core GPU data structures & device helpers (LBM fields, equilibria, forcing)   
+- `init.cu` – initialization kernels (fields, jet/droplet shapes, distributions)
+- `lbm.cuh` – main CUDA kernels (moments, collision-stream, phase-field, normals, forces)  
+- `main.cu` – simulation entry point (initialization, time loop, output, performance stats)   
+
+---
+
+## ⚡ Benchmark
+
+Performance is reported in **MLUPS** (Million Lattice Updates Per Second).  
+Each GPU entry shows the average across multiple runs.
+
+| GPU            | D3Q19 (MLUPS) | D3Q27 (MLUPS) |
+|----------------|---------------|---------------|
+| RTX 3050 (4GB) | **710**       | –             |
+| RTX 4090 (24GB)| –             | –             |
+| A100 (40GB)    | –             | –             |
 
 ---
 

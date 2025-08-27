@@ -5,7 +5,7 @@ __host__ __forceinline__ std::string createSimulationDirectory(
     const std::string& VELOCITY_SET, const std::string& SIM_ID
 ) {
     std::string BASE_DIR = 
-    #ifdef _WIN32
+    #if defined(_WIN32)
         ".\\";
     #else
         "./";
@@ -13,7 +13,7 @@ __host__ __forceinline__ std::string createSimulationDirectory(
 
     std::string SIM_DIR = BASE_DIR + "bin/" + VELOCITY_SET + "/" + SIM_ID + "/";
     
-    #ifdef _WIN32
+    #if defined(_WIN32)
         std::string MKDIR_COMMAND = "mkdir \"" + SIM_DIR + "\"";
     #else
         std::string MKDIR_COMMAND = "mkdir -p \"" + SIM_DIR + "\"";
@@ -23,26 +23,6 @@ __host__ __forceinline__ std::string createSimulationDirectory(
     (void)ret;
 
     return SIM_DIR;
-}
-
-__host__ __forceinline__ void computeAndPrintOccupancy() {
-    int minGridSize = 0, blockSize = 0;
-    cudaError_t err = cudaOccupancyMaxPotentialBlockSize(
-        &minGridSize, &blockSize, gpuCollisionStream, 0, 0);
-    if (err != cudaSuccess) {
-        std::cerr << "Error in calculating occupancy: " << cudaGetErrorString(err) << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    int maxBlocksPerSM = 0;
-    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
-        &maxBlocksPerSM, gpuCollisionStream, blockSize, 0);
-
-    std::cout << "\n// =============================================== //\n";
-    std::cout << "     Optimal block size       : " << blockSize << "\n";
-    std::cout << "     Minimum grid size        : " << minGridSize << "\n";
-    std::cout << "     Active blocks per SM     : " << maxBlocksPerSM << "\n";
-    std::cout << "// =============================================== //\n" << std::endl;
 }
 
 __host__ __forceinline__ void generateSimulationInfoFile(
@@ -134,41 +114,11 @@ __host__ __forceinline__ void initDeviceVars() {
     checkCudaErrors(cudaMalloc(&lbm.f,     F_DIST_SIZE));
     checkCudaErrors(cudaMalloc(&lbm.g,     G_DIST_SIZE));
 
-    #ifdef D_FIELDS
+    #if defined(D_FIELDS)
     checkCudaErrors(cudaMalloc(&dfields.vorticity_mag, SIZE));
     checkCudaErrors(cudaMalloc(&dfields.velocity_mag,  SIZE));
     checkCudaErrors(cudaMalloc(&dfields.pressure,      SIZE));
-    #endif // D_FIELDS
-
-    // initialization with cudamemset, currently using a kernel
-    /*
-    checkCudaErrors(cudaMemset(lbm.pxx,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.pyy,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.pzz,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.pxy,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.pxz,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.pyz,   0, SIZE));
-
-    checkCudaErrors(cudaMemset(lbm.ux,    0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.uy,    0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.uz,    0, SIZE));
-
-    checkCudaErrors(cudaMemset(lbm.phi,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.ffx,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.ffy,   0, SIZE));
-    checkCudaErrors(cudaMemset(lbm.ffz,   0, SIZE));
-    */
-
-    checkCudaErrors(cudaMemcpyToSymbol(W,   &H_W,   FLINKS * sizeof(float)));
-    checkCudaErrors(cudaMemcpyToSymbol(W_G, &H_W_G, GLINKS * sizeof(float)));
-
-    checkCudaErrors(cudaMemcpyToSymbol(CIX,   &H_CIX,   FLINKS * sizeof(ci_t)));
-    checkCudaErrors(cudaMemcpyToSymbol(CIY,   &H_CIY,   FLINKS * sizeof(ci_t)));
-    checkCudaErrors(cudaMemcpyToSymbol(CIZ,   &H_CIZ,   FLINKS * sizeof(ci_t)));
-
-    #ifdef PERTURBATION
-    checkCudaErrors(cudaMemcpyToSymbol(PERTURBATION_DATA, &H_PERTURBATION, 200 * sizeof(float)));
-    #endif
+    #endif 
 
     getLastCudaError("initDeviceVars: post-initialization");
 }

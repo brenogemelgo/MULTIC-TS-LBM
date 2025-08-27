@@ -18,10 +18,7 @@ fi
 if [ "$VELOCITY_SET" = "D3Q27" ]; then
     MAXRREG=128
 elif [ "$VELOCITY_SET" = "D3Q19" ]; then
-    MAXRREG=68 
-    # under this value there seems 
-    # to be phantom spills that the 
-    # compiler does not report
+    MAXRREG=68 # under this value there seems to be phantom spills that the compiler does not report
 fi
 
 BASE_DIR=$(dirname "$0")
@@ -37,7 +34,6 @@ nvcc -O3 --restrict \
      -gencode arch=compute_${CC},code=sm_${CC} \
      -rdc=true --ptxas-options=-v -use_fast_math --fmad=true \
      -I"${SRC_DIR}" \
-     "${SRC_DIR}/deviceSetup.cu" \
      "${SRC_DIR}/main.cu" \
      -maxrregcount=${MAXRREG} -D${VELOCITY_SET} \
      -o "${EXECUTABLE}" 

@@ -67,7 +67,8 @@ __global__ void gpuInitDistributions(LBMFields d) {
     }
 } 
 
-#ifdef DROPLET_CASE
+#if defined(DROPLET_CASE)
+
 __global__ void gpuInitDropletShape(LBMFields d) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -91,5 +92,6 @@ __global__ void gpuInitDropletShape(LBMFields d) {
     const float phi = 0.5f + 0.5f * tanhf(2.0f * (RADIUS-radialDist) / 3.0f);
     d.phi[idx3] = phi;
 }
+
 #endif
 

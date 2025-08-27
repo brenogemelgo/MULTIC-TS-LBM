@@ -1,11 +1,11 @@
-#include "deviceHeader.cuh"
-#include "lbmInit.cuh"
+#include "deviceUtils.cuh"
+#include "init.cuh"
 #include "lbm.cuh"
-#include "lbmBcs.cuh"
+#include "bcs.cuh"
 #include "../include/hostFunctions.cuh"
-#ifdef D_FIELDS
+#if defined(D_FIELDS)
 #include "../include/derivedFields.cuh"
-#endif // D_FIELDS
+#endif 
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
@@ -16,7 +16,6 @@ int main(int argc, char* argv[]) {
     const std::string SIM_ID       = argv[2];
     const std::string SIM_DIR = createSimulationDirectory(VELOCITY_SET, SIM_ID);
 
-    //computeAndPrintOccupancy(); 
     initDeviceVars();
     
     const dim3 block(32u, 2u, 2u); 
@@ -40,6 +39,8 @@ int main(int argc, char* argv[]) {
                       1u);
 
     const size_t shmem_bytes = 0;
+
+    #define BENCHMARK
 
     cudaStream_t mainStream{};
     checkCudaErrors(cudaStreamCreate(&mainStream));
@@ -66,42 +67,46 @@ int main(int argc, char* argv[]) {
 
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (int STEP = 0; STEP <= NSTEPS; ++STEP) {
+        #if !defined(BENCHMARK)
         std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
+        #endif
 
         // ======================== NORMALS AND FORCES ======================== //
 
-            gpuPhi<<<grid, block, shmem_bytes, mainStream>>>(lbm);
+            gpuPhi<<<grid, block, 0, mainStream>>>(lbm);
 
-            gpuNormals<<<grid, block, shmem_bytes, mainStream>>>(lbm);
+            gpuNormals<<<grid, block, 0, mainStream>>>(lbm);
 
-            gpuForces<<<grid, block, shmem_bytes, mainStream>>>(lbm);
+            gpuForces<<<grid, block, 0, mainStream>>>(lbm);
 
         // =================================================================== //
 
         // ======================== FLUID FIELD EVOLUTION ======================== //
 
-            gpuCollisionStream<<<grid, block, shmem_bytes, mainStream>>>(lbm);
+            gpuCollisionStream<<<grid, block, 0, mainStream>>>(lbm);
 
-            gpuEvolvePhaseField<<<grid, block, shmem_bytes, mainStream>>>(lbm);
+            gpuEvolvePhaseField<<<grid, block, 0, mainStream>>>(lbm);
 
         // ====================================================================== //
 
 
         // ============================== BOUNDARY CONDITIONS ============================== //
+        
+            gpuApplyInflow<<<gridZ, blockZ, 0, mainStream>>>(lbm, STEP);
 
-            gpuApplyInflow<<<gridZ, blockZ, shmem_bytes, mainStream>>>(lbm, STEP);
+            gpuApplyOutflow<<<gridZ, blockZ, 0, mainStream>>>(lbm);
 
-            gpuApplyOutflow<<<gridZ, blockZ, shmem_bytes, mainStream>>>(lbm);
+            gpuApplyPeriodicX<<<gridX, blockX, 0, mainStream>>>(lbm);
 
-            gpuApplyPeriodicX<<<gridX, blockX, shmem_bytes, mainStream>>>(lbm);
+            gpuApplyPeriodicY<<<gridY, blockY, 0, mainStream>>>(lbm);
 
-            gpuApplyPeriodicY<<<gridY, blockY, shmem_bytes, mainStream>>>(lbm);
-
-            #ifdef D_FIELDS
-            gpuDerivedFields<<<grid, block, shmem_bytes, mainStream>>>(lbm, dfields);
-            #endif // D_FIELDS
+            #if defined(D_FIELDS)
+            gpuDerivedFields<<<grid, block, 0, mainStream>>>(lbm, dfields);
+            #endif 
 
         // ================================================================================= //
+
+        #if !defined(BENCHMARK)
 
         checkCudaErrors(cudaDeviceSynchronize());
 
@@ -110,14 +115,16 @@ int main(int argc, char* argv[]) {
             copyAndSaveToBinary(lbm.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
             copyAndSaveToBinary(lbm.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
             copyAndSaveToBinary(lbm.uz,  PLANE, SIM_DIR, SIM_ID, STEP, "uz");
-            #ifdef D_FIELDS
+            #if defined(D_FIELDS)
             copyAndSaveToBinary(dfields.vorticity_mag, PLANE, SIM_DIR, SIM_ID, STEP, "vorticity_mag");
             copyAndSaveToBinary(dfields.velocity_mag,  PLANE, SIM_DIR, SIM_ID, STEP, "velocity_mag");
             copyAndSaveToBinary(dfields.pressure,      PLANE, SIM_DIR, SIM_ID, STEP, "pressure");
-            #endif // D_FIELDS
+            #endif 
             std::cout << "Step " << STEP << ": Binaries saved in " << SIM_DIR << "\n";
 
         }
+
+        #endif
     }
 
     const auto END_TIME = std::chrono::high_resolution_clock::now();
@@ -144,11 +151,11 @@ int main(int argc, char* argv[]) {
     cudaFree(lbm.ffy);
     cudaFree(lbm.ffz);
 
-    #ifdef D_FIELDS
+    #if defined(D_FIELDS)
     cudaFree(dfields.vorticity_mag);
     cudaFree(dfields.velocity_mag);
     cudaFree(dfields.pressure);
-    #endif // D_FIELDS
+    #endif 
 
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
     const uint64_t TOTAL_CELLS = static_cast<uint64_t>(NX) * NY * NZ * static_cast<uint64_t>(NSTEPS ? NSTEPS : 1);
