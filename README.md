@@ -1,6 +1,6 @@
 # MULTIC-TS-LBM
 
-**MULTIC-TS-LBM** is a **thread-safe**, GPU-accelerated simulator for multicomponent flows using the Lattice Boltzmann Method (LBM). Designed with CUDA for high performance, it supports **D3Q19** and **D3Q27** velocity sets for hydrodynamics, and **D3Q7** for phase-field evolution. The solver simulates flows with sharp interface dynamics, surface tension effects, and configurable perturbations. Currently, two cases are available: **droplet** and **jet**.
+**MULTIC-TS-LBM** is a **GPU-accelerated**, thread-safe Lattice Boltzmann simulator for multicomponent flows. Implemented in CUDA, it supports **D3Q19/D3Q27** for hydrodynamics and **D3Q7** for phase-field evolution, capturing interface dynamics, surface tension, and perturbations. Available cases: **droplet** and **jet**.
 
 ---
 
