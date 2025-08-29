@@ -77,6 +77,11 @@ Each GPU entry shows the average across multiple runs.
 | RTX 4090 (24GB)| –             | –             |
 | A100 (40GB)    | –             | –             |
 
+*Notes:*  
+- **D3Q19** uses **He forcing (1st order)** and 2nd-order equilibrium/non-equilibrium expansion.  
+- **D3Q27** uses **Guo forcing (2nd order)** and 3rd-order equilibrium/non-equilibrium expansion.  
+- These methodological differences contribute to the observed performance gap, beyond the natural cost of upgrading from **19** to **27** velocity directions.
+
 ---
 
 ## 🧠 Project Context
