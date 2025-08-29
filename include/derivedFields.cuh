@@ -4,7 +4,11 @@
 
 #if defined(D_FIELDS)
 
-__global__ void gpuDerivedFields(LBMFields lbm, DerivedFields dfields) {
+__global__ 
+void gpuDerivedFields(
+    LBMFields lbm, 
+    DerivedFields dfields
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;

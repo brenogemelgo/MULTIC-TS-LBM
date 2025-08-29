@@ -16,9 +16,9 @@
 #include <cstdint>
 #include <cmath>    
 
-inline constexpr unsigned BLOCK_SIZE_X = 32u;
-inline constexpr unsigned BLOCK_SIZE_Y = 4u;
-inline constexpr unsigned BLOCK_SIZE_Z = 4u;
+inline constexpr unsigned BLOCK_SIZE_X = 256u;
+inline constexpr unsigned BLOCK_SIZE_Y = 1u;
+inline constexpr unsigned BLOCK_SIZE_Z = 1u;
 
 inline constexpr int HALO   = 1;
 inline constexpr int TILE_X = static_cast<int>(BLOCK_SIZE_X) + 2*HALO;
@@ -33,40 +33,51 @@ inline constexpr int TILE_Z = static_cast<int>(BLOCK_SIZE_Z) + 2*HALO;
     using pop_t = __half;
 
     __host__ __device__ __forceinline__
-    pop_t to_pop(float x) { return __float2half(x); }
+    pop_t to_pop(
+        float x
+    ) { 
+        return __float2half(x); 
+    }
 
     __host__ __device__ __forceinline__
-    float from_pop(pop_t x) { return __half2float(x); }
-
-    __host__ __device__ __forceinline__
-    __half2 to_pop2(float x0, float x1) { return __float22half2_rn(make_float2(x0, x1)); }
-
-    __host__ __device__ __forceinline__
-    float2 from_pop2(__half2 h2) { return __half22float2(h2); }
+    float from_pop(
+        pop_t x
+    ) { 
+        return __half2float(x); 
+    }
 
 #else
 
     using pop_t = float;
 
     __host__ __device__ __forceinline__
-    pop_t to_pop(float x) { return x; }
+    pop_t to_pop(
+        float x
+    ) { 
+        return x; 
+    }
 
     __host__ __device__ __forceinline__
-    float from_pop(pop_t x) { return x; }
+    float from_pop(
+        pop_t x
+    ) { 
+        return x; 
+    }
 
 #endif
 
 using ci_t  = int; // int8_t
 using idx_t = uint32_t;
 
-#define checkCudaErrors(err)  __checkCudaErrors((err), #err, __FILE__, __LINE__)
+#define checkCudaErrors(err) __checkCudaErrors((err), #err, __FILE__, __LINE__)
 #define getLastCudaError(msg) __getLastCudaError((msg), __FILE__, __LINE__)
 
-inline void __checkCudaErrors(cudaError_t err,
-                              const char* const func,
-                              const char* const file,
-                              const int line) noexcept
-{
+inline void __checkCudaErrors(
+    cudaError_t err,
+    const char* const func,
+    const char* const file,
+    const int line
+) noexcept {
     if (err != cudaSuccess) {
         fprintf(stderr, "CUDA error at %s(%d) \"%s\": [%d] %s.\n",
                 file, line, func, (int)err, cudaGetErrorString(err));
@@ -75,10 +86,11 @@ inline void __checkCudaErrors(cudaError_t err,
     }
 }
 
-inline void __getLastCudaError(const char* const errorMessage,
-                               const char* const file,
-                               const int line) noexcept
-{
+inline void __getLastCudaError(
+    const char* const errorMessage,
+    const char* const file,
+    const int line
+) noexcept {
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
         fprintf(stderr, "CUDA error at %s(%d): [%d] %s. Context: %s\n",

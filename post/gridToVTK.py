@@ -1,29 +1,24 @@
 from pyevtk.hl import gridToVTK
 from getSimInfo import *
 
-def save_vtk_3d(macrs_dict, path, filename_write, points=True, norm_val=1):
+def saveVTK3D(macrosDict, path, filenameWrite, points=True, normVal=1):
 
-    info = retrieve_sim_info(path)
+    info = retrieveSimInfo(path)
 
-    if norm_val == 0:
-        norm_val = info['NX']
+    if normVal == 0:
+        normVal = info['NX']
         if points:
-            norm_val -= 1
+            normVal -= 1
 
-    dx, dy, dz = 1.0 / norm_val, 1.0 / norm_val, 1.0 / norm_val
-
-    if info['Prc'] == 'double':
-        prc = 'float64'
-    elif info['Prc'] == 'float':
-        prc = 'float32'
+    dx, dy, dz = 1.0 / normVal, 1.0 / normVal, 1.0 / normVal
 
     if not points:
-        x = np.arange(0, info['NX'] / norm_val + 0.1 * dx, dx, dtype=prc)
-        y = np.arange(0, info['NY'] / norm_val + 0.1 * dy, dy, dtype=prc)
-        z = np.arange(0, info['NZ_TOTAL'] / norm_val + 0.1 * dz, dz, dtype=prc)
-        gridToVTK(path + filename_write, x, y, z, cellData=macrs_dict)
+        x = np.arange(0, info['NX'] / normVal + 0.1 * dx, dx, dtype='float32')
+        y = np.arange(0, info['NY'] / normVal + 0.1 * dy, dy, dtype='float32')
+        z = np.arange(0, info['NZ'] / normVal + 0.1 * dz, dz, dtype='float32')
+        gridToVTK(path + filenameWrite, x, y, z, cellData=macrosDict)
     else:
-        x = np.arange(0, (info['NX'] - 1) / norm_val + 0.1 * dx, dx, dtype=prc)
-        y = np.arange(0, (info['NY'] - 1) / norm_val + 0.1 * dy, dy, dtype=prc)
-        z = np.arange(0, (info['NZ_TOTAL'] - 1) / norm_val + 0.1 * dz, dz, dtype=prc)
-        gridToVTK(path + filename_write, x, y, z, pointData=macrs_dict)
+        x = np.arange(0, (info['NX'] - 1) / normVal + 0.1 * dx, dx, dtype='float32')
+        y = np.arange(0, (info['NY'] - 1) / normVal + 0.1 * dy, dy, dtype='float32')
+        z = np.arange(0, (info['NZ'] - 1) / normVal + 0.1 * dz, dz, dtype='float32')
+        gridToVTK(path + filenameWrite, x, y, z, pointData=macrosDict)

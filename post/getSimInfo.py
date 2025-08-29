@@ -1,139 +1,128 @@
 import os
 import glob
+import re
 import numpy as np
 
-__macr_names__ = ['rho','phi','uz','vorticity_mag','velocity_mag']
+__macroNames__ = ['rho','phi','ux','uy','uz','vorticity_mag','velocity_mag']
 __info__ = dict()
 
-def get_filenames_macr(macr_name, path):
-    file_list = sorted(glob.glob(path + "*" + macr_name + "*.bin"))
-    return file_list
+def getFilenamesMacro(macr_name, path):
+    fileList = sorted(glob.glob(path + "*" + macr_name + "*.bin"))
+    return fileList
 
-def get_macr_steps(path):
-    file_list = get_filenames_macr(__macr_names__[0], path)
-    step_set = set()
-    for file in file_list:
-        step_str = file.split(__macr_names__[0])[-1]
-        step_str = step_str[:-4]  # remove ".bin"
-        step_int = int(step_str)
-        step_set.add(step_int)
-    macr_steps = sorted(step_set)
-    return macr_steps
+def getMacroSteps(path):
+    fileList = getFilenamesMacro(__macroNames__[0], path)
+    stepSet = set()
+    for file in fileList:
+        stepStr = file.split(__macroNames__[0])[-1]
+        stepStr = stepStr[:-4] 
+        stepInt = int(stepStr)
+        stepSet.add(stepInt)
+    macroSteps = sorted(stepSet)
+    return macroSteps
 
-def retrieve_sim_info(path):
-    if len(__info__) == 0:
-        filename = glob.glob(path + "*info*.txt")[0]
+def retrieveSimInfo(path):
+    global __info__
+    if __info__:
+        return __info__
+
+    files = sorted(glob.glob(os.path.join(path, "*info*.txt")))
+    if not files:
+        print("No *info*.txt files were found in directory:", path)
+        return __info__
+
+    filename = files[0]
+    try:
         with open(filename, "r") as f:
-            lines = f.readlines()
-            lines_trimmed = [line.strip() for line in lines]
+            text = f.read()
+    except Exception as e:
+        print("Failed to open file:", filename, "-", e)
+        return __info__
 
-            try:
-                __info__['ID'] = [str(txt.split(" ")[-1]) for txt in lines_trimmed
-                                  if 'Simulation ID' in txt][0]
-            except BaseException:
-                print("Not able to get ID from info file")
+    def grab(pattern, flags=re.M):
+        m = re.search(pattern, text, flags)
+        return m.group(1) if m else None
 
-            try:
-                __info__['Prc'] = [txt.split(" ")[-1] for txt in lines_trimmed
-                                   if 'Precision' in txt][0]
-            except BaseException:
-                print("Not able to get Precision from info file")
+    _id = grab(r"^ID:\s*(\S+)")
+    if _id is None:
+        print("Not able to get 'ID' from info file")
+    else:
+        __info__['ID'] = _id
 
-            try:
-                __info__['NX'] = [int(txt.split(" ")[-1]) for txt in lines_trimmed
-                                   if 'NX' in txt][0]
-            except BaseException:
-                print("Not able to get NX from info file")
+    steps = grab(r"^Timesteps:\s*(\d+)")
+    if steps is None:
+        steps = grab(r"^Total steps:\s*(\d+)")
+    if steps is None:
+        print("Not able to get 'Timesteps' from info file")
+    else:
+        __info__['Timesteps'] = int(steps)
 
-            try:
-                __info__['NY'] = [int(txt.split(" ")[-1]) for txt in lines_trimmed
-                                   if 'NY' in txt][0]
-            except BaseException:
-                print("Not able to get NY from info file")
-
-            try:
-                __info__['NZ'] = [int(txt.split(" ")[-1]) for txt in lines_trimmed
-                                   if 'NZ:' in txt][0]
-            except BaseException:
-                print("Not able to get NZ from info file")
-
-            try:
-                __info__['NZ_TOTAL'] = [int(txt.split(" ")[-1]) for txt in lines_trimmed
-                                        if 'NZ_TOTAL' in txt][0]
-            except BaseException:
-                print("Not able to get NZ_TOTAL from info file")
-
-            try:
-                __info__['Tau'] = [float(txt.split(" ")[-1]) for txt in lines_trimmed
-                                   if 'Tau' in txt][0]
-            except BaseException:
-                print("Not able to get Tau from info file")
-
-            try:
-                __info__['Umax'] = [float(txt.split(" ")[-1]) for txt in lines_trimmed
-                                    if 'Umax' in txt][0]
-            except BaseException:
-                print("Not able to get Umax from info file")
-
-            try:
-                __info__['Nsteps'] = [int(txt.split(" ")[-1]) for txt in lines_trimmed
-                                      if 'Nsteps' in txt][0]
-            except BaseException:
-                print("Not able to get Nsteps from info file")
+    m = re.search(r"^Domain size:\s*NX\s*=\s*(\d+)\s*,\s*NY\s*=\s*(\d+)\s*,\s*NZ\s*=\s*(\d+)",
+                  text, re.M)
+    if m:
+        __info__['NX'] = int(m.group(1))
+        __info__['NY'] = int(m.group(2))
+        __info__['NZ'] = int(m.group(3))
+    else:
+        nx = grab(r"^NX:\s*(\d+)")
+        ny = grab(r"^NY:\s*(\d+)")
+        nz = grab(r"^NZ:\s*(\d+)")
+        if nx is None or ny is None or nz is None:
+            print("Not able to get 'NX/NY/NZ' from info file")
+        else:
+            __info__['NX'] = int(nx)
+            __info__['NY'] = int(ny)
+            __info__['NZ'] = int(nz)
 
     return __info__
 
-def read_file_macr_3d(macr_filename, path):
-    info = retrieve_sim_info(path)
-    if info['Prc'] == 'double':
-        dtype = 'd'
-    elif info['Prc'] == 'float':
-        dtype = 'f'
+def readFileMacro3D(macr_filename, path):
+    info = retrieveSimInfo(path)
     with open(macr_filename, "r") as f:
-        vec = np.fromfile(f, dtype)
-        vec_3d = np.reshape(vec, (info['NZ_TOTAL'], info['NY'], info['NX']), 'C')
-        return np.swapaxes(vec_3d, 0, 2)
+        vec = np.fromfile(f, 'f') # float32
+        vec3D = np.reshape(vec, (info['NZ'], info['NY'], info['NX']), 'C')
+        return np.swapaxes(vec3D, 0, 2)
 
-def get_macrs_from_step(step, path):
+def getMacrosFromStep(step, path):
     macr = dict()
-    all_filenames = []
+    allFilenames = []
 
-    for macr_name in __macr_names__:
-        all_filenames.append(get_filenames_macr(macr_name, path))
+    for macr_name in __macroNames__:
+        allFilenames.append(getFilenamesMacro(macr_name, path))
 
-    flat_filenames = [filename for sublist in all_filenames for filename in sublist]
+    flatFilenames = [filename for sublist in allFilenames for filename in sublist]
 
-    step_filenames = [
-        filename for filename in flat_filenames
-        if any([f"{macr}{step:06d}.bin" in filename for macr in __macr_names__])
+    stepFilenames = [
+        filename for filename in flatFilenames
+        if any([f"{macr}{step:06d}.bin" in filename for macr in __macroNames__])
     ]
 
-    if len(step_filenames) == 0:
+    if len(stepFilenames) == 0:
         return None
 
-    for filename in step_filenames:
-        for macr_name in __macr_names__:
+    for filename in stepFilenames:
+        for macr_name in __macroNames__:
             if macr_name in filename:
-                macr[macr_name] = read_file_macr_3d(filename, path)
+                macr[macr_name] = readFileMacro3D(filename, path)
 
     return macr
 
-def get_all_macrs(path):
+def getAllMacros(path):
     macr = dict()
     filenames = dict()
 
-    for macr_name in __macr_names__:
-        filenames[macr_name] = get_filenames_macr(macr_name, path)
+    for macr_name in __macroNames__:
+        filenames[macr_name] = getFilenamesMacro(macr_name, path)
 
-    min_length = min(len(filenames[key]) for key in filenames)
+    minLength = min(len(filenames[key]) for key in filenames)
 
-    for i in range(min_length):
-        step_str = filenames[__macr_names__[0]][i].split(__macr_names__[0])[-1]
-        step_str = step_str[:-4]
-        step = int(step_str)
+    for i in range(minLength):
+        stepStr = filenames[__macroNames__[0]][i].split(__macroNames__[0])[-1]
+        stepStr = stepStr[:-4]
+        step = int(stepStr)
 
         macr[step] = dict()
         for macr_name in filenames:
-            macr[step][macr_name] = read_file_macr_3d(filenames[macr_name][i], path)
+            macr[step][macr_name] = readFileMacro3D(filenames[macr_name][i], path)
 
     return macr

@@ -5,11 +5,8 @@
 #include "../include/perturbationData.cuh"
 #endif
 
-#define JET_CASE
-//#define DROPLET_CASE
-
-//#define RUN_MODE
-#define SAMPLE_MODE
+#define RUN_MODE
+//#define SAMPLE_MODE
 //#define DEBUG_MODE
 
 #if defined(RUN_MODE)
@@ -23,7 +20,7 @@ constexpr int MACRO_SAVE = 1;
 constexpr int NSTEPS = 0;
 #endif
 
-#if defined(JET_CASE)
+#if defined(JET)
 
 constexpr int MESH = 128;
 constexpr int DIAM = 20; 
@@ -31,35 +28,39 @@ constexpr int NX   = MESH;
 constexpr int NY   = MESH;
 constexpr int NZ   = MESH*2;
 
-constexpr float U_JET  = 0.05f; 
+constexpr float U_REF  = 0.05f; 
 constexpr int REYNOLDS = 5000; 
 constexpr int WEBER    = 500; 
 
-constexpr float VISC  = (U_JET * DIAM) / REYNOLDS;     
-constexpr float TAU   = 0.5f + 3.0f * VISC;             
-constexpr float GAMMA = 0.3f * 3.0f;                   
-constexpr float SIGMA = (U_JET * U_JET * DIAM) / WEBER; 
+constexpr float GAMMA = 0.3f * 3.0f; 
 
-#elif defined(DROPLET_CASE)
+#elif defined(DROPLET)
 
 constexpr int MESH   = 64;
-constexpr int RADIUS = 9; 
+constexpr int RADIUS = 10; 
+constexpr int DIAM   = 2 * RADIUS;
 constexpr int NX     = MESH;
 constexpr int NY     = MESH;
 constexpr int NZ     = MESH;
 
-constexpr float TAU      = 0.55f;        
-constexpr float GAMMA    = 0.15f * 5.0f; 
-constexpr float SIGMA    = 0.1f;     
+constexpr float U_REF  = 0.05f; 
+constexpr int REYNOLDS = 200; 
+constexpr int WEBER    = 4; 
+
+constexpr float GAMMA = 0.15f * 3.0f; 
     
 #endif 
+
+constexpr float VISC  = (U_REF * DIAM) / REYNOLDS;     
+constexpr float TAU   = 0.5f + 3.0f * VISC;        
+constexpr float SIGMA = (U_REF * U_REF * DIAM) / WEBER; 
 
 constexpr float CSSQ   = 1.0f / 3.0f;  
 constexpr float OMEGA  = 1.0f / TAU;   
 constexpr float OMCO   = 1.0f - OMEGA; 
 constexpr float CSCO   = 1.0f - CSSQ;  
 
-#if defined(JET_CASE)
+#if defined(JET)
 
 constexpr float K        = 50.0f;
 constexpr float P        = 3.0f;            

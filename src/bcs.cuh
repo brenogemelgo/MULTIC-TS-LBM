@@ -1,8 +1,12 @@
 #pragma once
 
-#if defined(JET_CASE)
+#if defined(JET)
 
-__global__ void gpuApplyInflow(LBMFields d, const int STEP) {
+__global__ 
+void applyInflow(
+    LBMFields d, 
+    const int STEP
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = 0;
@@ -20,9 +24,9 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
     const idx_t idx3_in = global3(x,y,z);
     const float uzIn = 
     #if defined(PERTURBATION)
-        /* apply perturbation */ U_JET * (1.0f + PERTURBATION_DATA[(STEP/MACRO_SAVE)%200] * 10.0f);
+        /* apply perturbation */ U_REF * (1.0f + PERTURBATION_DATA[(STEP/MACRO_SAVE)%200] * 10.0f);
     #else
-        /* straightforward */ U_JET;
+        /* straightforward */ U_REF;
     #endif 
 
     d.uz[idx3_in] = uzIn;
@@ -96,7 +100,10 @@ __global__ void gpuApplyInflow(LBMFields d, const int STEP) {
     #endif 
 }
 
-__global__ void gpuApplyOutflow(LBMFields d) {
+__global__ 
+void applyOutflow(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = NZ-1;
@@ -185,7 +192,10 @@ __global__ void gpuApplyOutflow(LBMFields d) {
     #endif 
 }
 
-__global__ void gpuApplyPeriodicX(LBMFields d) {
+__global__ 
+void periodicX(
+    LBMFields d
+) {
     const idx_t y = threadIdx.x + blockIdx.x * blockDim.x;              
     const idx_t z = threadIdx.y + blockIdx.y * blockDim.y;
     
@@ -212,7 +222,10 @@ __global__ void gpuApplyPeriodicX(LBMFields d) {
     d.phi[global3(NX-1,y,z)] = d.phi[bL];
 }
 
-__global__ void gpuApplyPeriodicY(LBMFields d) {
+__global__ 
+void periodicY(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t z = threadIdx.y + blockIdx.y * blockDim.y;
     
@@ -244,7 +257,7 @@ __global__ void gpuApplyPeriodicY(LBMFields d) {
     //d.phi[global3(x,NY-1,z)] = d.phi[bB];
 }
 
-#elif defined(DROPLET_CASE)
+#elif defined(DROPLET)
 
 // still undefined
 

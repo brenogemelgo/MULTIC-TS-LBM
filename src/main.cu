@@ -8,13 +8,14 @@
 #endif 
 
 int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        std::cerr << "Error: Usage: " << argv[0] << " <velocity set> <ID>\n";
+    if (argc < 4) {
+        std::cerr << "Error: Usage: " << argv[0] << " <flow case> <velocity set> <ID>\n";
         return 1;
     }
-    const std::string VELOCITY_SET = argv[1];
-    const std::string SIM_ID       = argv[2];
-    const std::string SIM_DIR = createSimulationDirectory(VELOCITY_SET, SIM_ID);
+    const std::string FLOW_CASE    = argv[1];
+    const std::string VELOCITY_SET = argv[2];
+    const std::string SIM_ID       = argv[3];
+    const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
     initDeviceVars();
     
@@ -38,30 +39,24 @@ int main(int argc, char* argv[]) {
                       div_up(static_cast<unsigned>(NY), blockZ.y),
                       1u);
 
-    const size_t shmem_bytes = 0;
+    const size_t dynamic = 0;
 
-    #define BENCHMARK
+    //#define BENCHMARK
 
-    cudaStream_t mainStream{};
-    checkCudaErrors(cudaStreamCreate(&mainStream));
+    cudaStream_t queue{};
+    checkCudaErrors(cudaStreamCreate(&queue));
 
     // =========================== INITIALIZATION =========================== //
 
-        #if defined(DROPLET_CASE)
-        gpuInitDropletShape<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-        getLastCudaError("gpuInitDropletShape");
+        setFields <<<grid, block, dynamic, queue>>>(lbm);
+
+        #if defined(JET)
+        setJet<<<grid, block, dynamic, queue>>>(lbm);
+        #elif defined(DROPLET)
+        setDroplet<<<grid, block, dynamic, queue>>>(lbm);
         #endif
 
-        gpuInitFields<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-        getLastCudaError("gpuInitFields");
-
-        #if defined(JET_CASE)
-        gpuInitJetShape<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-        getLastCudaError("gpuInitJetShape");
-        #endif
-
-        gpuInitDistributions<<<grid, block, shmem_bytes, mainStream>>>(lbm);
-        getLastCudaError("gpuInitDistributions");
+        setDistros<<<grid, block, dynamic, queue>>>(lbm);
     
     // ===================================================================== //
 
@@ -73,38 +68,36 @@ int main(int argc, char* argv[]) {
 
         // ======================== NORMALS AND FORCES ======================== //
 
-            gpuPhi<<<grid, block, 0, mainStream>>>(lbm);
-
-            gpuNormals<<<grid, block, 0, mainStream>>>(lbm);
-
-            gpuForces<<<grid, block, 0, mainStream>>>(lbm);
+            computePhase  <<<grid, block, dynamic, queue>>>(lbm);
+            computeNormals<<<grid, block, dynamic, queue>>>(lbm);
+            computeForces <<<grid, block, dynamic, queue>>>(lbm);
 
         // =================================================================== //
 
         // ======================== FLUID FIELD EVOLUTION ======================== //
 
-            gpuCollisionStream<<<grid, block, 0, mainStream>>>(lbm);
-
-            gpuEvolvePhaseField<<<grid, block, 0, mainStream>>>(lbm);
+            streamCollide<<<grid, block, dynamic, queue>>>(lbm);
+            advectDiffuse<<<grid, block, dynamic, queue>>>(lbm);
 
         // ====================================================================== //
 
 
         // ============================== BOUNDARY CONDITIONS ============================== //
         
-            gpuApplyInflow<<<gridZ, blockZ, 0, mainStream>>>(lbm, STEP);
-
-            gpuApplyOutflow<<<gridZ, blockZ, 0, mainStream>>>(lbm);
-
-            gpuApplyPeriodicX<<<gridX, blockX, 0, mainStream>>>(lbm);
-
-            gpuApplyPeriodicY<<<gridY, blockY, 0, mainStream>>>(lbm);
-
-            #if defined(D_FIELDS)
-            gpuDerivedFields<<<grid, block, 0, mainStream>>>(lbm, dfields);
-            #endif 
+            #if defined(JET)
+            applyInflow <<<gridZ, blockZ, dynamic, queue>>>(lbm, STEP);
+            applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(lbm);
+            periodicX   <<<gridX, blockX, dynamic, queue>>>(lbm);
+            periodicY   <<<gridY, blockY, dynamic, queue>>>(lbm);
+            #elif defined(DROPLET)
+            // undefined
+            #endif
 
         // ================================================================================= //
+
+        #if defined(D_FIELDS)
+        gpuDerivedFields<<<grid, block, dynamic, queue>>>(lbm, dfields);
+        #endif 
 
         #if !defined(BENCHMARK)
 
@@ -114,11 +107,16 @@ int main(int argc, char* argv[]) {
 
             copyAndSaveToBinary(lbm.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
             copyAndSaveToBinary(lbm.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
+            #if defined(JET)
             copyAndSaveToBinary(lbm.uz,  PLANE, SIM_DIR, SIM_ID, STEP, "uz");
+            #elif defined(DROPLET)
+            copyAndSaveToBinary(lbm.ux,  PLANE, SIM_DIR, SIM_ID, STEP, "ux");
+            copyAndSaveToBinary(lbm.uy,  PLANE, SIM_DIR, SIM_ID, STEP, "uy");
+            copyAndSaveToBinary(lbm.uz,  PLANE, SIM_DIR, SIM_ID, STEP, "uz");
+            #endif
             #if defined(D_FIELDS)
             copyAndSaveToBinary(dfields.vorticity_mag, PLANE, SIM_DIR, SIM_ID, STEP, "vorticity_mag");
             copyAndSaveToBinary(dfields.velocity_mag,  PLANE, SIM_DIR, SIM_ID, STEP, "velocity_mag");
-            copyAndSaveToBinary(dfields.pressure,      PLANE, SIM_DIR, SIM_ID, STEP, "pressure");
             #endif 
             std::cout << "Step " << STEP << ": Binaries saved in " << SIM_DIR << "\n";
 
@@ -128,7 +126,7 @@ int main(int argc, char* argv[]) {
     }
 
     const auto END_TIME = std::chrono::high_resolution_clock::now();
-    checkCudaErrors(cudaStreamDestroy(mainStream));
+    checkCudaErrors(cudaStreamDestroy(queue));
 
     cudaFree(lbm.f);
     cudaFree(lbm.g);
@@ -154,7 +152,6 @@ int main(int argc, char* argv[]) {
     #if defined(D_FIELDS)
     cudaFree(dfields.vorticity_mag);
     cudaFree(dfields.velocity_mag);
-    cudaFree(dfields.pressure);
     #endif 
 
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
@@ -166,7 +163,7 @@ int main(int argc, char* argv[]) {
     std::cout << "     Performance             : " << MLUPS << " MLUPS\n";
     std::cout << "// =============================================== //\n\n";
 
-    generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET, NSTEPS, MACRO_SAVE, TAU, MLUPS);
+    generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET, MLUPS);
     getLastCudaError("Final sync");
 
     return 0;

@@ -77,7 +77,7 @@ Each GPU entry shows the average across multiple runs.
 | RTX 4090 (24GB)| –             | –             |
 | A100 (40GB)    | –             | –             |
 
-*Notes:*  
+*Important considerations:*  
 - **D3Q19** uses **He forcing (1st order)** and 2nd-order equilibrium/non-equilibrium expansion.  
 - **D3Q27** uses **Guo forcing (2nd order)** and 3rd-order equilibrium/non-equilibrium expansion.  
 - These methodological differences contribute to the observed performance gap, beyond the natural cost of upgrading from **19** to **27** velocity directions.
@@ -94,7 +94,8 @@ This code was developed as part of an undergraduate research fellowship at the G
 
 ## 📊 Credits
 
-The post-processing workflow is shared with the project [MR-LBM](https://github.com/CERNN/MR-LBM).
+The post-processing workflow is mostly shared with the project [MR-LBM](https://github.com/CERNN/MR-LBM).
+The implementation is strongly based on the article *[A high-performance lattice Boltzmann model for multicomponent turbulent jet simulations](https://arxiv.org/abs/2403.15773)*.
 
 ---
 

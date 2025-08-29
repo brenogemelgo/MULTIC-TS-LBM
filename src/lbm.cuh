@@ -1,6 +1,9 @@
 #pragma once
 
-__global__ void gpuPhi(LBMFields d) {
+__global__ 
+void computePhase(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -16,7 +19,10 @@ __global__ void gpuPhi(LBMFields d) {
     d.phi[idx3] = phi;
 }
 
-__global__ void gpuNormals(LBMFields d) {
+__global__ 
+void computeNormals(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -78,7 +84,10 @@ __global__ void gpuNormals(LBMFields d) {
     d.normz[idx3] = normZ;
 }
 
-__global__ void gpuForces(LBMFields d) {
+__global__ 
+void computeForces(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -136,7 +145,10 @@ __global__ void gpuForces(LBMFields d) {
     d.ffz[idx3] = stCurv * normZ * ind;
 }
 
-__global__ void gpuCollisionStream(LBMFields d) {
+__global__ 
+void streamCollide(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -178,10 +190,9 @@ __global__ void gpuCollisionStream(LBMFields d) {
     const float pop26 = from_pop(d.f[PLANE26+idx3]); // 26
     #endif 
 
-    #if defined(D3Q19)
     float rho = pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18;
-    #elif defined(D3Q27)
-    float rho = pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18 + pop19 + pop20 + pop21 + pop22 + pop23 + pop24 + pop25 + pop26;
+    #if defined(D3Q27)
+    rho += pop19 + pop20 + pop21 + pop22 + pop23 + pop24 + pop25 + pop26;
     #endif
     rho += 1.0f; 
     d.rho[idx3] = rho;
@@ -354,12 +365,13 @@ __global__ void gpuCollisionStream(LBMFields d) {
 
     #if defined(D3Q19)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - ux) + 4.5f*(uz - ux)*(uz - ux));
+    fneq = pop16 - feq;
     pxx += fneq + CSSQ; 
     #elif defined(D3Q27)
     feq = W_2 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*(uz - ux) + 4.5f*(uz - ux)*(uz - ux) + 4.5f*(uz - ux)*(uz - ux)*(uz - ux) - 3.0f*(uz - ux) * 1.5f*(ux*ux + uy*uy + uz*uz));
+    fneq = pop16 - feq;
     pxx += fneq; 
     #endif
-    fneq = pop16 - feq;
     pzz += fneq; 
     pxz -= fneq;
 
@@ -472,7 +484,11 @@ __global__ void gpuCollisionStream(LBMFields d) {
     d.pxz[idx3] = pxz;   
     d.pyz[idx3] = pyz;
 
+    #if defined(JET)
     const float omegaLocal = omegaSponge(z);
+    #elif defined(DROPLET)
+    const float omegaLocal = OMEGA;
+    #endif
     const float omcoLocal = 1.0f - omegaLocal;
     const float coeffForce = 1.0f - 0.5f * omegaLocal;
 
@@ -620,7 +636,10 @@ __global__ void gpuCollisionStream(LBMFields d) {
     #endif 
 }
 
-__global__ void gpuEvolvePhaseField(LBMFields d) {
+__global__ 
+void advectDiffuse(
+    LBMFields d
+) {
     const int x = threadIdx.x + blockIdx.x * blockDim.x;
     const int y = threadIdx.y + blockIdx.y * blockDim.y;
     const int z = threadIdx.z + blockIdx.z * blockDim.z;

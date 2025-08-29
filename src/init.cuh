@@ -1,6 +1,9 @@
 #pragma once
 
-__global__ void gpuInitFields(LBMFields d) {
+__global__ 
+void setFields(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -28,27 +31,10 @@ __global__ void gpuInitFields(LBMFields d) {
     d.pyz[idx3] = 0.0f;
 }
 
-__global__ void gpuInitJetShape(LBMFields d) {
-    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
-    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
-    const idx_t z = 0;
-
-    if (x >= NX || y >= NY) return;
-
-    const float centerX = (NX-1) * 0.5f;
-    const float centerY = (NY-1) * 0.5f;
-
-    const float dx = x-centerX, dy = y-centerY;
-    const float radialDist = sqrtf(dx*dx + dy*dy);
-    const float radius = 0.5f * DIAM;
-    if (radialDist > radius) return;
-
-    const idx_t idx3_in = global3(x,y,z);
-    d.uz[idx3_in] = U_JET;
-    d.phi[idx3_in] = 1.0f;
-}
-
-__global__ void gpuInitDistributions(LBMFields d) {
+__global__ 
+void setDistros(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
@@ -67,9 +53,37 @@ __global__ void gpuInitDistributions(LBMFields d) {
     }
 } 
 
-#if defined(DROPLET_CASE)
+#if defined(JET)
 
-__global__ void gpuInitDropletShape(LBMFields d) {
+__global__ 
+void setJet(
+    LBMFields d
+) {
+    const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
+    const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
+    const idx_t z = 0;
+
+    if (x >= NX || y >= NY) return;
+
+    const float centerX = (NX-1) * 0.5f;
+    const float centerY = (NY-1) * 0.5f;
+
+    const float dx = x-centerX, dy = y-centerY;
+    const float radialDist = sqrtf(dx*dx + dy*dy);
+    const float radius = 0.5f * DIAM;
+    if (radialDist > radius) return;
+
+    const idx_t idx3_in = global3(x,y,z);
+    d.uz[idx3_in] = U_REF;
+    d.phi[idx3_in] = 1.0f;
+}
+
+#elif defined(DROPLET)
+
+__global__ 
+void setDroplet(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
