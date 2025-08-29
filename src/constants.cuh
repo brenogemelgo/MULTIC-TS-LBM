@@ -11,7 +11,7 @@
 
 #if defined(RUN_MODE)
 constexpr int MACRO_SAVE = 100;
-constexpr int NSTEPS = 50000;
+constexpr int NSTEPS = 10000;
 #elif defined(SAMPLE_MODE)
 constexpr int MACRO_SAVE = 100;
 constexpr int NSTEPS = 1000;
@@ -28,11 +28,9 @@ constexpr int NX   = MESH;
 constexpr int NY   = MESH;
 constexpr int NZ   = MESH*2;
 
-constexpr float U_REF  = 0.05f; 
-constexpr int REYNOLDS = 5000; 
-constexpr int WEBER    = 500; 
-
-constexpr float GAMMA = 0.3f * 3.0f; 
+constexpr float U_REF    = 0.05f; 
+constexpr int   REYNOLDS = 5000;     
+constexpr int   WEBER    = 500;  
 
 #elif defined(DROPLET)
 
@@ -43,22 +41,23 @@ constexpr int NX     = MESH;
 constexpr int NY     = MESH;
 constexpr int NZ     = MESH;
 
-constexpr float U_REF  = 0.05f; 
-constexpr int REYNOLDS = 200; 
-constexpr int WEBER    = 4; 
-
-constexpr float GAMMA = 0.15f * 3.0f; 
+constexpr float U_REF    = 0.05f; 
+constexpr int   REYNOLDS = 200;        
+constexpr int   WEBER    = 4; 
     
 #endif 
 
-constexpr float VISC  = (U_REF * DIAM) / REYNOLDS;     
-constexpr float TAU   = 0.5f + 3.0f * VISC;        
-constexpr float SIGMA = (U_REF * U_REF * DIAM) / WEBER; 
+constexpr float VISC_WATER = (U_REF * DIAM) / REYNOLDS; 
+constexpr float VISC_OIL   = 5.0f * VISC_WATER;     
 
-constexpr float CSSQ   = 1.0f / 3.0f;  
-constexpr float OMEGA  = 1.0f / TAU;   
-constexpr float OMCO   = 1.0f - OMEGA; 
-constexpr float CSCO   = 1.0f - CSSQ;  
+constexpr float VISC_REF = VISC_WATER;
+constexpr float OMEGA    = 1.0f / (0.5f + 3.0f * VISC_REF);
+
+constexpr float TAU_REF  = 0.5f + 3.0f * VISC_REF;        
+constexpr float SIGMA    = (U_REF * U_REF * DIAM) / WEBER; 
+
+constexpr float GAMMA = 0.3f * 3.0f; 
+constexpr float CSSQ  = 1.0f / 3.0f;  
 
 #if defined(JET)
 
@@ -67,13 +66,13 @@ constexpr float P        = 3.0f;
 constexpr int   CELLS    = int(NZ/12);      
 static_assert(CELLS > 0, "CELLS must be > 0");
 
-constexpr float SPONGE   = float(CELLS) / float(NZ-1);
-constexpr float Z_START  = float(NZ-1-CELLS) / float(NZ-1);
-constexpr float OMEGA_MAX= 1.0f / ((VISC * (K + 1.0f)) / CSSQ + 0.5f);
-constexpr float OMCO_MAX = 1.0f - OMEGA_MAX; 
+constexpr float SPONGE     = float(CELLS) / float(NZ-1);
+constexpr float Z_START    = float(NZ-1-CELLS) / float(NZ-1);
+constexpr float INV_NZ_M1  = 1.0f / float(NZ-1);
+constexpr float INV_SPONGE = 1.0f / SPONGE;
 
-constexpr float INV_NZ_M1   = 1.0f / float(NZ-1);
-constexpr float INV_SPONGE  = 1.0f / SPONGE;
+constexpr float OMEGA_MAX = 1.0f / ((VISC_REF * (K + 1.0f)) / CSSQ + 0.5f);
+constexpr float OMCO_MAX  = 1.0f - OMEGA_MAX; 
 constexpr float OMEGA_DELTA = OMEGA_MAX - OMEGA; 
 
 #endif

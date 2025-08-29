@@ -484,19 +484,18 @@ void streamCollide(
     d.pxz[idx3] = pxz;   
     d.pyz[idx3] = pyz;
 
-    #if defined(JET)
-    const float omegaLocal = omegaSponge(z);
-    #elif defined(DROPLET)
-    const float omegaLocal = OMEGA;
-    #endif
-    const float omcoLocal = 1.0f - omegaLocal;
-    const float coeffForce = 1.0f - 0.5f * omegaLocal;
+    const float phi = d.phi[idx3]; 
+    const float nuLocal = phi * VISC_OIL + (1.0f-phi) * VISC_WATER;
+    const float omegaPhys = 1.0f / (0.5f + 3.0f * nuLocal);
 
-    // #if defined(D3Q19)
-    // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
-    // #elif defined(D3Q27)
-    // feq = W_0 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz));
-    // #endif
+    #if defined(JET) // mix with sponge
+    const float omegaLocal = fminf(omegaPhys, omegaSponge(z));
+    #elif defined(DROPLET) // no mix
+    float omegaLocal = omegaPhys;
+    #endif
+
+    const float omcoLocal  = 1.0f - omegaLocal;
+    const float coeffForce = 1.0f - 0.5f * omegaLocal;
 
     feq = computeEquilibria(rho,ux,uy,uz,0);
     float forceCorr = computeForceTerm(coeffForce,feq,ux,uy,uz,ffx,ffy,ffz,invRhoCssq,0);
@@ -656,7 +655,7 @@ void advectDiffuse(
     const float uy = d.uy[idx3];
     const float uz = d.uz[idx3];
 
-    d.g[global4(x,y,z,0)] = W_G_1 * phi;
+    d.g[idx3] = W_G_1 * phi;
 
     const float phiNorm = W_G_2 * GAMMA * phi * (1.0f - phi);
     const float multPhi = W_G_2 * phi;

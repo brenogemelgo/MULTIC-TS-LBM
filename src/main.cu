@@ -1,4 +1,4 @@
-#include "deviceUtils.cuh"
+#include "deviceFunctions.cuh"
 #include "init.cuh"
 #include "lbm.cuh"
 #include "bcs.cuh"
