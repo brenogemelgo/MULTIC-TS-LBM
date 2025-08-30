@@ -47,15 +47,31 @@ constexpr int   WEBER    = 4;
     
 #endif 
 
+#define VISC_CONTRAST
+#if defined(VISC_CONTRAST)
+
 constexpr float VISC_WATER = (U_REF * DIAM) / REYNOLDS; 
 constexpr float VISC_OIL   = 5.0f * VISC_WATER;     
 
-constexpr float VISC_REF = VISC_WATER;
-constexpr float OMEGA    = 1.0f / (0.5f + 3.0f * VISC_REF);
+constexpr float VISC_REF = VISC_WATER; 
 
-constexpr float TAU_REF  = 0.5f + 3.0f * VISC_REF;        
-constexpr float SIGMA    = (U_REF * U_REF * DIAM) / WEBER; 
+constexpr float OMEGA_WATER = 1.0f / (0.5f + 3.0f * VISC_WATER);
+constexpr float OMEGA_OIL   = 1.0f / (0.5f + 3.0f * VISC_OIL);
 
+constexpr float OMEGA_REF = OMEGA_WATER;
+
+constexpr float OMCO_ZMIN = 1.0f - OMEGA_OIL;
+
+#else
+
+constexpr float VISC_REF = (U_REF * DIAM) / REYNOLDS;
+constexpr float OMEGA_REF = 1.0f / (0.5f + 3.0f * VISC_REF);
+
+constexpr float OMCO = 1.0f - OMEGA_REF;
+
+#endif
+
+constexpr float SIGMA = (U_REF * U_REF * DIAM) / WEBER; 
 constexpr float GAMMA = 0.3f * 3.0f; 
 constexpr float CSSQ  = 1.0f / 3.0f;  
 
@@ -71,9 +87,9 @@ constexpr float Z_START    = float(NZ-1-CELLS) / float(NZ-1);
 constexpr float INV_NZ_M1  = 1.0f / float(NZ-1);
 constexpr float INV_SPONGE = 1.0f / SPONGE;
 
-constexpr float OMEGA_MAX = 1.0f / ((VISC_REF * (K + 1.0f)) / CSSQ + 0.5f);
-constexpr float OMCO_MAX  = 1.0f - OMEGA_MAX; 
-constexpr float OMEGA_DELTA = OMEGA_MAX - OMEGA; 
+constexpr float OMEGA_ZMAX  = 1.0f / (0.5f + 3.0f * VISC_REF * (K + 1.0f));
+constexpr float OMCO_ZMAX   = 1.0f - OMEGA_ZMAX; 
+constexpr float OMEGA_DELTA = OMEGA_ZMAX - OMEGA_REF; 
 
 #endif
 
