@@ -5,7 +5,7 @@
 #if defined(D_FIELDS)
 
 __global__ 
-void gpuDerivedFields(
+void computeDerived(
     LBMFields lbm, 
     DerivedFields dfields
 ) {

@@ -83,15 +83,16 @@ void copyAndSaveToBinary(
     file.close();
 }
 
-static inline constexpr unsigned div_up(
-    unsigned n, 
-    unsigned d
+__host__ static __forceinline__ constexpr 
+unsigned divUp(
+    unsigned a, 
+    unsigned b
 ) {
-    return (n + d - 1u) / d;
+    return (a + b - 1u) / b;
 }
 
 __host__ __forceinline__ 
-void initDeviceVars() {
+void setDevice() {
     constexpr size_t SIZE =        NX * NY * NZ          * sizeof(float);            
     constexpr size_t F_DIST_SIZE = NX * NY * NZ * FLINKS * sizeof(pop_t);
     constexpr size_t G_DIST_SIZE = NX * NY * NZ * GLINKS * sizeof(float); 

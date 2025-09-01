@@ -17,29 +17,30 @@ int main(int argc, char* argv[]) {
     const std::string SIM_ID       = argv[3];
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-    initDeviceVars();
+    setDevice();
     
-    const dim3 block(32u, 2u, 2u); 
-    const dim3 grid (div_up(static_cast<unsigned>(NX), block.x),
-                     div_up(static_cast<unsigned>(NY), block.y),
-                     div_up(static_cast<unsigned>(NZ), block.z));
+    constexpr dim3 block(32u, 2u, 2u); 
+    constexpr dim3 blockX(32u, 32u, 1u);
+    constexpr dim3 blockY(32u, 32u, 1u);
+    constexpr dim3 blockZ(32u, 32u, 1u);
 
-    const dim3 blockX(32u, 32u, 1u);
-    const dim3 gridX (div_up(static_cast<unsigned>(NY), blockX.x),
-                      div_up(static_cast<unsigned>(NZ), blockX.y),
-                      1u);
+    constexpr dim3 grid(divUp(static_cast<unsigned>(NX), block.x),
+                        divUp(static_cast<unsigned>(NY), block.y),
+                        divUp(static_cast<unsigned>(NZ), block.z));
 
-    const dim3 blockY(32u, 32u, 1u);
-    const dim3 gridY (div_up(static_cast<unsigned>(NX), blockY.x),
-                      div_up(static_cast<unsigned>(NZ), blockY.y),
-                      1u);
+    constexpr dim3 gridX(divUp(static_cast<unsigned>(NY), blockX.x),
+                         divUp(static_cast<unsigned>(NZ), blockX.y),
+                         1u);
 
-    const dim3 blockZ(32u, 32u, 1u);
-    const dim3 gridZ (div_up(static_cast<unsigned>(NX), blockZ.x),
-                      div_up(static_cast<unsigned>(NY), blockZ.y),
-                      1u);
+    constexpr dim3 gridY(divUp(static_cast<unsigned>(NX), blockY.x),
+                         divUp(static_cast<unsigned>(NZ), blockY.y),
+                         1u);
 
-    const size_t dynamic = 0;
+    constexpr dim3 gridZ(divUp(static_cast<unsigned>(NX), blockZ.x),
+                         divUp(static_cast<unsigned>(NY), blockZ.y),
+                         1u);
+
+    constexpr size_t dynamic = 0;
 
     //#define BENCHMARK
 
@@ -96,7 +97,7 @@ int main(int argc, char* argv[]) {
         // ================================================================================= //
 
         #if defined(D_FIELDS)
-        gpuDerivedFields<<<grid, block, dynamic, queue>>>(lbm, dfields);
+        computeDerived<<<grid, block, dynamic, queue>>>(lbm, dfields);
         #endif 
 
         #if !defined(BENCHMARK)
@@ -118,7 +119,7 @@ int main(int argc, char* argv[]) {
             copyAndSaveToBinary(dfields.vorticity_mag, PLANE, SIM_DIR, SIM_ID, STEP, "vorticity_mag");
             copyAndSaveToBinary(dfields.velocity_mag,  PLANE, SIM_DIR, SIM_ID, STEP, "velocity_mag");
             #endif 
-            std::cout << "Step " << STEP << ": Binaries saved in " << SIM_DIR << "\n";
+            std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
 
         }
 

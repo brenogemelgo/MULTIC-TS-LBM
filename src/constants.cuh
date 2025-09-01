@@ -11,7 +11,7 @@
 
 #if defined(RUN_MODE)
 constexpr int MACRO_SAVE = 100;
-constexpr int NSTEPS = 10000;
+constexpr int NSTEPS = 50000;
 #elif defined(SAMPLE_MODE)
 constexpr int MACRO_SAVE = 100;
 constexpr int NSTEPS = 1000;
@@ -22,8 +22,8 @@ constexpr int NSTEPS = 0;
 
 #if defined(JET)
 
-constexpr int MESH = 128;
-constexpr int DIAM = 20; 
+constexpr int MESH = 64;
+constexpr int DIAM = 10; 
 constexpr int NX   = MESH;
 constexpr int NY   = MESH;
 constexpr int NZ   = MESH*2;
@@ -34,8 +34,8 @@ constexpr int   WEBER    = 500;
 
 #elif defined(DROPLET)
 
-constexpr int MESH   = 64;
-constexpr int RADIUS = 10; 
+constexpr int MESH   = 128;
+constexpr int RADIUS = 20; 
 constexpr int DIAM   = 2 * RADIUS;
 constexpr int NX     = MESH;
 constexpr int NY     = MESH;
@@ -47,11 +47,11 @@ constexpr int   WEBER    = 4;
     
 #endif 
 
-#define VISC_CONTRAST
+//#define VISC_CONTRAST
 #if defined(VISC_CONTRAST)
 
 constexpr float VISC_WATER = (U_REF * DIAM) / REYNOLDS; 
-constexpr float VISC_OIL   = 5.0f * VISC_WATER;     
+constexpr float VISC_OIL   = 10.0f * VISC_WATER;     
 
 constexpr float VISC_REF = VISC_WATER; 
 
@@ -67,7 +67,7 @@ constexpr float OMCO_ZMIN = 1.0f - OMEGA_OIL;
 constexpr float VISC_REF = (U_REF * DIAM) / REYNOLDS;
 constexpr float OMEGA_REF = 1.0f / (0.5f + 3.0f * VISC_REF);
 
-constexpr float OMCO = 1.0f - OMEGA_REF;
+constexpr float OMCO_ZMIN = 1.0f - OMEGA_REF;
 
 #endif
 

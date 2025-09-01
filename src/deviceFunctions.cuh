@@ -81,7 +81,7 @@ float omegaSponge(
     float s  = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
     float s2 = s * s;
     float ramp = s2 * s;
-    return fmaf(ramp, OMEGA_DELTA, OMEGA);
+    return fmaf(ramp, OMEGA_DELTA, OMEGA_REF);
 }
 
 #endif
