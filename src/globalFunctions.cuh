@@ -13,10 +13,10 @@ struct LBMFields {
     float *pxy; 
     float *pxz; 
     float *pyz;
-    float *ind; 
     float *normx; 
     float *normy; 
     float *normz;
+    float *ind; 
     float *ffx;
     float *ffy; 
     float *ffz;
@@ -35,52 +35,33 @@ DerivedFields dfields;
 
 __device__ __forceinline__ 
 idx_t global3(
-    const int x, 
-    const int y, 
-    const int z
+    const idx_t x, 
+    const idx_t y, 
+    const idx_t z
 ) {
     return x + y * NX + z * STRIDE;
 }
 
 __device__ __forceinline__ 
 idx_t global4(
-    const int x, 
-    const int y, 
-    const int z, 
-    const int Q
+    const idx_t x, 
+    const idx_t y, 
+    const idx_t z, 
+    const idx_t Q
 ) {
     return Q * PLANE + global3(x,y,z);
-}
-
-__device__ __forceinline__ 
-idx_t shared3(
-    const int tx, 
-    const int ty, 
-    const int tz
-) {
-    return tx + ty * TILE_X + tz * TILE_X * TILE_Y;
-}
-
-__device__ __forceinline__ 
-float smoothstep(
-    float edge0, 
-    float edge1, 
-    float x
-) {
-    x = __saturatef((x - edge0) / (edge1 - edge0));
-    return x * x * (3.0f - 2.0f * x);
 }
 
 #if defined(JET)
 
 __device__ __forceinline__ 
 float omegaSponge(
-    int z
+    const idx_t z
 ) {
-    float zn = __int2float_rn(z) * INV_NZ_M1;
-    float s  = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
-    float s2 = s * s;
-    float ramp = s2 * s;
+    const float zn = static_cast<float>(z) * INV_NZ_M1;
+    const float s  = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
+    const float s2 = s * s;
+    const float ramp = s2 * s;
     return fmaf(ramp, OMEGA_DELTA, OMEGA_REF);
 }
 
@@ -92,7 +73,7 @@ float computeEquilibria(
     const float ux, 
     const float uy, 
     const float uz, 
-    const int Q
+    const idx_t Q
 ) {
     const float uu = 1.5f * (ux*ux + uy*uy + uz*uz);
     #if defined(D3Q19)
@@ -109,7 +90,7 @@ float computeTruncatedEquilibria(
     const float ux, 
     const float uy, 
     const float uz, 
-    const int Q
+    const idx_t Q
 ) {
     const float cu = 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]);
     return W_G[Q] * density * (1.0f + cu);
@@ -126,7 +107,7 @@ float computeNonEquilibria(
     const float ux, 
     const float uy, 
     const float uz, 
-    const int Q
+    const idx_t Q
 ) {
     #if defined(D3Q19)
         return (W[Q] * 4.5f) * ((CIX[Q]*CIX[Q] - CSSQ) * PXX + 
@@ -173,7 +154,7 @@ float computeForceTerm(
     const float ffy, 
     const float ffz, 
     const float aux, 
-    const int Q
+    const idx_t Q
 ) {
     #if defined(D3Q19)
         return coeff * feq * ((CIX[Q] - ux) * ffx +
@@ -187,12 +168,12 @@ float computeForceTerm(
     #endif 
 }
 
-template<typename T, int... Qs>
+template<typename T, idx_t... Qs>
 __device__ __forceinline__
 void copyDirs(
     T* __restrict__ arr, 
-    idx_t dst, 
-    idx_t src
+    const idx_t dst, 
+    const idx_t src
 ) {
     ((arr[Qs*PLANE+dst] = arr[Qs*PLANE+src]), ...);
 }

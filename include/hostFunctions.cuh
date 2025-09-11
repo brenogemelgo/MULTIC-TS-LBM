@@ -58,7 +58,7 @@ void copyAndSaveToBinary(
     const float* d_data,
     const size_t SIZE,
     const std::string& SIM_DIR,   
-    const std::string& ID,        
+    [[maybe_unused]] const std::string& ID,        
     const int STEP,
     const std::string& VAR_NAME
 ) {
@@ -79,23 +79,104 @@ void copyAndSaveToBinary(
         std::cerr << "Error opening file " << OUT_PATH.string() << " for writing." << std::endl;
         return;
     }
-    file.write(reinterpret_cast<const char*>(host_data.data()), host_data.size() * sizeof(float));
+    file.write(reinterpret_cast<const char*>(host_data.data()), static_cast<std::streamsize>(host_data.size() * sizeof(float)));
     file.close();
+}
+
+__host__ __forceinline__
+void printCudaMemUsage(const char* tag = nullptr, bool reset_baseline = false) {
+    int dev = -1;
+    cudaGetDevice(&dev);
+
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, dev);
+
+    static size_t baseline_free  = 0;
+    static size_t baseline_total = 0;
+    static bool   baseline_set   = false;
+
+    size_t freeB = 0, totalB = 0;
+    cudaMemGetInfo(&freeB, &totalB);
+
+    if (reset_baseline || !baseline_set) {
+        baseline_free  = freeB;
+        baseline_total = totalB; 
+        baseline_set   = true;
+    }
+
+    const size_t used_now   = totalB - freeB;
+    const size_t used_base  = baseline_total - baseline_free;
+    const size_t delta_used = (used_now >= used_base) ? (used_now - used_base) : 0;
+
+    auto toMiB = [](size_t b) -> double { return double(b) / (1024.0 * 1024.0); };
+    auto toGiB = [](size_t b) -> double { return double(b) / (1024.0 * 1024.0 * 1024.0); };
+
+    std::printf(
+        "\n[CUDA MEM] dev=%d (%s)%s\n"
+        "  total:  %12zu B  (%.2f MiB, %.2f GiB)\n"
+        "  free:   %12zu B  (%.2f MiB, %.2f GiB)\n"
+        "  used:   %12zu B  (%.2f MiB, %.2f GiB)\n"
+        "  delta:  %12zu B  (%.2f MiB, %.2f GiB)  %s\n",
+        dev, prop.name, tag ? tag : "",
+        totalB, toMiB(totalB), toGiB(totalB),
+        freeB,  toMiB(freeB),  toGiB(freeB),
+        used_now, toMiB(used_now), toGiB(used_now),
+        delta_used, toMiB(delta_used), toGiB(delta_used),
+        reset_baseline ? "[baseline reset]" : ""
+    );
+}
+
+__host__ __forceinline__
+void printCudaMemUsageLight(const char* tag = nullptr, bool reset_baseline = false) {
+    int dev = -1;
+    cudaGetDevice(&dev);
+
+    static size_t baseline_free  = 0;
+    static size_t baseline_total = 0;
+    static bool   baseline_set   = false;
+
+    size_t freeB = 0, totalB = 0;
+    cudaMemGetInfo(&freeB, &totalB);
+
+    if (reset_baseline || !baseline_set) {
+        baseline_free  = freeB;
+        baseline_total = totalB;
+        baseline_set   = true;
+    }
+
+    const size_t used_now   = totalB - freeB;
+    const size_t used_base  = baseline_total - baseline_free;
+    const size_t delta_used = (used_now >= used_base) ? (used_now - used_base) : 0;
+
+    auto toMiB = [](size_t b) -> double { return double(b) / (1024.0 * 1024.0); };
+
+    std::printf("[CUDA MEM] %s  used=%.2f MiB  delta=%.2f MiB%s\n",
+        tag ? tag : "",
+        toMiB(used_now),
+        toMiB(delta_used),
+        reset_baseline ? " [baseline reset]" : ""
+    );
 }
 
 __host__ static __forceinline__ constexpr 
 unsigned divUp(
-    unsigned a, 
-    unsigned b
+    const unsigned a, 
+    const unsigned b
 ) {
     return (a + b - 1u) / b;
 }
 
 __host__ __forceinline__ 
 void setDevice() {
-    constexpr size_t SIZE =        NX * NY * NZ          * sizeof(float);            
-    constexpr size_t F_DIST_SIZE = NX * NY * NZ * FLINKS * sizeof(pop_t);
-    constexpr size_t G_DIST_SIZE = NX * NY * NZ * GLINKS * sizeof(float); 
+    constexpr size_t NCELLS = static_cast<size_t>(NX) * static_cast<size_t>(NY) * static_cast<size_t>(NZ);
+    constexpr size_t SIZE        = NCELLS * sizeof(float);            
+    constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
+    constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(GLINKS) * sizeof(float); 
+
+    static_assert(NCELLS > 0, "Empty grid?");
+    static_assert(SIZE / sizeof(float) == NCELLS, "SIZE overflow");
+    static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(FLINKS), "F_DIST_SIZE overflow");
+    static_assert(G_DIST_SIZE / sizeof(float) == NCELLS * size_t(GLINKS), "G_DIST_SIZE overflow");
 
     checkCudaErrors(cudaMalloc(&lbm.rho,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ux,    SIZE));
@@ -109,13 +190,15 @@ void setDevice() {
     checkCudaErrors(cudaMalloc(&lbm.pyz,   SIZE));
 
     checkCudaErrors(cudaMalloc(&lbm.phi,   SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.ind,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normx, SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normy, SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normz, SIZE));
+    #if !defined(LESS_POINTERS)
+    checkCudaErrors(cudaMalloc(&lbm.ind,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ffx,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ffy,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ffz,   SIZE));
+    #endif
 
     checkCudaErrors(cudaMalloc(&lbm.f,     F_DIST_SIZE));
     checkCudaErrors(cudaMalloc(&lbm.g,     G_DIST_SIZE));
@@ -126,7 +209,7 @@ void setDevice() {
     checkCudaErrors(cudaMalloc(&dfields.pressure,      SIZE));
     #endif 
 
-    getLastCudaError("initDeviceVars: post-initialization");
+    getLastCudaErrorOutline("initDeviceVars: post-initialization");
 }
 
 

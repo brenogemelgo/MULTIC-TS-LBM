@@ -1,5 +1,7 @@
 #pragma once
 
+#if !defined(LESS_POINTERS)
+
 __global__ 
 void computePhase(
     LBMFields d
@@ -15,7 +17,14 @@ void computePhase(
 
     const idx_t idx3 = global3(x,y,z);
 
-    const float phi = d.g[idx3] + d.g[PLANE+idx3] + d.g[PLANE2+idx3] + d.g[PLANE3+idx3] + d.g[PLANE4+idx3] + d.g[PLANE5+idx3] + d.g[PLANE6+idx3];
+    const float phi = d.g[idx3] + 
+                      d.g[PLANE+idx3] + 
+                      d.g[PLANE2+idx3] + 
+                      d.g[PLANE3+idx3] + 
+                      d.g[PLANE4+idx3] + 
+                      d.g[PLANE5+idx3] + 
+                      d.g[PLANE6+idx3];
+                      
     d.phi[idx3] = phi;
 }
 
@@ -34,38 +43,72 @@ void computeNormals(
 
     const idx_t idx3 = global3(x,y,z);
 
-    float sumGradX = W_1 * (d.phi[global3(x+1,y,z)]   - d.phi[global3(x-1,y,z)])  +
-                     W_2 * (d.phi[global3(x+1,y+1,z)] - d.phi[global3(x-1,y-1,z)] +
-                            d.phi[global3(x+1,y,z+1)] - d.phi[global3(x-1,y,z-1)] +
-                            d.phi[global3(x+1,y-1,z)] - d.phi[global3(x-1,y+1,z)] +
-                            d.phi[global3(x+1,y,z-1)] - d.phi[global3(x-1,y,z+1)]);
+    const idx_t xp1 = idx3 + 1;
+    const idx_t xm1 = idx3 - 1;
+    const idx_t yp1 = idx3 + NX;
+    const idx_t ym1 = idx3 - NX;
+    const idx_t zp1 = idx3 + STRIDE;
+    const idx_t zm1 = idx3 - STRIDE;
 
-    float sumGradY = W_1 * (d.phi[global3(x,y+1,z)]   - d.phi[global3(x,y-1,z)])  +
-                     W_2 * (d.phi[global3(x+1,y+1,z)] - d.phi[global3(x-1,y-1,z)] +
-                            d.phi[global3(x,y+1,z+1)] - d.phi[global3(x,y-1,z-1)] +
-                            d.phi[global3(x-1,y+1,z)] - d.phi[global3(x+1,y-1,z)] +
-                            d.phi[global3(x,y+1,z-1)] - d.phi[global3(x,y-1,z+1)]);
+    const idx_t xp1yp1 = xp1 + NX;
+    const idx_t xm1ym1 = xm1 - NX;
+    const idx_t xp1ym1 = xp1 - NX;
+    const idx_t xm1yp1 = xm1 + NX;
 
-    float sumGradZ = W_1 * (d.phi[global3(x,y,z+1)]   - d.phi[global3(x,y,z-1)])  +
-                     W_2 * (d.phi[global3(x+1,y,z+1)] - d.phi[global3(x-1,y,z-1)] +
-                            d.phi[global3(x,y+1,z+1)] - d.phi[global3(x,y-1,z-1)] +
-                            d.phi[global3(x-1,y,z+1)] - d.phi[global3(x+1,y,z-1)] +
-                            d.phi[global3(x,y-1,z+1)] - d.phi[global3(x,y+1,z-1)]);
+    const idx_t xp1zp1 = xp1 + STRIDE;
+    const idx_t xm1zm1 = xm1 - STRIDE;
+    const idx_t xp1zm1 = xp1 - STRIDE;
+    const idx_t xm1zp1 = xm1 + STRIDE;
+
+    const idx_t yp1zp1 = yp1 + STRIDE;
+    const idx_t ym1zm1 = ym1 - STRIDE;
+    const idx_t yp1zm1 = yp1 - STRIDE;
+    const idx_t ym1zp1 = ym1 + STRIDE;
+
+
+    float sumGradX = W_1 * (d.phi[xp1] - d.phi[xm1]) +
+                     W_2 * ((d.phi[xp1yp1] - d.phi[xm1ym1]) +
+                            (d.phi[xp1zp1] - d.phi[xm1zm1]) +
+                            (d.phi[xp1ym1] - d.phi[xm1yp1]) +
+                            (d.phi[xp1zm1] - d.phi[xm1zp1]));
+
+    float sumGradY = W_1 * (d.phi[yp1] - d.phi[ym1]) +
+                     W_2 * ((d.phi[xp1yp1] - d.phi[xm1ym1]) +
+                            (d.phi[yp1zp1] - d.phi[ym1zm1]) +
+                            (d.phi[xm1yp1] - d.phi[xp1ym1]) +
+                            (d.phi[yp1zm1] - d.phi[ym1zp1]));
+
+    float sumGradZ = W_1 * (d.phi[zp1] - d.phi[zm1]) +
+                     W_2 * ((d.phi[xp1zp1] - d.phi[xm1zm1]) +
+                            (d.phi[yp1zp1] - d.phi[ym1zm1]) +
+                            (d.phi[xm1zp1] - d.phi[xp1zm1]) +
+                            (d.phi[ym1zp1] - d.phi[yp1zm1]));
+
     #if defined(D3Q27)
-    sumGradX += W_3 * (d.phi[global3(x+1,y+1,z+1)] - d.phi[global3(x-1,y-1,z-1)] +
-                       d.phi[global3(x+1,y+1,z-1)] - d.phi[global3(x-1,y-1,z+1)] +
-                       d.phi[global3(x+1,y-1,z+1)] - d.phi[global3(x-1,y+1,z-1)] +
-                       d.phi[global3(x+1,y-1,z-1)] - d.phi[global3(x-1,y+1,z+1)]);
+    const idx_t xp1yp1zp1 = xp1yp1 + STRIDE;
+    const idx_t xm1ym1zm1 = xm1ym1 - STRIDE;
+    const idx_t xp1yp1zm1 = xp1yp1 - STRIDE;
+    const idx_t xm1ym1zp1 = xm1ym1 + STRIDE;
 
-    sumGradY += W_3 * (d.phi[global3(x+1,y+1,z+1)] - d.phi[global3(x-1,y-1,z-1)] +
-                       d.phi[global3(x+1,y+1,z-1)] - d.phi[global3(x-1,y-1,z+1)] +
-                       d.phi[global3(x-1,y+1,z-1)] - d.phi[global3(x+1,y-1,z+1)] +
-                       d.phi[global3(x-1,y+1,z+1)] - d.phi[global3(x+1,y-1,z-1)]);
+    const idx_t xp1ym1zp1 = xp1ym1 + STRIDE;
+    const idx_t xm1yp1zm1 = xm1yp1 - STRIDE;
+    const idx_t xp1ym1zm1 = xp1ym1 - STRIDE;
+    const idx_t xm1yp1zp1 = xm1yp1 + STRIDE;
+    
+    sumGradX += W_3 * ((d.phi[xp1yp1zp1] - d.phi[xm1ym1zm1]) +
+                       (d.phi[xp1yp1zm1] - d.phi[xm1ym1zp1]) +
+                       (d.phi[xp1ym1zp1] - d.phi[xm1yp1zm1]) +
+                       (d.phi[xp1ym1zm1] - d.phi[xm1yp1zp1]));
 
-    sumGradZ += W_3 * (d.phi[global3(x+1,y+1,z+1)] - d.phi[global3(x-1,y-1,z-1)] +
-                       d.phi[global3(x-1,y-1,z+1)] - d.phi[global3(x+1,y+1,z-1)] +
-                       d.phi[global3(x+1,y-1,z+1)] - d.phi[global3(x-1,y+1,z-1)] +
-                       d.phi[global3(x-1,y+1,z+1)] - d.phi[global3(x+1,y-1,z-1)]);
+    sumGradY += W_3 * ((d.phi[xp1yp1zp1] - d.phi[xm1ym1zm1]) +
+                       (d.phi[xp1yp1zm1] - d.phi[xm1ym1zp1]) +
+                       (d.phi[xm1yp1zm1] - d.phi[xp1ym1zp1]) +
+                       (d.phi[xm1yp1zp1] - d.phi[xp1ym1zm1]));
+
+    sumGradZ += W_3 * ((d.phi[xp1yp1zp1] - d.phi[xm1ym1zm1]) +
+                       (d.phi[xm1ym1zp1] - d.phi[xp1yp1zm1]) +
+                       (d.phi[xp1ym1zp1] - d.phi[xm1yp1zm1]) +
+                       (d.phi[xm1yp1zp1] - d.phi[xp1ym1zm1]));
     #endif 
         
     const float gradX = 3.0f * sumGradX;
@@ -74,6 +117,7 @@ void computeNormals(
     
     const float ind = sqrtf(gradX*gradX + gradY*gradY + gradZ*gradZ);
     const float invInd = 1.0f / (ind + 1e-9f);
+
     const float normX = gradX * invInd;
     const float normY = gradY * invInd;
     const float normZ = gradZ * invInd;
@@ -99,50 +143,77 @@ void computeForces(
 
     const idx_t idx3 = global3(x,y,z);
 
-    const float normX = d.normx[idx3];
-    const float normY = d.normy[idx3];
-    const float normZ = d.normz[idx3];
-    const float ind = d.ind[idx3];
+    const idx_t xp1 = idx3 + 1;
+    const idx_t xm1 = idx3 - 1;
+    const idx_t yp1 = idx3 + NX;
+    const idx_t ym1 = idx3 - NX;
+    const idx_t zp1 = idx3 + STRIDE;
+    const idx_t zm1 = idx3 - STRIDE;
 
-    float sumCurvX = W_1 * (d.normx[global3(x+1,y,z)]   - d.normx[global3(x-1,y,z)])  +
-                     W_2 * (d.normx[global3(x+1,y+1,z)] - d.normx[global3(x-1,y-1,z)] +
-                            d.normx[global3(x+1,y,z+1)] - d.normx[global3(x-1,y,z-1)] +
-                            d.normx[global3(x+1,y-1,z)] - d.normx[global3(x-1,y+1,z)] +
-                            d.normx[global3(x+1,y,z-1)] - d.normx[global3(x-1,y,z+1)]);
+    const idx_t xp1yp1 = xp1 + NX;
+    const idx_t xm1ym1 = xm1 - NX;
+    const idx_t xp1ym1 = xp1 - NX;
+    const idx_t xm1yp1 = xm1 + NX;
 
-    float sumCurvY = W_1 * (d.normy[global3(x,y+1,z)]   - d.normy[global3(x,y-1,z)])  +
-                     W_2 * (d.normy[global3(x+1,y+1,z)] - d.normy[global3(x-1,y-1,z)] +
-                            d.normy[global3(x,y+1,z+1)] - d.normy[global3(x,y-1,z-1)] +
-                            d.normy[global3(x-1,y+1,z)] - d.normy[global3(x+1,y-1,z)] +
-                            d.normy[global3(x,y+1,z-1)] - d.normy[global3(x,y-1,z+1)]);
+    const idx_t xp1zp1 = xp1 + STRIDE;
+    const idx_t xm1zm1 = xm1 - STRIDE;
+    const idx_t xp1zm1 = xp1 - STRIDE;
+    const idx_t xm1zp1 = xm1 + STRIDE;
 
-    float sumCurvZ = W_1 * (d.normz[global3(x,y,z+1)]   - d.normz[global3(x,y,z-1)])  +
-                     W_2 * (d.normz[global3(x+1,y,z+1)] - d.normz[global3(x-1,y,z-1)] +
-                            d.normz[global3(x,y+1,z+1)] - d.normz[global3(x,y-1,z-1)] +
-                            d.normz[global3(x-1,y,z+1)] - d.normz[global3(x+1,y,z-1)] +
-                            d.normz[global3(x,y-1,z+1)] - d.normz[global3(x,y+1,z-1)]);
+    const idx_t yp1zp1 = yp1 + STRIDE;
+    const idx_t ym1zm1 = ym1 - STRIDE;
+    const idx_t yp1zm1 = yp1 - STRIDE;
+    const idx_t ym1zp1 = ym1 + STRIDE;
+
+    float sumCurvX = W_1 * (d.normx[xp1] - d.normx[xm1]) +
+                     W_2 * (d.normx[xp1yp1] - d.normx[xm1ym1] +
+                            d.normx[xp1zp1] - d.normx[xm1zm1] +
+                            d.normx[xp1ym1] - d.normx[xm1yp1] +
+                            d.normx[xp1zm1] - d.normx[xm1zp1]);
+
+    float sumCurvY = W_1 * (d.normy[yp1] - d.normy[ym1]) +
+                     W_2 * (d.normy[xp1yp1] - d.normy[xm1ym1] +
+                            d.normy[yp1zp1] - d.normy[ym1zm1] +
+                            d.normy[xm1yp1] - d.normy[xp1ym1] +
+                            d.normy[yp1zm1] - d.normy[ym1zp1]);
+
+    float sumCurvZ = W_1 * (d.normz[zp1] - d.normz[zm1]) +
+                     W_2 * (d.normz[xp1zp1] - d.normz[xm1zm1] +
+                            d.normz[yp1zp1] - d.normz[ym1zm1] +
+                            d.normz[xm1zp1] - d.normz[xp1zm1] +
+                            d.normz[ym1zp1] - d.normz[yp1zm1]);
     #if defined(D3Q27)
-    sumCurvX += W_3 * (d.normx[global3(x+1,y+1,z+1)] - d.normx[global3(x-1,y-1,z-1)] +
-                       d.normx[global3(x+1,y+1,z-1)] - d.normx[global3(x-1,y-1,z+1)] +
-                       d.normx[global3(x+1,y-1,z+1)] - d.normx[global3(x-1,y+1,z-1)] +
-                       d.normx[global3(x+1,y-1,z-1)] - d.normx[global3(x-1,y+1,z+1)]);
+    const idx_t xp1yp1zp1 = xp1yp1 + STRIDE;
+    const idx_t xm1ym1zm1 = xm1ym1 - STRIDE;
+    const idx_t xp1yp1zm1 = xp1yp1 - STRIDE;
+    const idx_t xm1ym1zp1 = xm1ym1 + STRIDE;
 
-    sumCurvY += W_3 * (d.normy[global3(x+1,y+1,z+1)] - d.normy[global3(x-1,y-1,z-1)] +
-                       d.normy[global3(x+1,y+1,z-1)] - d.normy[global3(x-1,y-1,z+1)] +
-                       d.normy[global3(x-1,y+1,z-1)] - d.normy[global3(x+1,y-1,z+1)] +
-                       d.normy[global3(x-1,y+1,z+1)] - d.normy[global3(x+1,y-1,z-1)]);
+    const idx_t xp1ym1zp1 = xp1ym1 + STRIDE;
+    const idx_t xm1yp1zm1 = xm1yp1 - STRIDE;
+    const idx_t xp1ym1zm1 = xp1ym1 - STRIDE;
+    const idx_t xm1yp1zp1 = xm1yp1 + STRIDE;
 
-    sumCurvZ += W_3 * (d.normz[global3(x+1,y+1,z+1)] - d.normz[global3(x-1,y-1,z-1)] +
-                       d.normz[global3(x-1,y-1,z+1)] - d.normz[global3(x+1,y+1,z-1)] +
-                       d.normz[global3(x+1,y-1,z+1)] - d.normz[global3(x-1,y+1,z-1)] +
-                       d.normz[global3(x-1,y+1,z+1)] - d.normz[global3(x+1,y-1,z-1)]);
+    sumCurvX += W_3 * (d.normx[xp1yp1zp1] - d.normx[xm1ym1zm1] +
+                       d.normx[xp1yp1zm1] - d.normx[xm1ym1zp1] +
+                       d.normx[xp1ym1zp1] - d.normx[xm1yp1zm1] +
+                       d.normx[xp1ym1zm1] - d.normx[xm1yp1zp1]);
+
+    sumCurvY += W_3 * (d.normy[xp1yp1zp1] - d.normy[xm1ym1zm1] +
+                       d.normy[xp1yp1zm1] - d.normy[xm1ym1zp1] +
+                       d.normy[xm1yp1zm1] - d.normy[xp1ym1zp1] +
+                       d.normy[xm1yp1zp1] - d.normy[xp1ym1zm1]);
+
+    sumCurvZ += W_3 * (d.normz[xp1yp1zp1] - d.normz[xm1ym1zm1] +
+                       d.normz[xm1ym1zp1] - d.normz[xp1yp1zm1] +
+                       d.normz[xp1ym1zp1] - d.normz[xm1yp1zm1] +
+                       d.normz[xm1yp1zp1] - d.normz[xp1ym1zm1]);
     #endif 
     float curvature = -3.0f * (sumCurvX + sumCurvY + sumCurvZ);   
 
-    const float stCurv = SIGMA * curvature;
-    d.ffx[idx3] = stCurv * normX * ind;
-    d.ffy[idx3] = stCurv * normY * ind;
-    d.ffz[idx3] = stCurv * normZ * ind;
+    const float stCurv = SIGMA * curvature * d.ind[idx3];
+    d.ffx[idx3] = stCurv * d.normx[idx3];
+    d.ffy[idx3] = stCurv * d.normy[idx3];
+    d.ffz[idx3] = stCurv * d.normz[idx3];
 }
 
 __global__ 
@@ -159,35 +230,35 @@ void streamCollide(
         z == 0 || z == NZ-1) return;
 
     const idx_t idx3 = global3(x,y,z);
-        
-    const float pop0  = from_pop(d.f[idx3]);         // 0
-    const float pop1  = from_pop(d.f[PLANE+idx3]);   // 1
-    const float pop2  = from_pop(d.f[PLANE2+idx3]);  // 2
-    const float pop3  = from_pop(d.f[PLANE3+idx3]);  // 3
-    const float pop4  = from_pop(d.f[PLANE4+idx3]);  // 4
-    const float pop5  = from_pop(d.f[PLANE5+idx3]);  // 5 
-    const float pop6  = from_pop(d.f[PLANE6+idx3]);  // 6
-    const float pop7  = from_pop(d.f[PLANE7+idx3]);  // 7
-    const float pop8  = from_pop(d.f[PLANE8+idx3]);  // 8
-    const float pop9  = from_pop(d.f[PLANE9+idx3]);  // 9
-    const float pop10 = from_pop(d.f[PLANE10+idx3]); // 10
-    const float pop11 = from_pop(d.f[PLANE11+idx3]); // 11
-    const float pop12 = from_pop(d.f[PLANE12+idx3]); // 12
-    const float pop13 = from_pop(d.f[PLANE13+idx3]); // 13
-    const float pop14 = from_pop(d.f[PLANE14+idx3]); // 14
-    const float pop15 = from_pop(d.f[PLANE15+idx3]); // 15
-    const float pop16 = from_pop(d.f[PLANE16+idx3]); // 16
-    const float pop17 = from_pop(d.f[PLANE17+idx3]); // 17
-    const float pop18 = from_pop(d.f[PLANE18+idx3]); // 18
+
+    const float pop0 = from_pop(d.f[idx3]);         
+    const float pop1 = from_pop(d.f[PLANE+idx3]);   
+    const float pop2 = from_pop(d.f[PLANE2+idx3]);  
+    const float pop3 = from_pop(d.f[PLANE3+idx3]);  
+    const float pop4 = from_pop(d.f[PLANE4+idx3]);  
+    const float pop5 = from_pop(d.f[PLANE5+idx3]);  
+    const float pop6 = from_pop(d.f[PLANE6+idx3]);  
+    const float pop7 = from_pop(d.f[PLANE7+idx3]);  
+    const float pop8 = from_pop(d.f[PLANE8+idx3]);  
+    const float pop9 = from_pop(d.f[PLANE9+idx3]);  
+    const float pop10 = from_pop(d.f[PLANE10+idx3]);
+    const float pop11 = from_pop(d.f[PLANE11+idx3]);
+    const float pop12 = from_pop(d.f[PLANE12+idx3]); 
+    const float pop13 = from_pop(d.f[PLANE13+idx3]); 
+    const float pop14 = from_pop(d.f[PLANE14+idx3]);
+    const float pop15 = from_pop(d.f[PLANE15+idx3]); 
+    const float pop16 = from_pop(d.f[PLANE16+idx3]); 
+    const float pop17 = from_pop(d.f[PLANE17+idx3]);
+    const float pop18 = from_pop(d.f[PLANE18+idx3]); 
     #if defined(D3Q27)
-    const float pop19 = from_pop(d.f[PLANE19+idx3]); // 19
-    const float pop20 = from_pop(d.f[PLANE20+idx3]); // 20
-    const float pop21 = from_pop(d.f[PLANE21+idx3]); // 21
-    const float pop22 = from_pop(d.f[PLANE22+idx3]); // 22
-    const float pop23 = from_pop(d.f[PLANE23+idx3]); // 23
-    const float pop24 = from_pop(d.f[PLANE24+idx3]); // 24
-    const float pop25 = from_pop(d.f[PLANE25+idx3]); // 25 
-    const float pop26 = from_pop(d.f[PLANE26+idx3]); // 26
+    const float pop19 = from_pop(d.f[PLANE19+idx3]); 
+    const float pop20 = from_pop(d.f[PLANE20+idx3]); 
+    const float pop21 = from_pop(d.f[PLANE21+idx3]); 
+    const float pop22 = from_pop(d.f[PLANE22+idx3]); 
+    const float pop23 = from_pop(d.f[PLANE23+idx3]); 
+    const float pop24 = from_pop(d.f[PLANE24+idx3]);
+    const float pop25 = from_pop(d.f[PLANE25+idx3]);
+    const float pop26 = from_pop(d.f[PLANE26+idx3]); 
     #endif 
 
     float rho = pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18;
@@ -197,11 +268,12 @@ void streamCollide(
     rho += 1.0f; 
     d.rho[idx3] = rho;
 
-    const float invRho = 1.0f / rho;
     const float ffx = d.ffx[idx3];
     const float ffy = d.ffy[idx3];
     const float ffz = d.ffz[idx3];
 
+    const float invRho = 1.0f / rho;
+    
     #if defined(D3Q19)
     float ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16);
     float uy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18);
@@ -221,9 +293,6 @@ void streamCollide(
     d.uz[idx3] = uz;
 
     const float invRhoCssq = 3.0f * invRho;
-
-    // NOTE: weight compensation piggybacks on the LAST contrib of each diagonal.
-    // if order changes, move/revisit this!
 
     #if defined(D3Q19)
     float feq = W_1 * rho * (1.0f - 1.5f*(ux*ux + uy*uy + uz*uz) + 3.0f*ux + 4.5f*ux*ux);
@@ -486,23 +555,27 @@ void streamCollide(
 
     #if defined(VISC_CONTRAST)
 
-    const float phi = d.phi[idx3]; 
-    const float nuLocal = phi * VISC_OIL + (1.0f-phi) * VISC_WATER;
-    const float omegaPhys = 1.0f / (0.5f + 3.0f * nuLocal);
+        float nuLocal;
+        {
+            const float phi = d.phi[idx3]; 
+            nuLocal = fmaf(phi, (VISC_OIL - VISC_WATER), VISC_WATER);
+        }
 
-    #if defined(JET) 
-    const float omegaLocal = fminf(omegaPhys, omegaSponge(z));
-    #elif defined(DROPLET) 
-    const float omegaLocal = omegaPhys;
-    #endif
+        const float omegaPhys = 1.0f / (0.5f + 3.0f * nuLocal);
+
+        #if defined(JET) 
+            const float omegaLocal = fminf(omegaPhys, omegaSponge(z));
+        #elif defined(DROPLET) 
+            const float omegaLocal = omegaPhys;
+        #endif
 
     #else
 
-    #if defined(JET)
-    const float omegaLocal = omegaSponge(z);
-    #elif defined(DROPLET)
-    const float omegaLocal = OMEGA_REF;
-    #endif
+        #if defined(JET)
+            const float omegaLocal = omegaSponge(z);
+        #elif defined(DROPLET)
+            const float omegaLocal = OMEGA_REF;
+        #endif
 
     #endif
 
@@ -645,55 +718,40 @@ void streamCollide(
     fneqReg = computeNonEquilibria(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz,26);
     d.f[global4(x+1,y-1,z-1,26)] = to_pop(feq + omcoLocal * fneqReg + forceCorr);
     #endif 
-}
 
-__global__ 
-void advectDiffuse(
-    LBMFields d
-) {
-    const int x = threadIdx.x + blockIdx.x * blockDim.x;
-    const int y = threadIdx.y + blockIdx.y * blockDim.y;
-    const int z = threadIdx.z + blockIdx.z * blockDim.z;
-
-    if (x >= NX || y >= NY || z >= NZ || 
-        x == 0 || x == NX-1 || 
-        y == 0 || y == NY-1 || 
-        z == 0 || z == NZ-1) return;
-        
-    const idx_t idx3 = global3(x,y,z);
-
-    const float phi = d.phi[idx3];
-    const float ux = d.ux[idx3];
-    const float uy = d.uy[idx3];
-    const float uz = d.uz[idx3];
+    #if !defined(VISC_CONTRAST)
+        const float phi = d.phi[idx3];
+    #endif
 
     d.g[idx3] = W_G_1 * phi;
 
-    const float phiNorm = W_G_2 * GAMMA * phi * (1.0f - phi);
+    const float phiNorm = (W_G_2 * GAMMA) * phi * (1.0f - phi);
     const float multPhi = W_G_2 * phi;
     const float a3 = 3.0f * multPhi;
 
-    float geq = multPhi + a3 * ux;
-    float antiDiff = phiNorm * d.normx[idx3];
-    d.g[global4(x+1,y,z,1)] = geq + antiDiff;
+    feq = multPhi + a3 * ux;
+    forceCorr = phiNorm * d.normx[idx3];
+    d.g[global4(x+1,y,z,1)] = multPhi + a3 * ux + forceCorr;
     
-    geq = multPhi - a3 * ux;
-    d.g[global4(x-1,y,z,2)] = geq - antiDiff;
+    feq = multPhi - a3 * ux;
+    d.g[global4(x-1,y,z,2)] = feq - forceCorr;
 
-    geq = multPhi + a3 * uy;
-    antiDiff = phiNorm * d.normy[idx3];
-    d.g[global4(x,y+1,z,3)] = geq + antiDiff;
+    feq = multPhi + a3 * uy;
+    forceCorr = phiNorm * d.normy[idx3];
+    d.g[global4(x,y+1,z,3)] = feq + forceCorr;
 
-    geq = multPhi - a3 * uy;
-    d.g[global4(x,y-1,z,4)] = geq - antiDiff;
+    feq = multPhi - a3 * uy;
+    d.g[global4(x,y-1,z,4)] = feq - forceCorr;
 
-    geq = multPhi + a3 * uz;
-    antiDiff = phiNorm * d.normz[idx3];
-    d.g[global4(x,y,z+1,5)] = geq + antiDiff;
+    feq = multPhi + a3 * uz;
+    forceCorr = phiNorm * d.normz[idx3];
+    d.g[global4(x,y,z+1,5)] = feq + forceCorr;
 
-    geq = multPhi - a3 * uz;
-    d.g[global4(x,y,z-1,6)] = geq - antiDiff;
-} 
+    feq = multPhi - a3 * uz;
+    d.g[global4(x,y,z-1,6)] = feq - forceCorr;
+}
+
+#endif
 
 
 

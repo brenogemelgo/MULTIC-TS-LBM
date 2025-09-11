@@ -13,12 +13,10 @@ void applyInflow(
 
     if (x >= NX || y >= NY) return;
 
-    const float centerX = (NX-1) * 0.5f;
-    const float centerY = (NY-1) * 0.5f;
-
-    const float dx = x-centerX, dy = y-centerY;
+    const float dx = static_cast<float>(x) - CENTER_X;
+    const float dy = static_cast<float>(y) - CENTER_Y;
     const float radialDist = sqrtf(dx*dx + dy*dy);
-    const float radius = 0.5f * DIAM;
+    const float radius = 0.5f * static_cast<float>(DIAM);
     if (radialDist > radius) return;
 
     const idx_t idx3_in = global3(x,y,z);
@@ -38,7 +36,7 @@ void applyInflow(
                                          d.ux[nbrIdx],d.uy[nbrIdx],d.uz[nbrIdx],5);
     d.f[PLANE5+nbrIdx] = to_pop(feq + OMCO_ZMIN * fneqReg);
 
-    feq = computeTruncatedEquilibria(1.0f,0.0f,0.0f,uzIn,5);
+    feq = computeTruncatedEquilibria(d.phi[idx3_in],0.0f,0.0f,uzIn,5);
     d.g[PLANE5+nbrIdx] = feq;
 
     nbrIdx = global3(x+1,y,z+1);
@@ -123,7 +121,6 @@ void applyOutflow(
     const float uyOut = d.uy[idx3];
     const float uzOut = d.uz[idx3];
 
-    // CI[6] = idx3_zm1
     float feq = computeEquilibria(d.rho[idx3_zm1],uxOut,uyOut,uzOut,6);
     float fneqReg = computeNonEquilibria(d.pxx[idx3_zm1],d.pyy[idx3_zm1],d.pzz[idx3_zm1],
                                          d.pxy[idx3_zm1],d.pxz[idx3_zm1],d.pyz[idx3_zm1],
@@ -217,7 +214,7 @@ void periodicX(
     #endif 
 
     d.g[PLANE+bL] = d.g[PLANE+bR];
-    d.g[2*PLANE+bR] = d.g[2*PLANE+bL];
+    d.g[PLANE2+bR] = d.g[PLANE2+bL];
     d.phi[global3(0,y,z)] = d.phi[bR];
     d.phi[global3(NX-1,y,z)] = d.phi[bL];
 }
@@ -234,8 +231,8 @@ void periodicY(
     const idx_t bB = global3(x,1,z);
     const idx_t bT = global3(x,NY-2,z);
 
-    d.g[3*PLANE+bB] = d.g[3*PLANE+bT];
-    d.g[4*PLANE+bT] = d.g[4*PLANE+bB];
+    d.g[PLANE3+bB] = d.g[PLANE3+bT];
+    d.g[PLANE4+bT] = d.g[PLANE4+bB];
     d.phi[global3(x,0,z)] = d.phi[bT];
     d.phi[global3(x,NY-1,z)] = d.phi[bB];
 
@@ -251,10 +248,6 @@ void periodicY(
     copyDirs<pop_t,20,22,23,26>(d.f,bT,bB);
     #endif 
 
-    //d.g[3*PLANE+bB] = d.g[3*PLANE+bT];
-    //d.g[4*PLANE+bT] = d.g[4*PLANE+bB];
-    //d.phi[global3(x,0,z)] = d.phi[bT];
-    //d.phi[global3(x,NY-1,z)] = d.phi[bB];
 }
 
 #elif defined(DROPLET)

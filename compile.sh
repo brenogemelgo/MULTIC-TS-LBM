@@ -16,7 +16,6 @@ if [ "$VELOCITY_SET" != "D3Q19" ] && [ "$VELOCITY_SET" != "D3Q27" ]; then
     exit 1
 fi
 
-# least register value without spills
 if [ "$VELOCITY_SET" = "D3Q27" ]; then
     MAXRREG=72
 else
@@ -45,8 +44,8 @@ echo "Project root detected: ${BASE_DIR}"
 echo "Compiling to ${EXECUTABLE}..."
 
 nvcc -O3 --restrict \
-     -gencode arch=compute_${CC},code=sm_${CC} \
-     -rdc=true --ptxas-options=-v -use_fast_math --fmad=true \
+     -gencode arch=compute_${CC},code=sm_${CC} -rdc=true --ptxas-options=-v \
+     --use_fast_math --fmad=true \
      -I"${SRC_DIR}" \
      "${SRC_DIR}/main.cu" \
      -maxrregcount=${MAXRREG} -D${VELOCITY_SET} -D${FLOW_CASE} \

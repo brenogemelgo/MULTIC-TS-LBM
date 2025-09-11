@@ -44,11 +44,11 @@ void setDistros(
     const idx_t idx3 = global3(x,y,z);
 
     #pragma unroll FLINKS
-    for (int Q = 0; Q < FLINKS; ++Q) {
+    for (idx_t Q = 0; Q < FLINKS; ++Q) {
         d.f[global4(x,y,z,Q)] = computeEquilibria(d.rho[idx3],d.ux[idx3],d.uy[idx3],d.uz[idx3],Q);
     }
     #pragma unroll GLINKS
-    for (int Q = 0; Q < GLINKS; ++Q) {
+    for (idx_t Q = 0; Q < GLINKS; ++Q) {
         d.g[global4(x+CIX[Q],y+CIY[Q],z+CIZ[Q],Q)] = computeTruncatedEquilibria(d.phi[idx3],d.ux[idx3],d.uy[idx3],d.uz[idx3],Q);
     }
 } 
@@ -65,12 +65,10 @@ void setJet(
 
     if (x >= NX || y >= NY) return;
 
-    const float centerX = (NX-1) * 0.5f;
-    const float centerY = (NY-1) * 0.5f;
-
-    const float dx = x-centerX, dy = y-centerY;
+    const float dx = static_cast<float>(x) - CENTER_X;
+    const float dy = static_cast<float>(y) - CENTER_Y;
     const float radialDist = sqrtf(dx*dx + dy*dy);
-    const float radius = 0.5f * DIAM;
+    const float radius = 0.5f * static_cast<float>(DIAM);
     if (radialDist > radius) return;
 
     const idx_t idx3_in = global3(x,y,z);
@@ -94,16 +92,13 @@ void setDroplet(
         z == 0 || z == NZ-1) return;
 
     const idx_t idx3 = global3(x,y,z);
-    
-    const float centerX = (NX-1) * 0.5f;
-    const float centerY = (NY-1) * 0.5f;
-    const float centerZ = (NZ-1) * 0.5f;
 
-    const float dx = (x-centerX) / 2.0f, dy = y-centerY, dz = z-centerZ;
-    //const float dx= x-centerX, dy = y-centerY, dz = z-centerZ;
+    const float dx = (static_cast<float>(x) - CENTER_X) / 2.0f;
+    const float dy = static_cast<float>(y) - CENTER_Y;
+    const float dz = static_cast<float>(z) - CENTER_Z;
     const float radialDist = sqrtf(dx*dx + dy*dy + dz*dz);
 
-    const float phi = 0.5f + 0.5f * tanhf(2.0f * (RADIUS-radialDist) / 3.0f);
+    const float phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<float>(RADIUS)-radialDist) / 3.0f);
     d.phi[idx3] = phi;
 }
 

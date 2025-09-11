@@ -1,4 +1,4 @@
-#include "deviceFunctions.cuh"
+#include "globalFunctions.cuh"
 #include "init.cuh"
 #include "lbm.cuh"
 #include "bcs.cuh"
@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
     const std::string SIM_ID       = argv[3];
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
+    //#define BENCHMARK
     setDevice();
     
     constexpr dim3 block(32u, 2u, 2u); 
@@ -24,25 +25,23 @@ int main(int argc, char* argv[]) {
     constexpr dim3 blockY(32u, 32u, 1u);
     constexpr dim3 blockZ(32u, 32u, 1u);
 
-    constexpr dim3 grid(divUp(static_cast<unsigned>(NX), block.x),
-                        divUp(static_cast<unsigned>(NY), block.y),
-                        divUp(static_cast<unsigned>(NZ), block.z));
+    constexpr dim3 grid(divUp(NX, block.x),
+                        divUp(NY, block.y),
+                        divUp(NZ, block.z));
 
-    constexpr dim3 gridX(divUp(static_cast<unsigned>(NY), blockX.x),
-                         divUp(static_cast<unsigned>(NZ), blockX.y),
+    constexpr dim3 gridX(divUp(NY, blockX.x),
+                         divUp(NZ, blockX.y),
                          1u);
 
-    constexpr dim3 gridY(divUp(static_cast<unsigned>(NX), blockY.x),
-                         divUp(static_cast<unsigned>(NZ), blockY.y),
+    constexpr dim3 gridY(divUp(NX, blockY.x),
+                         divUp(NZ, blockY.y),
                          1u);
 
-    constexpr dim3 gridZ(divUp(static_cast<unsigned>(NX), blockZ.x),
-                         divUp(static_cast<unsigned>(NY), blockZ.y),
+    constexpr dim3 gridZ(divUp(NX, blockZ.x),
+                         divUp(NY, blockZ.y),
                          1u);
 
     constexpr size_t dynamic = 0;
-
-    //#define BENCHMARK
 
     cudaStream_t queue{};
     checkCudaErrors(cudaStreamCreate(&queue));
@@ -64,23 +63,17 @@ int main(int argc, char* argv[]) {
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (int STEP = 0; STEP <= NSTEPS; ++STEP) {
         #if !defined(BENCHMARK)
-        std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
+        //std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
         #endif
 
-        // ======================== NORMALS AND FORCES ======================== //
+        // ======================== LATTICE BOLTZMANN RELATED ======================== //
 
             computePhase  <<<grid, block, dynamic, queue>>>(lbm);
             computeNormals<<<grid, block, dynamic, queue>>>(lbm);
             computeForces <<<grid, block, dynamic, queue>>>(lbm);
-
-        // =================================================================== //
-
-        // ======================== FLUID FIELD EVOLUTION ======================== //
-
             streamCollide<<<grid, block, dynamic, queue>>>(lbm);
-            advectDiffuse<<<grid, block, dynamic, queue>>>(lbm);
 
-        // ====================================================================== //
+        // ========================================================================== //
 
 
         // ============================== BOUNDARY CONDITIONS ============================== //
@@ -127,13 +120,12 @@ int main(int argc, char* argv[]) {
     }
 
     const auto END_TIME = std::chrono::high_resolution_clock::now();
-    checkCudaErrors(cudaStreamDestroy(queue));
+    checkCudaErrorsOutline(cudaStreamDestroy(queue));
 
     cudaFree(lbm.f);
     cudaFree(lbm.g);
     cudaFree(lbm.phi);
     cudaFree(lbm.rho);
-    cudaFree(lbm.ind);
     cudaFree(lbm.normx);
     cudaFree(lbm.normy);
     cudaFree(lbm.normz);
@@ -146,6 +138,7 @@ int main(int argc, char* argv[]) {
     cudaFree(lbm.pxy);
     cudaFree(lbm.pxz);
     cudaFree(lbm.pyz);
+    cudaFree(lbm.ind);
     cudaFree(lbm.ffx);
     cudaFree(lbm.ffy);
     cudaFree(lbm.ffz);
@@ -165,7 +158,7 @@ int main(int argc, char* argv[]) {
     std::cout << "// =============================================== //\n\n";
 
     generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET, MLUPS);
-    getLastCudaError("Final sync");
+    getLastCudaErrorOutline("Final sync");
 
     return 0;
 }

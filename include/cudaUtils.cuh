@@ -66,11 +66,27 @@ inline constexpr int TILE_Z = static_cast<int>(BLOCK_SIZE_Z) + 2*HALO;
 
 #endif
 
-using ci_t  = int; // int8_t
+using ci_t  = int; // probably best type for -1,0,1
 using idx_t = uint32_t;
 
 #define checkCudaErrors(err) __checkCudaErrors((err), #err, __FILE__, __LINE__)
+#define checkCudaErrorsOutline(err) __checkCudaErrorsOutline((err), #err, __FILE__, __LINE__)
 #define getLastCudaError(msg) __getLastCudaError((msg), __FILE__, __LINE__)
+#define getLastCudaErrorOutline(msg) __getLastCudaErrorOutline((msg), __FILE__, __LINE__)
+
+void __checkCudaErrorsOutline(
+    cudaError_t err,
+    const char* const func,
+    const char* const file,
+    const int line
+) noexcept {
+    if (err != cudaSuccess) {
+        fprintf(stderr, "CUDA error at %s(%d) \"%s\": [%d] %s.\n",
+                file, line, func, (int)err, cudaGetErrorString(err));
+        fflush(stderr);
+        std::abort();
+    }
+}
 
 inline void __checkCudaErrors(
     cudaError_t err,
@@ -81,6 +97,20 @@ inline void __checkCudaErrors(
     if (err != cudaSuccess) {
         fprintf(stderr, "CUDA error at %s(%d) \"%s\": [%d] %s.\n",
                 file, line, func, (int)err, cudaGetErrorString(err));
+        fflush(stderr);
+        std::abort();
+    }
+}
+
+void __getLastCudaErrorOutline(
+    const char* const errorMessage,
+    const char* const file,
+    const int line
+) noexcept {
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        fprintf(stderr, "CUDA error at %s(%d): [%d] %s. Context: %s\n",
+                file, line, (int)err, cudaGetErrorString(err), errorMessage);
         fflush(stderr);
         std::abort();
     }
