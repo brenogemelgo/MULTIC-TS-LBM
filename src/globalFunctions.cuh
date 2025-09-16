@@ -52,36 +52,31 @@ idx_t global4(
     return Q * PLANE + global3(x,y,z);
 }
 
-#if defined(JET)
-
-__device__ __forceinline__ 
-float omegaSponge(
-    const idx_t z
-) {
-    const float zn = static_cast<float>(z) * INV_NZ_M1;
-    const float s  = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
-    const float s2 = s * s;
-    const float ramp = s2 * s;
-    return fmaf(ramp, OMEGA_DELTA, OMEGA_REF);
-}
-
-#endif
-
 __device__ __forceinline__ 
 float computeEquilibria(
-    const float density, 
+    const float rho, 
     const float ux, 
     const float uy, 
     const float uz, 
     const idx_t Q
 ) {
-    const float uu = 1.5f * (ux*ux + uy*uy + uz*uz);
     #if defined(D3Q19)
-        const float eqbase = density * (-uu + (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (3.0f + 4.5f*(ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])));
+        return W[Q] * rho * (
+              1.0f
+            - 1.5f * (ux*ux + uy*uy + uz*uz)
+            + 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])
+            + 4.5f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])
+        ) - W[Q];
     #elif defined(D3Q27)
-        const float eqbase = density * (-uu + (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (3.0f + (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (4.5f + 4.5f*(ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])) - 3.0f*uu));
+        return W[Q] * rho * (
+              1.0f
+            - 1.5f * (ux*ux + uy*uy + uz*uz)
+            + 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])
+            + 4.5f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])
+            + 4.5f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])
+            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q])
+        ) - W[Q];
     #endif
-    return W[Q] * (density + eqbase) - W[Q];
 }
 
 __device__ __forceinline__ 
@@ -161,10 +156,9 @@ float computeForceTerm(
                               (CIY[Q] - uy) * ffy +
                               (CIZ[Q] - uz) * ffz) * aux;
     #elif defined(D3Q27)
-        const float cu = 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]);
-        return coeff * W[Q] * ((3.0f * (CIX[Q] - ux) + 3.0f * cu * CIX[Q] ) * ffx +
-                               (3.0f * (CIY[Q] - uy) + 3.0f * cu * CIY[Q] ) * ffy +
-                               (3.0f * (CIZ[Q] - uz) + 3.0f * cu * CIZ[Q] ) * ffz);
+        return coeff * W[Q] * ((3.0f * (CIX[Q] - ux) + 3.0f * 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * CIX[Q] ) * ffx +
+                               (3.0f * (CIY[Q] - uy) + 3.0f * 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * CIY[Q] ) * ffy +
+                               (3.0f * (CIZ[Q] - uz) + 3.0f * 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]) * CIZ[Q] ) * ffz);
     #endif 
 }
 
@@ -175,5 +169,20 @@ void copyDirs(
     const idx_t dst, 
     const idx_t src
 ) {
-    ((arr[Qs*PLANE+dst] = arr[Qs*PLANE+src]), ...);
+    ((arr[Qs * PLANE + dst] = arr[Qs * PLANE + src]), ...);
 }
+
+#if defined(JET)
+
+    __device__ __forceinline__ 
+    float cubicSponge(
+        const idx_t z
+    ) {
+        const float zn = static_cast<float>(z) * INV_NZ_M1;
+        const float s  = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
+        const float s2 = s * s;
+        const float ramp = s2 * s;
+        return fmaf(ramp, OMEGA_DELTA, OMEGA_REF);
+    }
+
+#endif

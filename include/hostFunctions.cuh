@@ -18,6 +18,7 @@ std::string createSimulationDirectory(
     return SIM_DIR.string() + std::filesystem::path::preferred_separator;
 }
 
+#include <filesystem>
 __host__ __forceinline__
 void generateSimulationInfoFile(
     const std::string& SIM_DIR,           
@@ -178,30 +179,28 @@ void setDevice() {
     static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(FLINKS), "F_DIST_SIZE overflow");
     static_assert(G_DIST_SIZE / sizeof(float) == NCELLS * size_t(GLINKS), "G_DIST_SIZE overflow");
 
-    checkCudaErrors(cudaMalloc(&lbm.rho,   SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.ux,    SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.uy,    SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.uz,    SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.pxx,   SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.pyy,   SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.pzz,   SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.pxy,   SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.pxz,   SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.pyz,   SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.rho, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.ux,  SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.uy,  SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.uz,  SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxx, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pyy, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pzz, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxy, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pxz, SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.pyz, SIZE));
 
     checkCudaErrors(cudaMalloc(&lbm.phi,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normx, SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normy, SIZE));
     checkCudaErrors(cudaMalloc(&lbm.normz, SIZE));
-    #if !defined(LESS_POINTERS)
     checkCudaErrors(cudaMalloc(&lbm.ind,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ffx,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ffy,   SIZE));
     checkCudaErrors(cudaMalloc(&lbm.ffz,   SIZE));
-    #endif
 
-    checkCudaErrors(cudaMalloc(&lbm.f,     F_DIST_SIZE));
-    checkCudaErrors(cudaMalloc(&lbm.g,     G_DIST_SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.f, F_DIST_SIZE));
+    checkCudaErrors(cudaMalloc(&lbm.g, G_DIST_SIZE));
 
     #if defined(D_FIELDS)
     checkCudaErrors(cudaMalloc(&dfields.vorticity_mag, SIZE));

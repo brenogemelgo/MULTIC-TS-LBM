@@ -49,7 +49,7 @@ void setDistros(
     }
     #pragma unroll GLINKS
     for (idx_t Q = 0; Q < GLINKS; ++Q) {
-        d.g[global4(x+CIX[Q],y+CIY[Q],z+CIZ[Q],Q)] = computeTruncatedEquilibria(d.phi[idx3],d.ux[idx3],d.uy[idx3],d.uz[idx3],Q);
+        d.g[global4(x,y,z,Q)] = computeTruncatedEquilibria(d.phi[idx3],d.ux[idx3],d.uy[idx3],d.uz[idx3],Q);
     }
 } 
 
@@ -67,9 +67,8 @@ void setJet(
 
     const float dx = static_cast<float>(x) - CENTER_X;
     const float dy = static_cast<float>(y) - CENTER_Y;
-    const float radialDist = sqrtf(dx*dx + dy*dy);
-    const float radius = 0.5f * static_cast<float>(DIAM);
-    if (radialDist > radius) return;
+    const float r2 = dx*dx + dy*dy;
+    if (r2 > RR) return;
 
     const idx_t idx3_in = global3(x,y,z);
     d.uz[idx3_in] = U_REF;

@@ -21,9 +21,9 @@ int main(int argc, char* argv[]) {
     setDevice();
     
     constexpr dim3 block(32u, 2u, 2u); 
-    constexpr dim3 blockX(32u, 32u, 1u);
-    constexpr dim3 blockY(32u, 32u, 1u);
-    constexpr dim3 blockZ(32u, 32u, 1u);
+    constexpr dim3 blockX(16u, 16u, 1u);
+    constexpr dim3 blockY(16u, 16u, 1u);
+    constexpr dim3 blockZ(16u, 16u, 1u);
 
     constexpr dim3 grid(divUp(NX, block.x),
                         divUp(NY, block.y),
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
             computePhase  <<<grid, block, dynamic, queue>>>(lbm);
             computeNormals<<<grid, block, dynamic, queue>>>(lbm);
             computeForces <<<grid, block, dynamic, queue>>>(lbm);
-            streamCollide<<<grid, block, dynamic, queue>>>(lbm);
+            streamCollide <<<grid, block, dynamic, queue>>>(lbm);
 
         // ========================================================================== //
 

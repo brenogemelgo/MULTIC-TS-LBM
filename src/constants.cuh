@@ -6,13 +6,13 @@
 #endif
 
 //#define RUN_MODE
-#define SAMPLE_MODE
-//#define DEBUG_MODE
+//#define SAMPLE_MODE
+#define DEBUG_MODE
 
 #if defined(RUN_MODE)
 
-    constexpr int MACRO_SAVE = 100;
-    constexpr int NSTEPS = 50000;
+    constexpr int MACRO_SAVE = 1000;
+    constexpr int NSTEPS = 100000;
     
 #elif defined(SAMPLE_MODE)
 
@@ -29,10 +29,13 @@
 #if defined(JET)
 
     constexpr idx_t MESH = 128;
-    constexpr int DIAM   = 20; 
-    constexpr idx_t NX   = MESH;
-    constexpr idx_t NY   = MESH;
-    constexpr idx_t NZ   = MESH*2;
+    constexpr idx_t NX = MESH;
+    constexpr idx_t NY = MESH;
+    constexpr idx_t NZ = MESH*2;
+
+    constexpr int DIAM   = 12; 
+    constexpr int RADIUS = DIAM / 2;
+    constexpr float RR   = RADIUS * RADIUS; 
 
     constexpr float U_REF    = 0.05f; 
     constexpr int   REYNOLDS = 5000;     
@@ -41,11 +44,12 @@
 #elif defined(DROPLET)
 
     constexpr idx_t MESH = 128;
-    constexpr int RADIUS = 20; 
-    constexpr int DIAM   = 2 * RADIUS;
     constexpr idx_t NX   = MESH;
     constexpr idx_t NY   = MESH;
     constexpr idx_t NZ   = MESH;
+
+    constexpr int RADIUS = 20; 
+    constexpr int DIAM   = 2 * RADIUS;
 
     constexpr float U_REF    = 0.05f; 
     constexpr int   REYNOLDS = 200;        
@@ -87,7 +91,7 @@ constexpr float CSSQ  = 1.0f / 3.0f;
 
 #if defined(JET)
 
-    constexpr float K          = 50.0f;
+    constexpr float K          = 100.0f; 
     constexpr float P          = 3.0f;            
     constexpr int SPONGE_CELLS = static_cast<int>(NZ/12);      
     static_assert(SPONGE_CELLS > 0, "SPONGE_CELLS must be > 0");
@@ -124,14 +128,16 @@ constexpr idx_t PLANE16 = 16 * PLANE;
 constexpr idx_t PLANE17 = 17 * PLANE;
 constexpr idx_t PLANE18 = 18 * PLANE;
 #if defined(D3Q27)
-constexpr idx_t PLANE19 = 19 * PLANE;
-constexpr idx_t PLANE20 = 20 * PLANE;
-constexpr idx_t PLANE21 = 21 * PLANE;
-constexpr idx_t PLANE22 = 22 * PLANE;
-constexpr idx_t PLANE23 = 23 * PLANE;
-constexpr idx_t PLANE24 = 24 * PLANE;
-constexpr idx_t PLANE25 = 25 * PLANE;
-constexpr idx_t PLANE26 = 26 * PLANE;
+
+    constexpr idx_t PLANE19 = 19 * PLANE;
+    constexpr idx_t PLANE20 = 20 * PLANE;
+    constexpr idx_t PLANE21 = 21 * PLANE;
+    constexpr idx_t PLANE22 = 22 * PLANE;
+    constexpr idx_t PLANE23 = 23 * PLANE;
+    constexpr idx_t PLANE24 = 24 * PLANE;
+    constexpr idx_t PLANE25 = 25 * PLANE;
+    constexpr idx_t PLANE26 = 26 * PLANE;
+    
 #endif                     
 
  
