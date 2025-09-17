@@ -112,29 +112,22 @@ float computeNonEquilibria(
                                 2.0f * CIX[Q] * CIZ[Q] * PXZ +
                                 2.0f * CIY[Q] * CIZ[Q] * PYZ);
     #elif defined(D3Q27)
-        return (W[Q] * 4.5f) * (
-            // 2nd order
-            (CIX[Q]*CIX[Q] - CSSQ) * PXX +
-            (CIY[Q]*CIY[Q] - CSSQ) * PYY +
-            (CIZ[Q]*CIZ[Q] - CSSQ) * PZZ +
-            2.0f * CIX[Q] * CIY[Q] * PXY +
-            2.0f * CIX[Q] * CIZ[Q] * PXZ +
-            2.0f * CIY[Q] * CIZ[Q] * PYZ +
-
-            // 3rd order
-            (CIX[Q]*CIX[Q]*CIX[Q] - 3.0f*CSSQ*CIX[Q]) * (3.0f * ux * PXX) +
-            (CIY[Q]*CIY[Q]*CIY[Q] - 3.0f*CSSQ*CIY[Q]) * (3.0f * uy * PYY) +
-            (CIZ[Q]*CIZ[Q]*CIZ[Q] - 3.0f*CSSQ*CIZ[Q]) * (3.0f * uz * PZZ) +
-            3.0f * (
-                (CIX[Q]*CIX[Q]*CIY[Q] - CSSQ*CIY[Q]) * (PXX*uy + 2.0f*ux*PXY) +
-                (CIX[Q]*CIX[Q]*CIZ[Q] - CSSQ*CIZ[Q]) * (PXX*uz + 2.0f*ux*PXZ) +
-                (CIX[Q]*CIY[Q]*CIY[Q] - CSSQ*CIX[Q]) * (PXY*uy + 2.0f*ux*PYY) +
-                (CIY[Q]*CIY[Q]*CIZ[Q] - CSSQ*CIZ[Q]) * (PYY*uz + 2.0f*uy*PYZ) +
-                (CIX[Q]*CIZ[Q]*CIZ[Q] - CSSQ*CIX[Q]) * (PXZ*uz + 2.0f*ux*PZZ) +
-                (CIY[Q]*CIZ[Q]*CIZ[Q] - CSSQ*CIY[Q]) * (PYZ*uz + 2.0f*uy*PZZ)
-            ) +
-            6.0f * (CIX[Q]*CIY[Q]*CIZ[Q]) * (PXY*uz + ux*PYZ + uy*PXZ)
-        );
+        return (W[Q] * 4.5f) * ((CIX[Q]*CIX[Q] - CSSQ) * PXX +
+                                (CIY[Q]*CIY[Q] - CSSQ) * PYY +
+                                (CIZ[Q]*CIZ[Q] - CSSQ) * PZZ +
+                                2.0f * CIX[Q] * CIY[Q] * PXY +
+                                2.0f * CIX[Q] * CIZ[Q] * PXZ +
+                                2.0f * CIY[Q] * CIZ[Q] * PYZ +
+                                (CIX[Q]*CIX[Q]*CIX[Q] - 3.0f*CSSQ*CIX[Q]) * (3.0f * ux * PXX) +
+                                (CIY[Q]*CIY[Q]*CIY[Q] - 3.0f*CSSQ*CIY[Q]) * (3.0f * uy * PYY) +
+                                (CIZ[Q]*CIZ[Q]*CIZ[Q] - 3.0f*CSSQ*CIZ[Q]) * (3.0f * uz * PZZ) +
+                                3.0f * ((CIX[Q]*CIX[Q]*CIY[Q] - CSSQ*CIY[Q]) * (PXX*uy + 2.0f*ux*PXY) +
+                                        (CIX[Q]*CIX[Q]*CIZ[Q] - CSSQ*CIZ[Q]) * (PXX*uz + 2.0f*ux*PXZ) +
+                                        (CIX[Q]*CIY[Q]*CIY[Q] - CSSQ*CIX[Q]) * (PXY*uy + 2.0f*ux*PYY) +
+                                        (CIY[Q]*CIY[Q]*CIZ[Q] - CSSQ*CIZ[Q]) * (PYY*uz + 2.0f*uy*PYZ) +
+                                        (CIX[Q]*CIZ[Q]*CIZ[Q] - CSSQ*CIX[Q]) * (PXZ*uz + 2.0f*ux*PZZ) +
+                                        (CIY[Q]*CIZ[Q]*CIZ[Q] - CSSQ*CIY[Q]) * (PYZ*uz + 2.0f*uy*PZZ)) +
+                                6.0f * (CIX[Q]*CIY[Q]*CIZ[Q]) * (PXY*uz + ux*PYZ + uy*PXZ));
     #endif 
 }
 

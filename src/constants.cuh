@@ -5,9 +5,9 @@
 #include "../include/perturbationData.cuh"
 #endif
 
-//#define RUN_MODE
+#define RUN_MODE
 //#define SAMPLE_MODE
-#define DEBUG_MODE
+//#define DEBUG_MODE
 
 #if defined(RUN_MODE)
 
@@ -17,7 +17,7 @@
 #elif defined(SAMPLE_MODE)
 
     constexpr int MACRO_SAVE = 100;
-    constexpr int NSTEPS = 1000;
+    constexpr int NSTEPS = 10000;
 
 #elif defined(DEBUG_MODE)
 
@@ -33,7 +33,7 @@
     constexpr idx_t NY = MESH;
     constexpr idx_t NZ = MESH*2;
 
-    constexpr int DIAM   = 12; 
+    constexpr int DIAM   = 20; 
     constexpr int RADIUS = DIAM / 2;
     constexpr float RR   = RADIUS * RADIUS; 
 
@@ -88,6 +88,7 @@ constexpr float CENTER_Z = (NZ-1) * 0.5f;
 constexpr float SIGMA = (U_REF * U_REF * DIAM) / WEBER; 
 constexpr float GAMMA = 0.3f * 3.0f; 
 constexpr float CSSQ  = 1.0f / 3.0f;  
+constexpr float CSCO  = 1.0f - CSSQ;
 
 #if defined(JET)
 
@@ -109,35 +110,6 @@ constexpr float CSSQ  = 1.0f / 3.0f;
 
 constexpr idx_t STRIDE = NX * NY;
 constexpr idx_t PLANE  = NX * NY * NZ;
-
-constexpr idx_t PLANE2  = 2 * PLANE;
-constexpr idx_t PLANE3  = 3 * PLANE;
-constexpr idx_t PLANE4  = 4 * PLANE;
-constexpr idx_t PLANE5  = 5 * PLANE;
-constexpr idx_t PLANE6  = 6 * PLANE;
-constexpr idx_t PLANE7  = 7 * PLANE;
-constexpr idx_t PLANE8  = 8 * PLANE;
-constexpr idx_t PLANE9  = 9 * PLANE;
-constexpr idx_t PLANE10 = 10 * PLANE;
-constexpr idx_t PLANE11 = 11 * PLANE;
-constexpr idx_t PLANE12 = 12 * PLANE;   
-constexpr idx_t PLANE13 = 13 * PLANE;
-constexpr idx_t PLANE14 = 14 * PLANE;
-constexpr idx_t PLANE15 = 15 * PLANE;
-constexpr idx_t PLANE16 = 16 * PLANE;
-constexpr idx_t PLANE17 = 17 * PLANE;
-constexpr idx_t PLANE18 = 18 * PLANE;
-#if defined(D3Q27)
-
-    constexpr idx_t PLANE19 = 19 * PLANE;
-    constexpr idx_t PLANE20 = 20 * PLANE;
-    constexpr idx_t PLANE21 = 21 * PLANE;
-    constexpr idx_t PLANE22 = 22 * PLANE;
-    constexpr idx_t PLANE23 = 23 * PLANE;
-    constexpr idx_t PLANE24 = 24 * PLANE;
-    constexpr idx_t PLANE25 = 25 * PLANE;
-    constexpr idx_t PLANE26 = 26 * PLANE;
-    
-#endif                     
+                   
 
  
