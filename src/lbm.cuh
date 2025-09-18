@@ -378,7 +378,7 @@ void streamCollide(
 
         // pop9 (c = +x̂ +ẑ)
         #if defined(D3Q19)
-        feq = W_2 * rho * ( 1.0f
+        feq = W_2 * rho * (1.0f
                         - 1.5f * (ux*ux + uy*uy + uz*uz)
                         + 3.0f * (ux + uz)
                         + 4.5f * (ux + uz) * (ux + uz));
@@ -727,7 +727,7 @@ void streamCollide(
     #endif
 
     const float omcoLocal = 1.0f - omegaLocal;
-    const float coeffForce = 1.0f - 0.5f * omegaLocal;
+    const float coeffTerm = 1.0f - 0.5f * omegaLocal;
 
 
 
@@ -738,145 +738,232 @@ void streamCollide(
         // CIY[27] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 1,-1, 1,-1, 1,-1,-1, 1, 1,-1 };
         // CIZ[27] = { 0, 0, 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0,-1, 1,-1, 1, 1,-1,-1, 1, 1,-1, 1,-1 };
 
-        float forceCorr;
+        float forceTerm;
 
         #if defined(D3Q19)
             
-            // check if right. brute force it again
-            const float invRhoCssq = 3.0f * invRho;
+            const float coeffForce = coeffTerm * 3.0f * invRho;
+            const float uu = 1.5f * (ux*ux + uy*uy + uz*uz);
+            const float uf = ux*ffx + uy*ffy + uz*ffz;
 
         // ========================== ZERO ========================== //
 
-            feq = W_0 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz)) - W_0;
-            forceCorr = -coeffForce * feq * (ux * ffx + uy * ffy + uz * ffz) * invRhoCssq;
-            fneq = (W_0 * 4.5f) * (-CSSQ * pxx - CSSQ * pyy - CSSQ * pzz);
-            d.f[idx3] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_0 * rho * (1.0f - uu) - W_0;
+            forceTerm = coeffForce * feq * uf;
+
+            fneq = W0_45 * CSSQ * (pxx + pyy + pzz);
+
+            d.f[idx3] = to_pop(feq - omcoLocal * fneq - forceTerm);
 
         // ========================== ONE ========================== //
 
-            feq = W_1 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * ux + 4.5f * ux * ux) - W_1;
-            forceCorr = coeffForce * feq * ((1.0f - ux) * ffx - uy * ffy - uz * ffz) * invRhoCssq;
-            fneq = (W_1 * 4.5f) * (CSCO * pxx - CSSQ * pyy - CSSQ * pzz);
-            d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_1 * rho * (1.0f - uu + 3.0f * ux + 4.5f * ux * ux) - W_1;
+            forceTerm = coeffForce * feq * (ffx - uf);
+
+            fneq = W1_45 * (CSCO * pxx 
+                            - CSSQ * pyy 
+                            - CSSQ * pzz);
+
+            d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWO ========================== //
 
-            feq = W_1 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) - 3.0f * ux + 4.5f * ux * ux) - W_1;
-            forceCorr = coeffForce * feq * ((-1.0f - ux) * ffx - uy * ffy - uz * ffz) * invRhoCssq;
-            fneq = (W_1 * 4.5f) * (CSCO * pxx - CSSQ * pyy - CSSQ * pzz);
-            d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_1 * rho * (1.0f - uu - 3.0f * ux + 4.5f * ux * ux) - W_1;
+            forceTerm = coeffForce * feq * (ffx + uf);
+
+            fneq = W1_45 * (CSCO * pxx 
+                            - CSSQ * pyy 
+                            - CSSQ * pzz);
+
+            d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneq - forceTerm);
 
         // ========================== THREE ========================== //
 
-            feq = W_1 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * uy + 4.5f * uy * uy) - W_1;
-            forceCorr = coeffForce * feq * (-ux * ffx + (1.0f - uy) * ffy - uz * ffz ) * invRhoCssq;
-            fneq = (W_1 * 4.5f) * (-CSSQ * pxx + CSCO * pyy - CSSQ * pzz );
-            d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_1 * rho * (1.0f - uu + 3.0f * uy + 4.5f * uy * uy) - W_1;
+            forceTerm = coeffForce * feq * (ffy - uf);
+
+            fneq = W1_45 * (-CSSQ * pxx 
+                            + CSCO * pyy 
+                            - CSSQ * pzz);
+
+            d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== FOUR ========================== //
 
-            feq = W_1 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) - 3.0f * uy + 4.5f * uy * uy) - W_1;
-            forceCorr = coeffForce * feq * (-ux * ffx + (-1.0f - uy) * ffy - uz * ffz) * invRhoCssq;
-            fneq = (W_1 * 4.5f) * (-CSSQ * pxx + CSCO * pyy - CSSQ * pzz);
-            d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_1 * rho * (1.0f - uu - 3.0f * uy + 4.5f * uy * uy) - W_1;
+            forceTerm = coeffForce * feq * (ffy + uf);
+
+            fneq = W1_45 * (-CSSQ * pxx 
+                            + CSCO * pyy 
+                            - CSSQ * pzz);
+
+            d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneq - forceTerm);
 
         // ========================== FIVE ========================== //
 
-            feq = W_1 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * uz + 4.5f * uz * uz) - W_1;
-            forceCorr = coeffForce * feq * (-ux * ffx - uy * ffy + (1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_1 * 4.5f) * (-CSSQ * pxx - CSSQ * pyy + CSCO * pzz);
-            d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_1 * rho * (1.0f - uu + 3.0f * uz + 4.5f * uz * uz) - W_1;
+            forceTerm = coeffForce * feq * (ffz - uf);
+
+            fneq = W1_45 * (-CSSQ * pxx 
+                            - CSSQ * pyy 
+                            + CSCO * pzz);
+
+            d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== SIX ========================== //
 
-            feq = W_1 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) - 3.0f * uz + 4.5f * uz * uz ) - W_1;
-            forceCorr = coeffForce * feq * (-ux * ffx - uy * ffy + (-1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_1 * 4.5f) * (-CSSQ * pxx - CSSQ * pyy + CSCO * pzz);
-            d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_1 * rho * (1.0f - uu - 3.0f * uz + 4.5f * uz * uz) - W_1;
+            forceTerm = coeffForce * feq * (ffz + uf);
+
+            fneq = W1_45 * (-CSSQ * pxx 
+                            - CSSQ * pyy 
+                            + CSCO * pzz);
+
+            d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneq - forceTerm);
 
         // ========================== SEVEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (ux + uy) + 4.5f * (ux + uy) * (ux + uy)) - W_2;
-            forceCorr = coeffForce * feq * ((1.0f - ux) * ffx + (1.0f - uy) * ffy - uz * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx + CSCO * pyy - CSSQ * pzz + 2.0f * pxy);
-            d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux + uy) + 4.5f * (ux + uy) * (ux + uy)) - W_2;
+            forceTerm = coeffForce * feq * (ffx + ffy - uf);
+
+            fneq = W2_45 * (CSCO * pxx 
+                            + CSCO * pyy 
+                            - CSSQ * pzz 
+                            + 2.0f * pxy);
+
+            d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== EIGHT ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) - 3.0f * (ux + uy) + 4.5f * (ux + uy) * (ux + uy)) - W_2;
-            forceCorr = coeffForce * feq * ((-1.0f - ux) * ffx + (-1.0f - uy) * ffy - uz * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx + CSCO * pyy - CSSQ * pzz + 2.0f * pxy);
-            d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu - 3.0f * (ux + uy) + 4.5f * (ux + uy) * (ux + uy)) - W_2;
+            forceTerm = coeffForce * feq * (ffx + ffy + uf);
+            
+            fneq = W2_45 * (CSCO * pxx 
+                            + CSCO * pyy 
+                            - CSSQ * pzz 
+                            + 2.0f * pxy);
+
+            d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneq - forceTerm);
 
         // ========================== NINE ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (ux + uz) + 4.5f * (ux + uz) * (ux + uz)) - W_2;
-            forceCorr = coeffForce * feq * ((1.0f - ux) * ffx - uy * ffy + (1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx - CSSQ * pyy + CSCO * pzz + 2.0f * pxz);
-            d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux + uz) + 4.5f * (ux + uz) * (ux + uz)) - W_2;
+            forceTerm = coeffForce * feq * (ffx + ffz - uf);
+
+            fneq = W2_45 * (CSCO * pxx 
+                            - CSSQ * pyy 
+                            + CSCO * pzz 
+                            + 2.0f * pxz);
+
+            d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) - 3.0f * (ux + uz) + 4.5f * (ux + uz) * (ux + uz)) - W_2;
-            forceCorr = coeffForce * feq * ((-1.0f - ux) * ffx - uy * ffy + (-1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx - CSSQ * pyy + CSCO * pzz + 2.0f * pxz);
-            d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu - 3.0f * (ux + uz) + 4.5f * (ux + uz) * (ux + uz)) - W_2;
+            forceTerm = coeffForce * feq * (ffx + ffz + uf);
+
+            fneq = W2_45 * (CSCO * pxx 
+                            - CSSQ * pyy 
+                            + CSCO * pzz 
+                            + 2.0f * pxz);
+
+            d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneq - forceTerm);
 
         // ========================== ELEVEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (uy + uz) + 4.5f * (uy + uz) * (uy + uz)) - W_2;
-            forceCorr = coeffForce * feq * (-ux * ffx + (1.0f - uy) * ffy + (1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (-CSSQ * pxx + CSCO * pyy + CSCO * pzz + 2.0f * pyz);
-            d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (uy + uz) + 4.5f * (uy + uz) * (uy + uz)) - W_2;
+            forceTerm = coeffForce * feq * (ffy + ffz - uf);
+
+            fneq = W2_45 * (-CSSQ * pxx 
+                            + CSCO * pyy 
+                            + CSCO * pzz 
+                            + 2.0f * pyz);
+
+            d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWELVE ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) - 3.0f * (uy + uz) + 4.5f * (uy + uz) * (uy + uz)) - W_2;
-            forceCorr = coeffForce * feq * (-ux * ffx + (-1.0f - uy) * ffy + (-1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (-CSSQ * pxx + CSCO * pyy + CSCO * pzz + 2.0f * pyz);
-            d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu - 3.0f * (uy + uz) + 4.5f * (uy + uz) * (uy + uz)) - W_2;
+            forceTerm = coeffForce * feq * (ffy + ffz + uf);
+
+            fneq = W2_45 * (-CSSQ * pxx 
+                            + CSCO * pyy 
+                            + CSCO * pzz 
+                            + 2.0f * pyz);
+
+            d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneq - forceTerm);
 
         // ========================== THIRTEEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (ux - uy) + 4.5f * (ux - uy) * (ux - uy)) - W_2;
-            forceCorr = coeffForce * feq * ((1.0f - ux) * ffx + (-1.0f - uy) * ffy - uz * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx + CSCO * pyy - CSSQ * pzz - 2.0f * pxy);
-            d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux - uy) + 4.5f * (ux - uy) * (ux - uy)) - W_2;
+            forceTerm = coeffForce * feq * (ffx - ffy - uf);
+            
+            fneq = W2_45 * (CSCO * pxx 
+                            + CSCO * pyy 
+                            - CSSQ * pzz 
+                            - 2.0f * pxy);
+
+            d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== FOURTEEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (uy - ux) + 4.5f * (uy - ux) * (uy - ux)) - W_2;
-            forceCorr = coeffForce * feq * ((-1.0f - ux) * ffx + (1.0f - uy) * ffy - uz * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx + CSCO * pyy - CSSQ * pzz - 2.0f * pxy);
-            d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (uy - ux) + 4.5f * (uy - ux) * (uy - ux)) - W_2;
+            forceTerm = coeffForce * feq * (ffy - ffx - uf);
+
+            fneq = W2_45 * (CSCO * pxx 
+                            + CSCO * pyy 
+                            - CSSQ * pzz 
+                            - 2.0f * pxy);
+
+            d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== FIFTEEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (ux - uz) + 4.5f * (ux - uz) * (ux - uz)) - W_2;
-            forceCorr = coeffForce * feq * ((1.0f - ux) * ffx - uy * ffy + (-1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx - CSSQ * pyy + CSCO * pzz - 2.0f * pxz);
-            d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneq + forceCorr); 
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux - uz) + 4.5f * (ux - uz) * (ux - uz)) - W_2;
+            forceTerm = coeffForce * feq * (ffx - ffz - uf);
+
+            fneq = W2_45 * (CSCO * pxx 
+                            - CSSQ * pyy
+                            + CSCO * pzz  
+                            - 2.0f * pxz);
+
+            d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneq + forceTerm); 
 
         // ========================== SIXTEEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (uz - ux) + 4.5f * (uz - ux) * (uz - ux)) - W_2;
-            forceCorr = coeffForce * feq * ((-1.0f - ux) * ffx - uy * ffy + (1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (CSCO * pxx - CSSQ * pyy + CSCO * pzz - 2.0f * pxz);
-            d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (uz - ux) + 4.5f * (uz - ux) * (uz - ux)) - W_2;
+            forceTerm = coeffForce * feq * (ffz - ffx - uf);
+
+            fneq = W2_45 * (CSCO * pxx 
+                            - CSSQ * pyy 
+                            + CSCO * pzz 
+                            - 2.0f * pxz);
+
+            d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== SEVENTEEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (uy - uz) + 4.5f * (uy - uz) * (uy - uz)) - W_2;
-            forceCorr = coeffForce * feq * (-ux * ffx + (1.0f - uy) * ffy + (-1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (-CSSQ * pxx + CSCO * pyy + CSCO * pzz - 2.0f * pyz);
-            d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (uy - uz) + 4.5f * (uy - uz) * (uy - uz)) - W_2;
+            forceTerm = coeffForce * feq * (ffy - ffz - uf);
+
+            fneq = W2_45 * (-CSSQ * pxx 
+                            + CSCO * pyy 
+                            + CSCO * pzz 
+                            - 2.0f * pyz);
+
+            d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== EIGHTEEN ========================== //
 
-            feq = W_2 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz) + 3.0f * (uz - uy) + 4.5f * (uz - uy) * (uz - uy)) - W_2;
-            forceCorr = coeffForce * feq * (-ux * ffx + (-1.0f - uy) * ffy + (1.0f - uz) * ffz) * invRhoCssq;
-            fneq = (W_2 * 4.5f) * (-CSSQ * pxx + CSCO * pyy + CSCO * pzz - 2.0f * pyz);
-            d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            feq = W_2 * rho * (1.0f - uu + 3.0f * (uz - uy) + 4.5f * (uz - uy) * (uz - uy)) - W_2;
+            forceTerm = coeffForce * feq * (ffz - ffy - uf);
+
+            fneq = W2_45 * (-CSSQ * pxx 
+                            + CSCO * pyy 
+                            + CSCO * pzz 
+                            - 2.0f * pyz);
+
+            d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         #elif defined(D3Q27)
 
@@ -884,7 +971,7 @@ void streamCollide(
 
             feq =  W_0 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz)) - W_0;
 
-            forceCorr = coeffForce * W_0 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*0) * 0 ) * ffx +
+            forceTerm = coeffForce * W_0 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*0) * 0 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*0) * 0 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*0) * 0 ) * ffz);
 
@@ -905,7 +992,7 @@ void streamCollide(
                                         (0*0*0 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*0*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[idx3] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[idx3] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== ONE ========================== //
 
@@ -914,13 +1001,13 @@ void streamCollide(
                             + 3.0f * ux
                             + 4.5f * ux * ux
                             + 4.5f * ux * ux * ux
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * ux);
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * ux) - W_1;
 
-            forceCorr = coeffForce * W_1 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*0) * 1 ) * ffx +
+            forceTerm = coeffForce * W_1 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*0) * 1 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*0) * 0 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_1 * 4.5f) * ((1*1 - CSSQ) * pxx +
+            fneq = W1_45 * ((1*1 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * 1 * 0 * pxy +
@@ -937,7 +1024,7 @@ void streamCollide(
                                         (0*0*0 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*0*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWO ========================== //
 
@@ -946,13 +1033,13 @@ void streamCollide(
                             - 3.0f * ux
                             + 4.5f * ux * ux
                             - 4.5f * ux * ux * ux
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * ux);
+                            + 4.5f * (ux*ux + uy*uy + uz*uz) * ux) - W_1;
 
-            forceCorr = coeffForce * W_1 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*0) * -1 ) * ffx +
+            forceTerm = coeffForce * W_1 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*0) * -1 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*0) * 0 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_1 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
+            fneq = W1_45 * ((-1*-1 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * -1 * 0 * pxy +
@@ -969,7 +1056,7 @@ void streamCollide(
                                         (0*0*0 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*0*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== THREE ========================== //
 
@@ -978,13 +1065,13 @@ void streamCollide(
                             + 3.0f * uy
                             + 4.5f * uy * uy
                             + 4.5f * uy * uy * uy
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * uy);
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * uy) - W_1;
 
-            forceCorr = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*0) * 0 ) * ffx +
+            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*0) * 0 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*0) * 1 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_1 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
                                 (1*1 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * 0 * 1 * pxy +
@@ -1001,7 +1088,7 @@ void streamCollide(
                                         (1*0*0 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*1*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== FOUR ========================== //
 
@@ -1010,13 +1097,13 @@ void streamCollide(
                             - 3.0f * uy
                             + 4.5f * uy * uy
                             - 4.5f * uy * uy * uy
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * uy);
+                            + 4.5f * (ux*ux + uy*uy + uz*uz) * uy) - W_1;
 
-            forceCorr = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*0) * 0 ) * ffx +
+            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*0) * 0 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*0) * -1 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_1 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
                                 (-1*-1 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * 0 * -1 * pxy +
@@ -1033,7 +1120,7 @@ void streamCollide(
                                         (-1*0*0 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*-1*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== FIVE ========================== //
 
@@ -1042,13 +1129,13 @@ void streamCollide(
                         + 3.0f * uz
                         + 4.5f * uz * uz
                         + 4.5f * uz * uz * uz
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * uz);
+                        - 4.5f * (ux*ux + uy*uy + uz*uz) * uz) - W_1;
 
-            forceCorr = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*1) * 0 ) * ffx +
+            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*1) * 0 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*1) * 0 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*1) * 1 ) * ffz);
 
-            fneq = (W_1 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (1*1 - CSSQ) * pzz +
                                 2.0f * 0 * 0 * pxy +
@@ -1065,7 +1152,7 @@ void streamCollide(
                                         (0*1*1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*0*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== SIX ========================== //
 
@@ -1074,13 +1161,13 @@ void streamCollide(
                             - 3.0f * uz
                             + 4.5f * uz * uz
                             - 4.5f * uz * uz * uz
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * uz);
+                            + 4.5f * (ux*ux + uy*uy + uz*uz) * uz) - W_1;
 
-            forceCorr = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*-1) * 0 ) * ffx +
+            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*-1) * 0 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*-1) * 0 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*-1) * -1 ) * ffz);
 
-            fneq = (W_1 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (-1*-1 - CSSQ) * pzz +
                                 2.0f * 0 * 0 * pxy +
@@ -1097,7 +1184,7 @@ void streamCollide(
                                         (0*-1*-1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*0*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== SEVEN ========================== //
 
@@ -1106,13 +1193,13 @@ void streamCollide(
                             + 3.0f * (ux + uy)
                             + 4.5f * (ux + uy) * (ux + uy)
                             + 4.5f * (ux + uy) * (ux + uy) * (ux + uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*0) * 1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*0) * 1 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*0) * 1 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((1*1 - CSSQ) * pxx +
+            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
                                 (1*1 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * 1 * 1 * pxy +
@@ -1129,7 +1216,7 @@ void streamCollide(
                                         (1*0*0 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*1*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== EIGHT ========================== //
 
@@ -1138,13 +1225,13 @@ void streamCollide(
                             - 3.0f * (ux + uy)
                             + 4.5f * (ux + uy) * (ux + uy)
                             - 4.5f * (ux + uy) * (ux + uy) * (ux + uy)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy));
+                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*0) * -1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*0) * -1 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*0) * -1 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
+            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
                                 (-1*-1 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * -1 * -1 * pxy +
@@ -1161,7 +1248,7 @@ void streamCollide(
                                         (-1*0*0 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*-1*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== NINE ========================== //
 
@@ -1170,13 +1257,13 @@ void streamCollide(
                             + 3.0f * (ux + uz)
                             + 4.5f * (ux + uz) * (ux + uz)
                             + 4.5f * (ux + uz) * (ux + uz) * (ux + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*1) * 1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*1) * 1 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*1) * 0 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*1) * 1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((1*1 - CSSQ) * pxx +
+            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (1*1 - CSSQ) * pzz +
                                 2.0f * 1 * 0 * pxy +
@@ -1193,7 +1280,7 @@ void streamCollide(
                                         (0*1*1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*0*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TEN ========================== //
 
@@ -1202,13 +1289,13 @@ void streamCollide(
                             - 3.0f * (ux + uz)
                             + 4.5f * (ux + uz) * (ux + uz)
                             - 4.5f * (ux + uz) * (ux + uz) * (ux + uz)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz));
+                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*-1) * -1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*-1) * -1 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*-1) * 0 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*-1) * -1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
+            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (-1*-1 - CSSQ) * pzz +
                                 2.0f * -1 * 0 * pxy +
@@ -1225,7 +1312,7 @@ void streamCollide(
                                         (0*-1*-1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*0*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== ELEVEN ========================== //
 
@@ -1234,13 +1321,13 @@ void streamCollide(
                             + 3.0f * (uy + uz)
                             + 4.5f * (uy + uz) * (uy + uz)
                             + 4.5f * (uy + uz) * (uy + uz) * (uy + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*1) * 0 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*1) * 0 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*1) * 1 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*1) * 1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
                                 (1*1 - CSSQ) * pyy +
                                 (1*1 - CSSQ) * pzz +
                                 2.0f * 0 * 1 * pxy +
@@ -1257,7 +1344,7 @@ void streamCollide(
                                         (1*1*1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*1*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWELVE ========================== //
 
@@ -1266,13 +1353,13 @@ void streamCollide(
                             - 3.0f * (uy + uz)
                             + 4.5f * (uy + uz) * (uy + uz)
                             - 4.5f * (uy + uz) * (uy + uz) * (uy + uz)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz));
+                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*-1) * 0 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*-1) * 0 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*-1) * -1 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*-1) * -1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
                                 (-1*-1 - CSSQ) * pyy +
                                 (-1*-1 - CSSQ) * pzz +
                                 2.0f * 0 * -1 * pxy +
@@ -1289,7 +1376,7 @@ void streamCollide(
                                         (-1*-1*-1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*-1*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneq + forceTerm);
         
         // ========================== THIRTEEN ========================== //
 
@@ -1298,13 +1385,13 @@ void streamCollide(
                             + 3.0f * (ux - uy)
                             + 4.5f * (ux - uy) * (ux - uy)
                             + 4.5f * (ux - uy) * (ux - uy) * (ux - uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*0) * 1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*0) * 1 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*0) * -1 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((1*1 - CSSQ) * pxx +
+            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
                                 (-1*-1 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * 1 * -1 * pxy +
@@ -1321,7 +1408,7 @@ void streamCollide(
                                         (-1*0*0 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*-1*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== FOURTEEN ========================== //
 
@@ -1330,13 +1417,13 @@ void streamCollide(
                             + 3.0f * (uy - ux)
                             + 4.5f * (uy - ux) * (uy - ux)
                             + 4.5f * (uy - ux) * (uy - ux) * (uy - ux)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*0) * -1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*0) * -1 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*0) * 1 ) * ffy +
                                (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*0) * 0 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
+            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
                                 (1*1 - CSSQ) * pyy +
                                 (0*0 - CSSQ) * pzz +
                                 2.0f * -1 * 1 * pxy +
@@ -1353,7 +1440,7 @@ void streamCollide(
                                         (1*0*0 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*1*0) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== FIFTEEN ========================== //
 
@@ -1362,13 +1449,13 @@ void streamCollide(
                             + 3.0f * (ux - uz)
                             + 4.5f * (ux - uz) * (ux - uz)
                             + 4.5f * (ux - uz) * (ux - uz) * (ux - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uz)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*-1) * 1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*-1) * 1 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*-1) * 0 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*-1) * -1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((1*1 - CSSQ) * pxx +
+            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (-1*-1 - CSSQ) * pzz +
                                 2.0f * 1 * 0 * pxy +
@@ -1385,7 +1472,7 @@ void streamCollide(
                                         (0*-1*-1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*0*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneq + forceCorr); 
+            d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneq + forceTerm); 
 
         // ========================== SIXTEEN ========================== //
 
@@ -1394,13 +1481,13 @@ void streamCollide(
                             + 3.0f * (uz - ux)
                             + 4.5f * (uz - ux) * (uz - ux)
                             + 4.5f * (uz - ux) * (uz - ux) * (uz - ux)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*1) * -1 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*1) * -1 ) * ffx +
                                (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*1) * 0 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*1) * 1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
+            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
                                 (0*0 - CSSQ) * pyy +
                                 (1*1 - CSSQ) * pzz +
                                 2.0f * -1 * 0 * pxy +
@@ -1417,7 +1504,7 @@ void streamCollide(
                                         (0*1*1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*0*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== SEVENTEEN ========================== //
 
@@ -1426,13 +1513,13 @@ void streamCollide(
                             + 3.0f * (uy - uz)
                             + 4.5f * (uy - uz) * (uy - uz)
                             + 4.5f * (uy - uz) * (uy - uz) * (uy - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - uz)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*-1) * 0 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*-1) * 0 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*-1) * 1 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*-1) * -1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
                                 (1*1 - CSSQ) * pyy +
                                 (-1*-1 - CSSQ) * pzz +
                                 2.0f * 0 * 1 * pxy +
@@ -1449,7 +1536,7 @@ void streamCollide(
                                         (1*-1*-1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*1*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== EIGHTEEN ========================== //
 
@@ -1458,13 +1545,13 @@ void streamCollide(
                             + 3.0f * (uz - uy)
                             + 4.5f * (uz - uy) * (uz - uy)
                             + 4.5f * (uz - uy) * (uz - uy) * (uz - uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - uy));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - uy)) - W_2;
 
-            forceCorr = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*1) * 0 ) * ffx +
+            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*1) * 0 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*1) * -1 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*1) * 1 ) * ffz);
 
-            fneq = (W_2 * 4.5f) * ((0*0 - CSSQ) * pxx +
+            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
                                 (-1*-1 - CSSQ) * pyy +
                                 (1*1 - CSSQ) * pzz +
                                 2.0f * 0 * -1 * pxy +
@@ -1481,7 +1568,7 @@ void streamCollide(
                                         (-1*1*1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (0*-1*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneq + forceTerm);
         
         // ========================== NINETEEN ========================== //
 
@@ -1490,9 +1577,9 @@ void streamCollide(
                             + 3.0f * (ux + uy + uz)
                             + 4.5f * (ux + uy + uz) * (ux + uy + uz)
                             + 4.5f * (ux + uy + uz) * (ux + uy + uz) * (ux + uy + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz)) - W_3;
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*1) * 1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*1) * 1 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*1) * 1 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*1) * 1 ) * ffz);
 
@@ -1513,7 +1600,7 @@ void streamCollide(
                                         (1*1*1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*1*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y+1,z+1,19)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y+1,z+1,19)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWENTY ========================== //
 
@@ -1522,9 +1609,9 @@ void streamCollide(
                             - 3.0f * (ux + uy + uz)
                             + 4.5f * (ux + uy + uz) * (ux + uy + uz)
                             - 4.5f * (ux + uy + uz) * (ux + uy + uz) * (ux + uy + uz)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz));
+                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz)) - W_3;
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*-1) * -1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*-1) * -1 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*-1) * -1 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*-1) * -1 ) * ffz);
 
@@ -1545,7 +1632,7 @@ void streamCollide(
                                         (-1*-1*-1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*-1*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y-1,z-1,20)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x-1,y-1,z-1,20)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWENTY ONE ========================== //
 
@@ -1554,9 +1641,9 @@ void streamCollide(
                             + 3.0f * (ux + uy - uz)
                             + 4.5f * (ux + uy - uz) * (ux + uy - uz)
                             + 4.5f * (ux + uy - uz) * (ux + uy - uz) * (ux + uy - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy - uz));        
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy - uz)) - W_3;        
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*-1) * 1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*-1) * 1 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*-1) * 1 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*-1) * -1 ) * ffz);
 
@@ -1577,7 +1664,7 @@ void streamCollide(
                                         (1*-1*-1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*1*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y+1,z-1,21)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y+1,z-1,21)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWENTY TWO ========================== //
 
@@ -1586,9 +1673,9 @@ void streamCollide(
                             + 3.0f * (uz - ux - uy)
                             + 4.5f * (uz - ux - uy) * (uz - ux - uy)
                             + 4.5f * (uz - ux - uy) * (uz - ux - uy) * (uz - ux - uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux - uy));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux - uy)) - W_3;
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*1) * -1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*1) * -1 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*1) * -1 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*1) * 1 ) * ffz);
 
@@ -1609,7 +1696,7 @@ void streamCollide(
                                         (-1*1*1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*-1*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y-1,z+1,22)] = to_pop(feq + omcoLocal * fneq + forceCorr);    
+            d.f[global4(x-1,y-1,z+1,22)] = to_pop(feq + omcoLocal * fneq + forceTerm);    
 
         // ========================== TWENTY THREE ========================== //
         
@@ -1618,9 +1705,9 @@ void streamCollide(
                             + 3.0f * (ux - uy + uz)
                             + 4.5f * (ux - uy + uz) * (ux - uy + uz)
                             + 4.5f * (ux - uy + uz) * (ux - uy + uz) * (ux - uy + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy + uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy + uz)) - W_3;
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*1) * 1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*1) * 1 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*1) * -1 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*1) * 1 ) * ffz);
 
@@ -1641,7 +1728,7 @@ void streamCollide(
                                         (-1*1*1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*-1*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y-1,z+1,23)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y-1,z+1,23)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWENTY FOUR ========================== //
 
@@ -1650,9 +1737,9 @@ void streamCollide(
                             + 3.0f * (uy - ux - uz)
                             + 4.5f * (uy - ux - uz) * (uy - ux - uz)
                             + 4.5f * (uy - ux - uz) * (uy - ux - uz) * (uy - ux - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux - uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux - uz)) - W_3;
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*-1) * -1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*-1) * -1 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*-1) * 1 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*-1) * -1 ) * ffz);
 
@@ -1673,7 +1760,7 @@ void streamCollide(
                                         (1*-1*-1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*1*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y+1,z-1,24)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x-1,y+1,z-1,24)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         // ========================== TWENTY FIVE ========================== //
 
@@ -1682,9 +1769,9 @@ void streamCollide(
                             + 3.0f * (uy - ux + uz)
                             + 4.5f * (uy - ux + uz) * (uy - ux + uz)
                             + 4.5f * (uy - ux + uz) * (uy - ux + uz) * (uy - ux + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux + uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux + uz)) - W_3;
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*1) * -1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*1) * -1 ) * ffx +
                                (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*1) * 1 ) * ffy +
                                (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*1) * 1 ) * ffz);
 
@@ -1705,7 +1792,7 @@ void streamCollide(
                                         (1*1*1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (-1*1*1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x-1,y+1,z+1,25)] = to_pop(feq + omcoLocal * fneq + forceCorr);    
+            d.f[global4(x-1,y+1,z+1,25)] = to_pop(feq + omcoLocal * fneq + forceTerm);    
         
         // ========================== TWENTY SIX ========================== //
 
@@ -1714,9 +1801,9 @@ void streamCollide(
                             + 3.0f * (ux - uy - uz)
                             + 4.5f * (ux - uy - uz) * (ux - uy - uz)
                             + 4.5f * (ux - uy - uz) * (ux - uy - uz) * (ux - uy - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy - uz));
+                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy - uz)) - W_3;
 
-            forceCorr = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*-1) * 1 ) * ffx +
+            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*-1) * 1 ) * ffx +
                                (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*-1) * -1 ) * ffy +
                                (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*-1) * -1 ) * ffz);
 
@@ -1737,7 +1824,7 @@ void streamCollide(
                                         (-1*-1*-1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
                                 6.0f * (1*-1*-1) * (pxy*uz + ux*pyz + uy*pxz));
 
-            d.f[global4(x+1,y-1,z-1,26)] = to_pop(feq + omcoLocal * fneq + forceCorr);
+            d.f[global4(x+1,y-1,z-1,26)] = to_pop(feq + omcoLocal * fneq + forceTerm);
 
         #endif 
 
@@ -1764,25 +1851,25 @@ void streamCollide(
         const float a3 = 3.0f * multPhi;
 
         feq = multPhi + a3 * ux;
-        forceCorr = phiNorm * d.normx[idx3];
-        d.g[global4(x+1,y,z,1)] = feq + forceCorr;
+        forceTerm = phiNorm * d.normx[idx3];
+        d.g[global4(x+1,y,z,1)] = feq + forceTerm;
         
         feq = multPhi - a3 * ux;
-        d.g[global4(x-1,y,z,2)] = feq - forceCorr;
+        d.g[global4(x-1,y,z,2)] = feq - forceTerm;
 
         feq = multPhi + a3 * uy;
-        forceCorr = phiNorm * d.normy[idx3];
-        d.g[global4(x,y+1,z,3)] = feq + forceCorr;
+        forceTerm = phiNorm * d.normy[idx3];
+        d.g[global4(x,y+1,z,3)] = feq + forceTerm;
 
         feq = multPhi - a3 * uy;
-        d.g[global4(x,y-1,z,4)] = feq - forceCorr;
+        d.g[global4(x,y-1,z,4)] = feq - forceTerm;
 
         feq = multPhi + a3 * uz;
-        forceCorr = phiNorm * d.normz[idx3];
-        d.g[global4(x,y,z+1,5)] = feq + forceCorr;
+        forceTerm = phiNorm * d.normz[idx3];
+        d.g[global4(x,y,z+1,5)] = feq + forceTerm;
 
         feq = multPhi - a3 * uz;
-        d.g[global4(x,y,z-1,6)] = feq - forceCorr;
+        d.g[global4(x,y,z-1,6)] = feq - forceTerm;
     
     // ========================================================== END ========================================================== //
     

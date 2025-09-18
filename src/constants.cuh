@@ -5,8 +5,8 @@
 #include "../include/perturbationData.cuh"
 #endif
 
-#define RUN_MODE
-//#define SAMPLE_MODE
+//#define RUN_MODE
+#define SAMPLE_MODE
 //#define DEBUG_MODE
 
 #if defined(RUN_MODE)
@@ -17,7 +17,7 @@
 #elif defined(SAMPLE_MODE)
 
     constexpr int MACRO_SAVE = 100;
-    constexpr int NSTEPS = 10000;
+    constexpr int NSTEPS = 1000;
 
 #elif defined(DEBUG_MODE)
 

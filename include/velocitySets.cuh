@@ -10,8 +10,11 @@
                                  1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f, 1.0f / 18.0f,
                                  1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f, 1.0f / 36.0f };
     constexpr float W_0 = 1.0f / 3.0f;  // 0
+    constexpr float W0_45 = W_0 * 4.5f;
     constexpr float W_1 = 1.0f / 18.0f; // 1 to 6
+    constexpr float W1_45 = W_1 * 4.5f;
     constexpr float W_2 = 1.0f / 36.0f; // 7 to 18
+    constexpr float W2_45 = W_2 * 4.5f;
     constexpr idx_t FLINKS = 19;
 
 #elif defined(D3Q27) //           0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
