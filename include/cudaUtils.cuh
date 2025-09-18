@@ -67,7 +67,7 @@ inline constexpr int TILE_Z = static_cast<int>(BLOCK_SIZE_Z) + 2*HALO;
 #endif
 
 using ci_t  = int; // probably best type for -1,0,1
-using idx_t = uint32_t;
+using idx_t = int;
 
 #define checkCudaErrors(err) __checkCudaErrors((err), #err, __FILE__, __LINE__)
 #define checkCudaErrorsOutline(err) __checkCudaErrorsOutline((err), #err, __FILE__, __LINE__)

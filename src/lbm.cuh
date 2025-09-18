@@ -205,16 +205,17 @@ void streamCollide(
     const float ffy = d.ffy[idx3];
     const float ffz = d.ffz[idx3];
 
+    float ux, uy, uz;
     const float invRho = 1.0f / rho;
     
     #if defined(D3Q19)
-    float ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16);
-    float uy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18);
-    float uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17);
+    ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16);
+    uy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18);
+    uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17);
     #elif defined(D3Q27)
-    float ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16 + pop19 - pop20 + pop21 - pop22 + pop23 - pop24 + pop26 - pop25);
-    float uy = invRho * (pop3 - pop4 + pop7 - pop8  + pop11 - pop12 + pop14 - pop13 + pop17 - pop18 + pop19 - pop20 + pop21 - pop22 + pop24 - pop23 + pop25 - pop26);
-    float uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17 + pop19 - pop20 + pop22 - pop21 + pop23 - pop24 + pop25 - pop26);
+    ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16 + pop19 - pop20 + pop21 - pop22 + pop23 - pop24 + pop26 - pop25);
+    uy = invRho * (pop3 - pop4 + pop7 - pop8  + pop11 - pop12 + pop14 - pop13 + pop17 - pop18 + pop19 - pop20 + pop21 - pop22 + pop24 - pop23 + pop25 - pop26);
+    uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17 + pop19 - pop20 + pop22 - pop21 + pop23 - pop24 + pop25 - pop26);
     #endif
     
     ux += ffx * 0.5f * invRho;
@@ -225,355 +226,108 @@ void streamCollide(
     d.uy[idx3] = uy; 
     d.uz[idx3] = uz;
 
+    float pxx, pyy, pzz, pxy, pxz, pyz;
+    { // ====================================== MOMENTUM FLUX TENSOR ====================================== //
+        float feq, fneq;
 
-
-    // =============================================== SECOND-ORDER MOMENTUM FLUX TENSOR =============================================== //
-
-        //             0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
-        // CIX[27] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 1,-1,-1, 1 };
-        // CIY[27] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 1,-1, 1,-1, 1,-1,-1, 1, 1,-1 };
-        // CIZ[27] = { 0, 0, 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0,-1, 1,-1, 1, 1,-1,-1, 1, 1,-1, 1,-1 };
-
-        float feq, fneq, pxx, pyy, pzz, pxy, pxz, pyz;
-
-        // pop1 (c = +x̂)
-        #if defined(D3Q19)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * ux
-                        + 4.5f * ux * ux);
-        #elif defined(D3Q27)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * ux
-                        + 4.5f * ux * ux
-                        + 4.5f * ux * ux * ux
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * ux);
-        #endif
+        feq  = computeFeq<1>(rho,ux,uy,uz);
         fneq = pop1 - feq;
         pxx = fneq;
 
-        // pop2 (c = -x̂)
-        #if defined(D3Q19)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * ux
-                        + 4.5f * ux * ux);
-        #elif defined(D3Q27)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * ux
-                        + 4.5f * ux * ux
-                        - 4.5f * ux * ux * ux
-                        + 4.5f * (ux*ux + uy*uy + uz*uz) * ux);
-        #endif
+        feq  = computeFeq<2>(rho,ux,uy,uz);
         fneq = pop2 - feq;
         pxx += fneq;
 
-        // pop3 (c = +ŷ)
-        #if defined(D3Q19)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * uy
-                        + 4.5f * uy * uy);
-        #elif defined(D3Q27)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * uy
-                        + 4.5f * uy * uy
-                        + 4.5f * uy * uy * uy
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * uy);
-        #endif
+        feq  = computeFeq<3>(rho,ux,uy,uz);
         fneq = pop3 - feq;
         pyy = fneq;
 
-        // pop4 (c = -ŷ)
-        #if defined(D3Q19)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * uy
-                        + 4.5f * uy * uy);
-        #elif defined(D3Q27)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * uy
-                        + 4.5f * uy * uy
-                        - 4.5f * uy * uy * uy
-                        + 4.5f * (ux*ux + uy*uy + uz*uz) * uy);
-        #endif
+        feq  = computeFeq<4>(rho,ux,uy,uz);
         fneq = pop4 - feq;
         pyy += fneq;
 
-        // pop5 (c = +ẑ)
-        #if defined(D3Q19)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * uz
-                        + 4.5f * uz * uz);
-        #elif defined(D3Q27)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * uz
-                        + 4.5f * uz * uz
-                        + 4.5f * uz * uz * uz
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * uz);
-        #endif
+        feq  = computeFeq<5>(rho,ux,uy,uz);
         fneq = pop5 - feq;
         pzz = fneq;
 
-        // pop6 (c = -ẑ)
-        #if defined(D3Q19)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * uz
-                        + 4.5f * uz * uz);
-        #elif defined(D3Q27)
-        feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * uz
-                        + 4.5f * uz * uz
-                        - 4.5f * uz * uz * uz
-                        + 4.5f * (ux*ux + uy*uy + uz*uz) * uz);
-        #endif
+        feq  = computeFeq<6>(rho,ux,uy,uz);
         fneq = pop6 - feq;
         pzz += fneq;
 
-        // pop7 (c = +x̂ +ŷ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux + uy)
-                        + 4.5f * (ux + uy) * (ux + uy));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux + uy)
-                        + 4.5f * (ux + uy) * (ux + uy)
-                        + 4.5f * (ux + uy) * (ux + uy) * (ux + uy)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy));
-        #endif
+        feq  = computeFeq<7>(rho,ux,uy,uz);
         fneq = pop7 - feq;
         pxx += fneq; 
         pyy += fneq; 
         pxy = fneq;
 
-        // pop8 (c = -x̂ -ŷ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * (ux + uy)
-                        + 4.5f * (ux + uy) * (ux + uy));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * (ux + uy)
-                        + 4.5f * (ux + uy) * (ux + uy)
-                        - 4.5f * (ux + uy) * (ux + uy) * (ux + uy)
-                        + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy));
-        #endif
+        feq  = computeFeq<8>(rho,ux,uy,uz);
         fneq = pop8 - feq;
         pxx += fneq; 
         pyy += fneq; 
         pxy += fneq;
 
-        // pop9 (c = +x̂ +ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux + uz)
-                        + 4.5f * (ux + uz) * (ux + uz));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux + uz)
-                        + 4.5f * (ux + uz) * (ux + uz)
-                        + 4.5f * (ux + uz) * (ux + uz) * (ux + uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz));
-        #endif
+        feq  = computeFeq<9>(rho,ux,uy,uz);
         fneq = pop9 - feq;
         pxx += fneq; 
         pzz += fneq; 
         pxz = fneq;
 
-        // pop10 (c = -x̂ -ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * (ux + uz)
-                        + 4.5f * (ux + uz) * (ux + uz));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * (ux + uz)
-                        + 4.5f * (ux + uz) * (ux + uz)
-                        - 4.5f * (ux + uz) * (ux + uz) * (ux + uz)
-                        + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz));
-        #endif
+        feq  = computeFeq<10>(rho,ux,uy,uz);
         fneq = pop10 - feq;
         pxx += fneq; 
         pzz += fneq; 
         pxz += fneq;
 
-        // pop11 (c = +ŷ +ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy + uz)
-                        + 4.5f * (uy + uz) * (uy + uz));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy + uz)
-                        + 4.5f * (uy + uz) * (uy + uz)
-                        + 4.5f * (uy + uz) * (uy + uz) * (uy + uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz));
-        #endif
+        feq  = computeFeq<11>(rho,ux,uy,uz);
         fneq = pop11 - feq;
         pyy += fneq;
         pzz += fneq; 
         pyz = fneq;
 
-        // pop12 (c = -ŷ -ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * (uy + uz)
-                        + 4.5f * (uy + uz) * (uy + uz));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * (uy + uz)
-                        + 4.5f * (uy + uz) * (uy + uz)
-                        - 4.5f * (uy + uz) * (uy + uz) * (uy + uz)
-                        + 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz));
-        #endif
+        feq  = computeFeq<12>(rho,ux,uy,uz);
         fneq = pop12 - feq;
         pyy += fneq; 
         pzz += fneq; 
         pyz += fneq;
 
-        // pop13 (c = +x̂ -ŷ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux - uy)
-                        + 4.5f * (ux - uy) * (ux - uy));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux - uy)
-                        + 4.5f * (ux - uy) * (ux - uy)
-                        + 4.5f * (ux - uy) * (ux - uy) * (ux - uy)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy));
-        #endif
+        feq  = computeFeq<13>(rho,ux,uy,uz);
         fneq = pop13 - feq;
         pxx += fneq; 
         pyy += fneq; 
         pxy -= fneq;
 
-        // pop14 (c = -x̂ +ŷ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy - ux)
-                        + 4.5f * (uy - ux) * (uy - ux));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy - ux)
-                        + 4.5f * (uy - ux) * (uy - ux)
-                        + 4.5f * (uy - ux) * (uy - ux) * (uy - ux)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux));
-        #endif
+        feq  = computeFeq<14>(rho,ux,uy,uz);
         fneq = pop14 - feq;
         pxx += fneq; 
         pyy += fneq; 
         pxy -= fneq;
 
-        // pop15 (c = +x̂ -ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux - uz)
-                        + 4.5f * (ux - uz) * (ux - uz));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux - uz)
-                        + 4.5f * (ux - uz) * (ux - uz)
-                        + 4.5f * (ux - uz) * (ux - uz) * (ux - uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uz));
-        #endif
+        feq  = computeFeq<15>(rho,ux,uy,uz);
         fneq = pop15 - feq;
         pxx += fneq; 
         pzz += fneq; 
         pxz -= fneq;
 
-        // pop16 (c = -x̂ +ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uz - ux)
-                        + 4.5f * (uz - ux) * (uz - ux));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uz - ux)
-                        + 4.5f * (uz - ux) * (uz - ux)
-                        + 4.5f * (uz - ux) * (uz - ux) * (uz - ux)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux));
-        #endif
+        feq  = computeFeq<16>(rho,ux,uy,uz);
         fneq = pop16 - feq;
         pxx += fneq; 
         pzz += fneq; 
         pxz -= fneq;
 
-        // pop17 (c = +ŷ -ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy - uz)
-                        + 4.5f * (uy - uz) * (uy - uz));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy - uz)
-                        + 4.5f * (uy - uz) * (uy - uz)
-                        + 4.5f * (uy - uz) * (uy - uz) * (uy - uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - uz));
-        #endif
+        feq  = computeFeq<17>(rho,ux,uy,uz);
         fneq = pop17 - feq;
         pyy += fneq; 
         pzz += fneq; 
         pyz -= fneq;
 
-        // pop18 (c = -ŷ +ẑ)
-        #if defined(D3Q19)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uz - uy)
-                        + 4.5f * (uz - uy) * (uz - uy));
-        #elif defined(D3Q27)
-        feq = W_2 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uz - uy)
-                        + 4.5f * (uz - uy) * (uz - uy)
-                        + 4.5f * (uz - uy) * (uz - uy) * (uz - uy)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - uy));
-        #endif
+        feq  = computeFeq<18>(rho,ux,uy,uz);
         fneq = pop18 - feq;
         pyy += fneq; 
         pzz += fneq; 
         pyz -= fneq;
         
         #if defined(D3Q27)
-        // pop19 (c = +x̂ +ŷ +ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux + uy + uz)
-                        + 4.5f * (ux + uy + uz) * (ux + uy + uz)
-                        + 4.5f * (ux + uy + uz) * (ux + uy + uz) * (ux + uy + uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz));
+        feq  = computeFeq<19>(rho,ux,uy,uz);
         fneq = pop19 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -582,13 +336,7 @@ void streamCollide(
         pxz += fneq; 
         pyz += fneq;
 
-        // pop20 (c = -x̂ -ŷ -ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        - 3.0f * (ux + uy + uz)
-                        + 4.5f * (ux + uy + uz) * (ux + uy + uz)
-                        - 4.5f * (ux + uy + uz) * (ux + uy + uz) * (ux + uy + uz)
-                        + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz));
+        feq  = computeFeq<20>(rho,ux,uy,uz);
         fneq = pop20 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -597,13 +345,7 @@ void streamCollide(
         pxz += fneq; 
         pyz += fneq;
 
-        // pop21 (c = +x̂ +ŷ -ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux + uy - uz)
-                        + 4.5f * (ux + uy - uz) * (ux + uy - uz)
-                        + 4.5f * (ux + uy - uz) * (ux + uy - uz) * (ux + uy - uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy - uz));
+        feq  = computeFeq<21>(rho,ux,uy,uz);
         fneq = pop21 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -612,13 +354,7 @@ void streamCollide(
         pxz -= fneq; 
         pyz -= fneq;
 
-        // pop22 (c = -x̂ -ŷ +ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uz - ux - uy)
-                        + 4.5f * (uz - ux - uy) * (uz - ux - uy)
-                        + 4.5f * (uz - ux - uy) * (uz - ux - uy) * (uz - ux - uy)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux - uy));
+        feq  = computeFeq<22>(rho,ux,uy,uz);
         fneq = pop22 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -627,13 +363,7 @@ void streamCollide(
         pxz -= fneq; 
         pyz -= fneq; 
 
-        // pop23 (c = +x̂ -ŷ +ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux - uy + uz)
-                        + 4.5f * (ux - uy + uz) * (ux - uy + uz)
-                        + 4.5f * (ux - uy + uz) * (ux - uy + uz) * (ux - uy + uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy + uz));
+        feq  = computeFeq<23>(rho,ux,uy,uz);
         fneq = pop23 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -642,13 +372,7 @@ void streamCollide(
         pxz += fneq; 
         pyz -= fneq;
 
-        // pop24 (c = -x̂ +ŷ -ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy - ux - uz)
-                        + 4.5f * (uy - ux - uz) * (uy - ux - uz)
-                        + 4.5f * (uy - ux - uz) * (uy - ux - uz) * (uy - ux - uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux - uz));
+        feq  = computeFeq<24>(rho,ux,uy,uz);
         fneq = pop24 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -657,13 +381,7 @@ void streamCollide(
         pxz += fneq; 
         pyz -= fneq;
 
-        // pop25 (c = -x̂ +ŷ +ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (uy - ux + uz)
-                        + 4.5f * (uy - ux + uz) * (uy - ux + uz)
-                        + 4.5f * (uy - ux + uz) * (uy - ux + uz) * (uy - ux + uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux + uz));
+        feq  = computeFeq<25>(rho,ux,uy,uz);
         fneq = pop25 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -672,13 +390,7 @@ void streamCollide(
         pxz -= fneq; 
         pyz += fneq;
 
-        // pop26 (c = +x̂ -ŷ -ẑ)
-        feq = W_3 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * (ux - uy - uz)
-                        + 4.5f * (ux - uy - uz) * (ux - uy - uz)
-                        + 4.5f * (ux - uy - uz) * (ux - uy - uz) * (ux - uy - uz)
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy - uz));
+        feq  = computeFeq<26>(rho,ux,uy,uz);
         fneq = pop26 - feq;
         pxx += fneq; 
         pyy += fneq; 
@@ -688,1189 +400,235 @@ void streamCollide(
         pyz += fneq;
         #endif 
 
-        pxx += CSSQ;
-        pyy += CSSQ;
-        pzz += CSSQ;
-
         d.pxx[idx3] = pxx;
         d.pyy[idx3] = pyy;
         d.pzz[idx3] = pzz;
         d.pxy[idx3] = pxy;
         d.pxz[idx3] = pxz;   
         d.pyz[idx3] = pyz;
+    } // ============================================== END ============================================== //
 
-    // ============================================================= END ============================================================= //
-
-
-
+    float omcoLocal;
     #if defined(VISC_CONTRAST)
-
+    {
         const float phi = d.phi[idx3]; 
-        nuLocal = fmaf(phi, (VISC_OIL - VISC_WATER), VISC_WATER);
-
+        const float nuLocal = fmaf(phi, (VISC_OIL - VISC_WATER), VISC_WATER);
         const float omegaPhys = 1.0f / (0.5f + 3.0f * nuLocal);
 
         #if defined(JET) 
-            const float omegaLocal = fminf(omegaPhys, cubicSponge(z));
+        omcoLocal = 1.0f - fminf(omegaPhys, cubicSponge(z));
         #elif defined(DROPLET) 
-            const float omegaLocal = omegaPhys;
-        #endif
-
+        omcoLocal = 1.0f - omegaPhys;
+        #endif 
+    }
     #else
-
+    {
         #if defined(JET)
-            const float omegaLocal = cubicSponge(z);
+        omcoLocal = 1.0f - cubicSponge(z);
         #elif defined(DROPLET)
-            const float omegaLocal = OMEGA_REF;
+        omcoLocal = 1.0f - OMEGA_REF;
         #endif
-
+    }
     #endif
 
-    const float omcoLocal = 1.0f - omegaLocal;
-    const float coeffTerm = 1.0f - 0.5f * omegaLocal;
-
-
-
-    // =============================================== FUSED COLLISION-STREAMING =============================================== //
-
-        //             0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
-        // CIX[27] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 1,-1,-1, 1 };
-        // CIY[27] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 1,-1, 1,-1, 1,-1,-1, 1, 1,-1 };
-        // CIZ[27] = { 0, 0, 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0,-1, 1,-1, 1, 1,-1,-1, 1, 1,-1, 1,-1 };
-
-        float forceTerm;
-
-        #if defined(D3Q19)
-            
-            const float coeffForce = coeffTerm * 3.0f * invRho;
-            const float uu = 1.5f * (ux*ux + uy*uy + uz*uz);
-            const float uf = ux*ffx + uy*ffy + uz*ffz;
-
-        // ========================== ZERO ========================== //
-
-            feq = W_0 * rho * (1.0f - uu) - W_0;
-            forceTerm = coeffForce * feq * uf;
-
-            fneq = W0_45 * CSSQ * (pxx + pyy + pzz);
-
-            d.f[idx3] = to_pop(feq - omcoLocal * fneq - forceTerm);
-
-        // ========================== ONE ========================== //
-
-            feq = W_1 * rho * (1.0f - uu + 3.0f * ux + 4.5f * ux * ux) - W_1;
-            forceTerm = coeffForce * feq * (ffx - uf);
-
-            fneq = W1_45 * (CSCO * pxx 
-                            - CSSQ * pyy 
-                            - CSSQ * pzz);
-
-            d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWO ========================== //
-
-            feq = W_1 * rho * (1.0f - uu - 3.0f * ux + 4.5f * ux * ux) - W_1;
-            forceTerm = coeffForce * feq * (ffx + uf);
-
-            fneq = W1_45 * (CSCO * pxx 
-                            - CSSQ * pyy 
-                            - CSSQ * pzz);
-
-            d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneq - forceTerm);
-
-        // ========================== THREE ========================== //
-
-            feq = W_1 * rho * (1.0f - uu + 3.0f * uy + 4.5f * uy * uy) - W_1;
-            forceTerm = coeffForce * feq * (ffy - uf);
-
-            fneq = W1_45 * (-CSSQ * pxx 
-                            + CSCO * pyy 
-                            - CSSQ * pzz);
-
-            d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== FOUR ========================== //
-
-            feq = W_1 * rho * (1.0f - uu - 3.0f * uy + 4.5f * uy * uy) - W_1;
-            forceTerm = coeffForce * feq * (ffy + uf);
-
-            fneq = W1_45 * (-CSSQ * pxx 
-                            + CSCO * pyy 
-                            - CSSQ * pzz);
-
-            d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneq - forceTerm);
-
-        // ========================== FIVE ========================== //
-
-            feq = W_1 * rho * (1.0f - uu + 3.0f * uz + 4.5f * uz * uz) - W_1;
-            forceTerm = coeffForce * feq * (ffz - uf);
-
-            fneq = W1_45 * (-CSSQ * pxx 
-                            - CSSQ * pyy 
-                            + CSCO * pzz);
-
-            d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== SIX ========================== //
-
-            feq = W_1 * rho * (1.0f - uu - 3.0f * uz + 4.5f * uz * uz) - W_1;
-            forceTerm = coeffForce * feq * (ffz + uf);
-
-            fneq = W1_45 * (-CSSQ * pxx 
-                            - CSSQ * pyy 
-                            + CSCO * pzz);
-
-            d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneq - forceTerm);
-
-        // ========================== SEVEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux + uy) + 4.5f * (ux + uy) * (ux + uy)) - W_2;
-            forceTerm = coeffForce * feq * (ffx + ffy - uf);
-
-            fneq = W2_45 * (CSCO * pxx 
-                            + CSCO * pyy 
-                            - CSSQ * pzz 
-                            + 2.0f * pxy);
-
-            d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== EIGHT ========================== //
-
-            feq = W_2 * rho * (1.0f - uu - 3.0f * (ux + uy) + 4.5f * (ux + uy) * (ux + uy)) - W_2;
-            forceTerm = coeffForce * feq * (ffx + ffy + uf);
-            
-            fneq = W2_45 * (CSCO * pxx 
-                            + CSCO * pyy 
-                            - CSSQ * pzz 
-                            + 2.0f * pxy);
-
-            d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneq - forceTerm);
-
-        // ========================== NINE ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux + uz) + 4.5f * (ux + uz) * (ux + uz)) - W_2;
-            forceTerm = coeffForce * feq * (ffx + ffz - uf);
-
-            fneq = W2_45 * (CSCO * pxx 
-                            - CSSQ * pyy 
-                            + CSCO * pzz 
-                            + 2.0f * pxz);
-
-            d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu - 3.0f * (ux + uz) + 4.5f * (ux + uz) * (ux + uz)) - W_2;
-            forceTerm = coeffForce * feq * (ffx + ffz + uf);
-
-            fneq = W2_45 * (CSCO * pxx 
-                            - CSSQ * pyy 
-                            + CSCO * pzz 
-                            + 2.0f * pxz);
-
-            d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneq - forceTerm);
-
-        // ========================== ELEVEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (uy + uz) + 4.5f * (uy + uz) * (uy + uz)) - W_2;
-            forceTerm = coeffForce * feq * (ffy + ffz - uf);
-
-            fneq = W2_45 * (-CSSQ * pxx 
-                            + CSCO * pyy 
-                            + CSCO * pzz 
-                            + 2.0f * pyz);
-
-            d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWELVE ========================== //
-
-            feq = W_2 * rho * (1.0f - uu - 3.0f * (uy + uz) + 4.5f * (uy + uz) * (uy + uz)) - W_2;
-            forceTerm = coeffForce * feq * (ffy + ffz + uf);
-
-            fneq = W2_45 * (-CSSQ * pxx 
-                            + CSCO * pyy 
-                            + CSCO * pzz 
-                            + 2.0f * pyz);
-
-            d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneq - forceTerm);
-
-        // ========================== THIRTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux - uy) + 4.5f * (ux - uy) * (ux - uy)) - W_2;
-            forceTerm = coeffForce * feq * (ffx - ffy - uf);
-            
-            fneq = W2_45 * (CSCO * pxx 
-                            + CSCO * pyy 
-                            - CSSQ * pzz 
-                            - 2.0f * pxy);
-
-            d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== FOURTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (uy - ux) + 4.5f * (uy - ux) * (uy - ux)) - W_2;
-            forceTerm = coeffForce * feq * (ffy - ffx - uf);
-
-            fneq = W2_45 * (CSCO * pxx 
-                            + CSCO * pyy 
-                            - CSSQ * pzz 
-                            - 2.0f * pxy);
-
-            d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== FIFTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (ux - uz) + 4.5f * (ux - uz) * (ux - uz)) - W_2;
-            forceTerm = coeffForce * feq * (ffx - ffz - uf);
-
-            fneq = W2_45 * (CSCO * pxx 
-                            - CSSQ * pyy
-                            + CSCO * pzz  
-                            - 2.0f * pxz);
-
-            d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneq + forceTerm); 
-
-        // ========================== SIXTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (uz - ux) + 4.5f * (uz - ux) * (uz - ux)) - W_2;
-            forceTerm = coeffForce * feq * (ffz - ffx - uf);
-
-            fneq = W2_45 * (CSCO * pxx 
-                            - CSSQ * pyy 
-                            + CSCO * pzz 
-                            - 2.0f * pxz);
-
-            d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== SEVENTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (uy - uz) + 4.5f * (uy - uz) * (uy - uz)) - W_2;
-            forceTerm = coeffForce * feq * (ffy - ffz - uf);
-
-            fneq = W2_45 * (-CSSQ * pxx 
-                            + CSCO * pyy 
-                            + CSCO * pzz 
-                            - 2.0f * pyz);
-
-            d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== EIGHTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f - uu + 3.0f * (uz - uy) + 4.5f * (uz - uy) * (uz - uy)) - W_2;
-            forceTerm = coeffForce * feq * (ffz - ffy - uf);
-
-            fneq = W2_45 * (-CSSQ * pxx 
-                            + CSCO * pyy 
-                            + CSCO * pzz 
-                            - 2.0f * pyz);
-
-            d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        #elif defined(D3Q27)
-
-        // ========================== ZERO ========================== //
-
-            feq =  W_0 * rho * (1.0f - 1.5f * (ux*ux + uy*uy + uz*uz)) - W_0;
-
-            forceTerm = coeffForce * W_0 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*0) * 0 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*0) * 0 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*0) * 0 ) * ffz);
-
-            fneq = (W_0 * 4.5f) * ((0*0 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * 0 * 0 * pxy +
-                                2.0f * 0 * 0 * pxz +
-                                2.0f * 0 * 0 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*0*0 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*0*0 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*0*0 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*0*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[idx3] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== ONE ========================== //
-
-            feq = W_1 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * ux
-                            + 4.5f * ux * ux
-                            + 4.5f * ux * ux * ux
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * ux) - W_1;
-
-            forceTerm = coeffForce * W_1 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*0) * 1 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*0) * 0 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*0) * 0 ) * ffz);
-
-            fneq = W1_45 * ((1*1 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * 1 * 0 * pxy +
-                                2.0f * 1 * 0 * pxz +
-                                2.0f * 0 * 0 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*0*0 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*0*0 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*0*0 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*0*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWO ========================== //
-
-            feq = W_1 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            - 3.0f * ux
-                            + 4.5f * ux * ux
-                            - 4.5f * ux * ux * ux
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * ux) - W_1;
-
-            forceTerm = coeffForce * W_1 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*0) * -1 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*0) * 0 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*0) * 0 ) * ffz);
-
-            fneq = W1_45 * ((-1*-1 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * -1 * 0 * pxy +
-                                2.0f * -1 * 0 * pxz +
-                                2.0f * 0 * 0 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*0*0 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*0*0 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*0*0 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*0*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== THREE ========================== //
-
-            feq = W_1 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * uy
-                            + 4.5f * uy * uy
-                            + 4.5f * uy * uy * uy
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * uy) - W_1;
-
-            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*0) * 0 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*0) * 1 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*0) * 0 ) * ffz);
-
-            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * 0 * 1 * pxy +
-                                2.0f * 0 * 0 * pxz +
-                                2.0f * 1 * 0 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*1*1 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*0*0 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*0*0 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*1*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== FOUR ========================== //
-
-            feq = W_1 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            - 3.0f * uy
-                            + 4.5f * uy * uy
-                            - 4.5f * uy * uy * uy
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * uy) - W_1;
-
-            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*0) * 0 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*0) * -1 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*0) * 0 ) * ffz);
-
-            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * 0 * -1 * pxy +
-                                2.0f * 0 * 0 * pxz +
-                                2.0f * -1 * 0 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*-1*-1 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*0*0 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*0*0 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*-1*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== FIVE ========================== //
-
-            feq = W_1 * rho * (1.0f
-                        - 1.5f * (ux*ux + uy*uy + uz*uz)
-                        + 3.0f * uz
-                        + 4.5f * uz * uz
-                        + 4.5f * uz * uz * uz
-                        - 4.5f * (ux*ux + uy*uy + uz*uz) * uz) - W_1;
-
-            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*1) * 0 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*1) * 0 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*1) * 1 ) * ffz);
-
-            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * 0 * 0 * pxy +
-                                2.0f * 0 * 1 * pxz +
-                                2.0f * 0 * 1 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*0*0 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*1*1 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*1*1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*0*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== SIX ========================== //
-
-            feq = W_1 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            - 3.0f * uz
-                            + 4.5f * uz * uz
-                            - 4.5f * uz * uz * uz
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * uz) - W_1;
-
-            forceTerm = coeffForce * W_1 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*-1) * 0 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*-1) * 0 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*0 + uy*0 + uz*-1) * -1 ) * ffz);
-
-            fneq = W1_45 * ((0*0 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * 0 * 0 * pxy +
-                                2.0f * 0 * -1 * pxz +
-                                2.0f * 0 * -1 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*0*0 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*-1*-1 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*-1*-1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*0*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== SEVEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux + uy)
-                            + 4.5f * (ux + uy) * (ux + uy)
-                            + 4.5f * (ux + uy) * (ux + uy) * (ux + uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*0) * 1 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*0) * 1 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*0) * 0 ) * ffz);
-
-            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * 1 * 1 * pxy +
-                                2.0f * 1 * 0 * pxz +
-                                2.0f * 1 * 0 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*1*1 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*0*0 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*0*0 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*1*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== EIGHT ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            - 3.0f * (ux + uy)
-                            + 4.5f * (ux + uy) * (ux + uy)
-                            - 4.5f * (ux + uy) * (ux + uy) * (ux + uy)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*0) * -1 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*0) * -1 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*0) * 0 ) * ffz);
-
-            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * -1 * -1 * pxy +
-                                2.0f * -1 * 0 * pxz +
-                                2.0f * -1 * 0 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*0*0 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*0*0 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*-1*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== NINE ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux + uz)
-                            + 4.5f * (ux + uz) * (ux + uz)
-                            + 4.5f * (ux + uz) * (ux + uz) * (ux + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*1) * 1 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*1) * 0 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*1) * 1 ) * ffz);
-
-            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * 1 * 0 * pxy +
-                                2.0f * 1 * 1 * pxz +
-                                2.0f * 0 * 1 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*0*0 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*1*1 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*1*1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*0*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            - 3.0f * (ux + uz)
-                            + 4.5f * (ux + uz) * (ux + uz)
-                            - 4.5f * (ux + uz) * (ux + uz) * (ux + uz)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uz)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*-1) * -1 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*-1) * 0 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*-1) * -1 ) * ffz);
-
-            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * -1 * 0 * pxy +
-                                2.0f * -1 * -1 * pxz +
-                                2.0f * 0 * -1 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*0*0 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*-1*-1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*0*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== ELEVEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uy + uz)
-                            + 4.5f * (uy + uz) * (uy + uz)
-                            + 4.5f * (uy + uz) * (uy + uz) * (uy + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*1) * 0 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*1) * 1 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*1) * 1 ) * ffz);
-
-            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * 0 * 1 * pxy +
-                                2.0f * 0 * 1 * pxz +
-                                2.0f * 1 * 1 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*1*1 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*1*1 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*1*1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*1*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWELVE ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            - 3.0f * (uy + uz)
-                            + 4.5f * (uy + uz) * (uy + uz)
-                            - 4.5f * (uy + uz) * (uy + uz) * (uy + uz)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (uy + uz)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*-1) * 0 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*-1) * -1 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*-1) * -1 ) * ffz);
-
-            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * 0 * -1 * pxy +
-                                2.0f * 0 * -1 * pxz +
-                                2.0f * -1 * -1 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*-1*-1 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*-1*-1 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*-1*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-        
-        // ========================== THIRTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux - uy)
-                            + 4.5f * (ux - uy) * (ux - uy)
-                            + 4.5f * (ux - uy) * (ux - uy) * (ux - uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*0) * 1 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*0) * -1 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*0) * 0 ) * ffz);
-
-            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * 1 * -1 * pxy +
-                                2.0f * 1 * 0 * pxz +
-                                2.0f * -1 * 0 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*-1*-1 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*0*0 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*0*0 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*-1*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== FOURTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uy - ux)
-                            + 4.5f * (uy - ux) * (uy - ux)
-                            + 4.5f * (uy - ux) * (uy - ux) * (uy - ux)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*0) * -1 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*0) * 1 ) * ffy +
-                               (3.0f * (0 - uz) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*0) * 0 ) * ffz);
-
-            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (0*0 - CSSQ) * pzz +
-                                2.0f * -1 * 1 * pxy +
-                                2.0f * -1 * 0 * pxz +
-                                2.0f * 1 * 0 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*0 - CSSQ*0) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*1*1 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*0 - CSSQ*0) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*0*0 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*0*0 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*1*0) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== FIFTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux - uz)
-                            + 4.5f * (ux - uz) * (ux - uz)
-                            + 4.5f * (ux - uz) * (ux - uz) * (ux - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uz)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*-1) * 1 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*-1) * 0 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*1 + uy*0 + uz*-1) * -1 ) * ffz);
-
-            fneq = W2_45 * ((1*1 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * 1 * 0 * pxy +
-                                2.0f * 1 * -1 * pxz +
-                                2.0f * 0 * -1 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*0*0 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*-1*-1 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*-1*-1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*0*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneq + forceTerm); 
-
-        // ========================== SIXTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uz - ux)
-                            + 4.5f * (uz - ux) * (uz - ux)
-                            + 4.5f * (uz - ux) * (uz - ux) * (uz - ux)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*1) * -1 ) * ffx +
-                               (3.0f * (0 - uy) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*1) * 0 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*0 + uz*1) * 1 ) * ffz);
-
-            fneq = W2_45 * ((-1*-1 - CSSQ) * pxx +
-                                (0*0 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * -1 * 0 * pxy +
-                                2.0f * -1 * 1 * pxz +
-                                2.0f * 0 * 1 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*0 - CSSQ*0) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*0*0 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (0*0*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*1*1 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (0*1*1 - CSSQ*0) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*0*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== SEVENTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uy - uz)
-                            + 4.5f * (uy - uz) * (uy - uz)
-                            + 4.5f * (uy - uz) * (uy - uz) * (uy - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - uz)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*-1) * 0 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*-1) * 1 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*0 + uy*1 + uz*-1) * -1 ) * ffz);
-
-            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * 0 * 1 * pxy +
-                                2.0f * 0 * -1 * pxz +
-                                2.0f * 1 * -1 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*1*1 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*-1*-1 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*-1*-1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*1*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== EIGHTEEN ========================== //
-
-            feq = W_2 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uz - uy)
-                            + 4.5f * (uz - uy) * (uz - uy)
-                            + 4.5f * (uz - uy) * (uz - uy) * (uz - uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - uy)) - W_2;
-
-            forceTerm = coeffForce * W_2 * ((3.0f * (0 - ux) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*1) * 0 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*1) * -1 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*0 + uy*-1 + uz*1) * 1 ) * ffz);
-
-            fneq = W2_45 * ((0*0 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * 0 * -1 * pxy +
-                                2.0f * 0 * 1 * pxz +
-                                2.0f * -1 * 1 * pyz +
-                                (0*0*0 - 3.0f*CSSQ*0) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((0*0*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (0*0*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (0*-1*-1 - CSSQ*0) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (0*1*1 - CSSQ*0) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*1*1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (0*-1*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-        
-        // ========================== NINETEEN ========================== //
-
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux + uy + uz)
-                            + 4.5f * (ux + uy + uz) * (ux + uy + uz)
-                            + 4.5f * (ux + uy + uz) * (ux + uy + uz) * (ux + uy + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz)) - W_3;
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*1) * 1 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*1) * 1 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*1) * 1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((1*1 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * 1 * 1 * pxy +
-                                2.0f * 1 * 1 * pxz +
-                                2.0f * 1 * 1 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*1*1 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*1*1 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*1*1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*1*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y+1,z+1,19)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWENTY ========================== //
-
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            - 3.0f * (ux + uy + uz)
-                            + 4.5f * (ux + uy + uz) * (ux + uy + uz)
-                            - 4.5f * (ux + uy + uz) * (ux + uy + uz) * (ux + uy + uz)
-                            + 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy + uz)) - W_3;
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*-1) * -1 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*-1) * -1 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*-1) * -1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * -1 * -1 * pxy +
-                                2.0f * -1 * -1 * pxz +
-                                2.0f * -1 * -1 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*-1*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y-1,z-1,20)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWENTY ONE ========================== //
-
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux + uy - uz)
-                            + 4.5f * (ux + uy - uz) * (ux + uy - uz)
-                            + 4.5f * (ux + uy - uz) * (ux + uy - uz) * (ux + uy - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux + uy - uz)) - W_3;        
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*-1) * 1 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*-1) * 1 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*1 + uy*1 + uz*-1) * -1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((1*1 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * 1 * 1 * pxy +
-                                2.0f * 1 * -1 * pxz +
-                                2.0f * 1 * -1 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*1*1 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*-1*-1 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*-1*-1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*1*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y+1,z-1,21)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWENTY TWO ========================== //
-
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uz - ux - uy)
-                            + 4.5f * (uz - ux - uy) * (uz - ux - uy)
-                            + 4.5f * (uz - ux - uy) * (uz - ux - uy) * (uz - ux - uy)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uz - ux - uy)) - W_3;
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*1) * -1 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*1) * -1 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*-1 + uz*1) * 1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * -1 * -1 * pxy +
-                                2.0f * -1 * 1 * pxz +
-                                2.0f * -1 * 1 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*1*1 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*1*1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*-1*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y-1,z+1,22)] = to_pop(feq + omcoLocal * fneq + forceTerm);    
-
-        // ========================== TWENTY THREE ========================== //
-        
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux - uy + uz)
-                            + 4.5f * (ux - uy + uz) * (ux - uy + uz)
-                            + 4.5f * (ux - uy + uz) * (ux - uy + uz) * (ux - uy + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy + uz)) - W_3;
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*1) * 1 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*1) * -1 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*1) * 1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((1*1 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * 1 * -1 * pxy +
-                                2.0f * 1 * 1 * pxz +
-                                2.0f * -1 * 1 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*-1*-1 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*1*1 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*1*1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*-1*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y-1,z+1,23)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWENTY FOUR ========================== //
-
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uy - ux - uz)
-                            + 4.5f * (uy - ux - uz) * (uy - ux - uz)
-                            + 4.5f * (uy - ux - uz) * (uy - ux - uz) * (uy - ux - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux - uz)) - W_3;
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*-1) * -1 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*-1) * 1 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*-1) * -1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * -1 * 1 * pxy +
-                                2.0f * -1 * -1 * pxz +
-                                2.0f * 1 * -1 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*1*1 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*-1*-1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*1*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y+1,z-1,24)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        // ========================== TWENTY FIVE ========================== //
-
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (uy - ux + uz)
-                            + 4.5f * (uy - ux + uz) * (uy - ux + uz)
-                            + 4.5f * (uy - ux + uz) * (uy - ux + uz) * (uy - ux + uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (uy - ux + uz)) - W_3;
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (-1 - ux) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*1) * -1 ) * ffx +
-                               (3.0f * (1 - uy) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*1) * 1 ) * ffy +
-                               (3.0f * (1 - uz) + 3.0f * 3.0f * (ux*-1 + uy*1 + uz*1) * 1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((-1*-1 - CSSQ) * pxx +
-                                (1*1 - CSSQ) * pyy +
-                                (1*1 - CSSQ) * pzz +
-                                2.0f * -1 * 1 * pxy +
-                                2.0f * -1 * 1 * pxz +
-                                2.0f * 1 * 1 * pyz +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * ux * pxx) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uy * pyy) +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * uz * pzz) +
-                                3.0f * ((-1*-1*1 - CSSQ*1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (-1*-1*1 - CSSQ*1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (-1*1*1 - CSSQ*-1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (1*1*1 - CSSQ*1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (-1*1*1 - CSSQ*-1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (1*1*1 - CSSQ*1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (-1*1*1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x-1,y+1,z+1,25)] = to_pop(feq + omcoLocal * fneq + forceTerm);    
-        
-        // ========================== TWENTY SIX ========================== //
-
-            feq = W_3 * rho * (1.0f
-                            - 1.5f * (ux*ux + uy*uy + uz*uz)
-                            + 3.0f * (ux - uy - uz)
-                            + 4.5f * (ux - uy - uz) * (ux - uy - uz)
-                            + 4.5f * (ux - uy - uz) * (ux - uy - uz) * (ux - uy - uz)
-                            - 4.5f * (ux*ux + uy*uy + uz*uz) * (ux - uy - uz)) - W_3;
-
-            forceTerm = coeffForce * W_3 * ((3.0f * (1 - ux) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*-1) * 1 ) * ffx +
-                               (3.0f * (-1 - uy) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*-1) * -1 ) * ffy +
-                               (3.0f * (-1 - uz) + 3.0f * 3.0f * (ux*1 + uy*-1 + uz*-1) * -1 ) * ffz);
-
-            fneq = (W_3 * 4.5f) * ((1*1 - CSSQ) * pxx +
-                                (-1*-1 - CSSQ) * pyy +
-                                (-1*-1 - CSSQ) * pzz +
-                                2.0f * 1 * -1 * pxy +
-                                2.0f * 1 * -1 * pxz +
-                                2.0f * -1 * -1 * pyz +
-                                (1*1*1 - 3.0f*CSSQ*1) * (3.0f * ux * pxx) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uy * pyy) +
-                                (-1*-1*-1 - 3.0f*CSSQ*-1) * (3.0f * uz * pzz) +
-                                3.0f * ((1*1*-1 - CSSQ*-1) * (pxx*uy + 2.0f*ux*pxy) +
-                                        (1*1*-1 - CSSQ*-1) * (pxx*uz + 2.0f*ux*pxz) +
-                                        (1*-1*-1 - CSSQ*1) * (pxy*uy + 2.0f*ux*pyy) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pyy*uz + 2.0f*uy*pyz) +
-                                        (1*-1*-1 - CSSQ*1) * (pxz*uz + 2.0f*ux*pzz) +
-                                        (-1*-1*-1 - CSSQ*-1) * (pyz*uz + 2.0f*uy*pzz)) +
-                                6.0f * (1*-1*-1) * (pxy*uz + ux*pyz + uy*pxz));
-
-            d.f[global4(x+1,y-1,z-1,26)] = to_pop(feq + omcoLocal * fneq + forceTerm);
-
-        #endif 
-
-    // ========================================================== END ========================================================== //
-
-
-
-    // ================================================== ADVECTION-DIFFUSION ================================================== //
-
-        //             0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
-        // CIX[27] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 1,-1,-1, 1 };
-        // CIY[27] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 1,-1, 1,-1, 1,-1,-1, 1, 1,-1 };
-        // CIZ[27] = { 0, 0, 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0,-1, 1,-1, 1, 1,-1,-1, 1, 1,-1, 1,-1 };
-
-        #if !defined(VISC_CONTRAST)
-        const float phi = d.phi[idx3];
+    { // ====================================== COLLISION-STREAMING ====================================== //
+        const float coeff = 0.5f + 0.5f * omcoLocal;
+        const float aux = 3.0f * invRho;
+
+        float feq, fneq, force;
+
+        // ========================== Q0 ========================== //
+        feq   = computeFeq<0>(rho,ux,uy,uz);
+        force = computeForce<0>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<0>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[idx3] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q1 ========================== //
+        feq   = computeFeq<1>(rho,ux,uy,uz);
+        force = computeForce<1>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<1>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y,z,1)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q2 ========================== //
+        feq   = computeFeq<2>(rho,ux,uy,uz);
+        force = computeForce<2>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<2>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y,z,2)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q3 ========================== //
+        feq   = computeFeq<3>(rho,ux,uy,uz);
+        force = computeForce<3>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<3>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y+1,z,3)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q4 ========================== //
+        feq   = computeFeq<4>(rho,ux,uy,uz);
+        force = computeForce<4>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<4>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y-1,z,4)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q5 ========================== //
+        feq   = computeFeq<5>(rho,ux,uy,uz);
+        force = computeForce<5>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<5>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y,z+1,5)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q6 ========================== //
+        feq   = computeFeq<6>(rho,ux,uy,uz);
+        force = computeForce<6>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<6>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y,z-1,6)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q7 ========================== //
+        feq   = computeFeq<7>(rho,ux,uy,uz);
+        force = computeForce<7>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<7>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y+1,z,7)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q8 ========================== //
+        feq   = computeFeq<8>(rho,ux,uy,uz);
+        force = computeForce<8>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<8>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y-1,z,8)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q9 ========================== //
+        feq   = computeFeq<9>(rho,ux,uy,uz);
+        force = computeForce<9>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<9>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y,z+1,9)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q10 ========================== //
+        feq   = computeFeq<10>(rho,ux,uy,uz);
+        force = computeForce<10>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<10>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y,z-1,10)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q11 ========================== //
+        feq   = computeFeq<11>(rho,ux,uy,uz);
+        force = computeForce<11>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<11>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y+1,z+1,11)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q12 ========================== //
+        feq   = computeFeq<12>(rho,ux,uy,uz);
+        force = computeForce<12>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<12>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y-1,z-1,12)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q13 ========================== //
+        feq   = computeFeq<13>(rho,ux,uy,uz);
+        force = computeForce<13>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<13>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y-1,z,13)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q14 ========================== //
+        feq   = computeFeq<14>(rho,ux,uy,uz);
+        force = computeForce<14>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<14>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y+1,z,14)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q15 ========================== //
+        feq   = computeFeq<15>(rho,ux,uy,uz);
+        force = computeForce<15>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<15>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y,z-1,15)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q16 ========================== //
+        feq   = computeFeq<16>(rho,ux,uy,uz);
+        force = computeForce<16>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<16>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y,z+1,16)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q17 ========================== //
+        feq   = computeFeq<17>(rho,ux,uy,uz);
+        force = computeForce<17>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<17>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y+1,z-1,17)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q18 ========================== //
+        feq   = computeFeq<18>(rho,ux,uy,uz);
+        force = computeForce<18>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<18>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x,y-1,z+1,18)] = to_pop(feq + omcoLocal * fneq + force);
+
+        #if defined(D3Q27)
+        // ========================== Q19 ========================== //
+        feq   = computeFeq<19>(rho,ux,uy,uz);
+        force = computeForce<19>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<19>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+,y+1,z+1,19)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q20 ========================== //
+        feq   = computeFeq<20>(rho,ux,uy,uz);
+        force = computeForce<20>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<20>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y-1,z-1,20)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q21 ========================== //
+        feq   = computeFeq<21>(rho,ux,uy,uz);
+        force = computeForce<21>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<21>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y+1,z-1,21)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q22 ========================== //
+        feq   = computeFeq<22>(rho,ux,uy,uz);
+        force = computeForce<22>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<22>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y-1,z+1,22)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q23 ========================== //
+        feq   = computeFeq<23>(rho,ux,uy,uz);
+        force = computeForce<23>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<23>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y-1,z+1,23)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q24 ========================== //
+        feq   = computeFeq<24>(rho,ux,uy,uz);
+        force = computeForce<24>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<24>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y+1,z-1,24)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q25 ========================== //
+        feq   = computeFeq<25>(rho,ux,uy,uz);
+        force = computeForce<25>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<25>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x-1,y+1,z+1,25)] = to_pop(feq + omcoLocal * fneq + force);
+
+        // ========================== Q26 ========================== //
+        feq   = computeFeq<26>(rho,ux,uy,uz);
+        force = computeForce<26>(coeff,feq,ux,uy,uz,ffx,ffy,ffz,aux);
+        fneq  = computeNeq<26>(pxx,pyy,pzz,pxy,pxz,pyz,ux,uy,uz);
+        d.f[global4(x+1,y-1,z-1,26)] = to_pop(feq + omcoLocal * fneq + force);
         #endif
+    } // ============================================== END ============================================== //
 
-        // =======
+    { // ====================================== ADVECTION-DIFFUSION ====================================== //
+        const float phi = d.phi[idx3];
         d.g[idx3] = W_G_1 * phi;
 
         const float phiNorm = W_G_2 * GAMMA * phi * (1.0f - phi);
         const float multPhi = W_G_2 * phi;
         const float a3 = 3.0f * multPhi;
 
-        feq = multPhi + a3 * ux;
-        forceTerm = phiNorm * d.normx[idx3];
-        d.g[global4(x+1,y,z,1)] = feq + forceTerm;
+        float feq = multPhi + a3 * ux;
+        float force = phiNorm * d.normx[idx3];
+        d.g[global4(x+1,y,z,1)] = feq + force;
         
         feq = multPhi - a3 * ux;
-        d.g[global4(x-1,y,z,2)] = feq - forceTerm;
+        d.g[global4(x-1,y,z,2)] = feq - force;
 
         feq = multPhi + a3 * uy;
-        forceTerm = phiNorm * d.normy[idx3];
-        d.g[global4(x,y+1,z,3)] = feq + forceTerm;
+        force = phiNorm * d.normy[idx3];
+        d.g[global4(x,y+1,z,3)] = feq + force;
 
         feq = multPhi - a3 * uy;
-        d.g[global4(x,y-1,z,4)] = feq - forceTerm;
+        d.g[global4(x,y-1,z,4)] = feq - force;
 
         feq = multPhi + a3 * uz;
-        forceTerm = phiNorm * d.normz[idx3];
-        d.g[global4(x,y,z+1,5)] = feq + forceTerm;
+        force = phiNorm * d.normz[idx3];
+        d.g[global4(x,y,z+1,5)] = feq + force;
 
         feq = multPhi - a3 * uz;
-        d.g[global4(x,y,z-1,6)] = feq - forceTerm;
-    
-    // ========================================================== END ========================================================== //
-    
+        d.g[global4(x,y,z-1,6)] = feq - force;
+    } // ============================================= END ============================================= //
 }
