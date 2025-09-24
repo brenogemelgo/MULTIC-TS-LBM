@@ -16,81 +16,83 @@ void applyInflow(
     const float dx = static_cast<float>(x) - CENTER_X;
     const float dy = static_cast<float>(y) - CENTER_Y;
     const float r2 = dx*dx + dy*dy;
-    if (r2 > RR) return;
+    if (r2 > R2) return;
 
     const idx_t idx3_in = global3(x,y,0);
     const float uzIn = 
     #if defined(PERTURBATION)
-        U_REF * (1.0f + PERTURBATION_DATA[(STEP / MACRO_SAVE) % 200] * 10.0f);
+        d.uz[idx3_in] * (1.0f + PERTURBATION_DATA[(STEP / MACRO_SAVE) % 200] * 10.0f);
     #else
-        U_REF;
+        d.uz[idx3_in];
     #endif 
 
+    const float uu = uzIn * uzIn;
+
     idx_t fluidNode = global3(x,y,1);
-    float feq  = computeFeq<5>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    float fneq = computeNeq<5>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    float feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,5);
+    float fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                             d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                            d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                            d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],5);
     d.f[5 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
-    feq = computeGeq<5>(d.phi[idx3_in],0.0f,0.0f,uzIn);
+    feq = computeGeq(d.phi[idx3_in],0.0f,0.0f,uzIn,5);
     d.g[5 * PLANE + fluidNode] = feq;
 
     fluidNode = global3(x+1,y,1);
-    feq  = computeFeq<9>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<9>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                        d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,9);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+                    d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
+                    d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],9);
     d.f[9 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
     fluidNode = global3(x,y+1,1);
-    feq  = computeFeq<11>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<11>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,11);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],11);
     d.f[11 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
     fluidNode = global3(x-1,y,1);
-    feq  = computeFeq<16>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<16>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,16);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],16);
     d.f[16 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
     fluidNode = global3(x,y-1,1);
-    feq  = computeFeq<18>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<18>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,18);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],18);
     d.f[18 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
     #if defined(D3Q27)
     fluidNode = global3(x+1,y+1,1);
-    feq  = computeFeq<19>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<19>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,19);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],19);
     d.f[19 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
     fluidNode = global3(x-1,y-1,1);
-    feq  = computeFeq<22>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<22>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,22);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],22);
     d.f[22 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
     fluidNode = global3(x+1,y-1,1);
-    feq  = computeFeq<23>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<23>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,23);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],23);
     d.f[23 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
 
     fluidNode = global3(x-1,y+1,1);
-    feq  = computeFeq<25>(d.rho[fluidNode],0.0f,0.0f,uzIn);
-    fneq = computeNeq<25>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,25);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],25);
     d.f[25 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
     #endif 
 }
@@ -112,70 +114,72 @@ void applyOutflow(
     const float uyOut = d.uy[idx3_zm1];
     const float uzOut = d.uz[idx3_zm1];
 
-    float feq  = computeFeq<6>(d.rho[idx3_zm1],uxOut,uyOut,uzOut);
-    float fneq = computeNeq<6>(d.pxx[idx3_zm1],d.pyy[idx3_zm1],d.pzz[idx3_zm1],
+    const float uu = uxOut*uxOut + uyOut*uyOut + uzOut*uzOut;
+
+    float feq  = computeFeq(d.rho[idx3_zm1],uxOut,uyOut,uzOut,uu,6);
+    float fneq = computeNeq(d.pxx[idx3_zm1],d.pyy[idx3_zm1],d.pzz[idx3_zm1],
                             d.pxy[idx3_zm1],d.pxz[idx3_zm1],d.pyz[idx3_zm1],
-                            d.ux[idx3_zm1],d.uy[idx3_zm1],d.uz[idx3_zm1]);
+                            d.ux[idx3_zm1],d.uy[idx3_zm1],d.uz[idx3_zm1],6);
     d.f[6 * PLANE + idx3_zm1] = to_pop(feq + OMCO_ZMAX * fneq);
 
-    feq = computeGeq<6>(d.phi[idx3_zm1],uxOut,uyOut,uzOut);
+    feq = computeGeq(d.phi[idx3_zm1],uxOut,uyOut,uzOut,6);
     d.g[6 * PLANE + idx3_zm1] = feq;
 
     idx_t fluidNode = global3(x-1,y,NZ-2);
-    feq  = computeFeq<10>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<10>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,10);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],10);
     d.f[10 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
 
     fluidNode = global3(x,y-1,NZ-2);
-    feq  = computeFeq<12>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<12>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,12);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],12);
     d.f[12 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
 
     fluidNode = global3(x+1,y,NZ-2);
-    feq  = computeFeq<15>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<15>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,15);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],15);
     d.f[15 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
 
     fluidNode = global3(x,y+1,NZ-2);
-    feq  = computeFeq<17>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<17>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,17);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],17);
     d.f[17 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
 
     #if defined(D3Q27)
     fluidNode = global3(x-1,y-1,NZ-2);
-    feq  = computeFeq<20>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<20>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,20);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],20);
     d.f[20 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
     
     fluidNode = global3(x+1,y+1,NZ-2);
-    feq  = computeFeq<21>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<21>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,21);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],21);
     d.f[21 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
 
     fluidNode = global3(x-1,y+1,NZ-2);
-    feq  = computeFeq<24>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<24>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,24);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],24);
     d.f[24 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
 
     fluidNode = global3(x+1,y-1,NZ-2);
-    feq  = computeFeq<26>(d.rho[fluidNode],uxOut,uyOut,uzOut);
-    fneq = computeNeq<26>(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
+    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,26);
+    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
                         d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode]);
+                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],26);
     d.f[26 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
     #endif 
 }

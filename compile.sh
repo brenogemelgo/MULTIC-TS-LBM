@@ -16,11 +16,11 @@ if [ "$VELOCITY_SET" != "D3Q19" ] && [ "$VELOCITY_SET" != "D3Q27" ]; then
     exit 1
 fi
 
-if [ "$VELOCITY_SET" = "D3Q27" ]; then
-    MAXRREG=72
-else
+#if [ "$VELOCITY_SET" = "D3Q27" ]; then
+#    MAXRREG=72
+#else
     MAXRREG=68
-fi
+#fi
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
@@ -48,7 +48,7 @@ nvcc -O3 --restrict \
      --use_fast_math --fmad=true \
      -I"${SRC_DIR}" \
      "${SRC_DIR}/main.cu" \
-     -maxrregcount=${MAXRREG} -D${VELOCITY_SET} -D${FLOW_CASE} \
+     -D${VELOCITY_SET} -D${FLOW_CASE} \
      -o "${EXECUTABLE}"
 
 echo "Compilation completed successfully: ${EXECUTABLE}"

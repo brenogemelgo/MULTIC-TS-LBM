@@ -1,10 +1,11 @@
 #include "globalFunctions.cuh"
 #include "init.cuh"
+#include "phase.cuh"
 #include "lbm.cuh"
 #include "bcs.cuh"
-#include "../include/hostFunctions.cuh"
+#include "../aux/hostFunctions.cuh"
 #if defined(D_FIELDS)
-#include "../include/derivedFields.cuh"
+#include "../aux/derivedFields.cuh"
 #endif 
 
 int main(int argc, char* argv[]) {
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]) {
     const std::string SIM_ID       = argv[3];
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-    #define BENCHMARK
+    //#define BENCHMARK
     setDevice();
     
     constexpr dim3 block(32u, 2u, 2u); 
