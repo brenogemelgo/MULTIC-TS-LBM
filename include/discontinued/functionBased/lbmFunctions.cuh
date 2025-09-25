@@ -24,7 +24,7 @@ float computeGeq(
     const idx_t Q
 ) {
     const float cu = ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q];
-    return W_G[Q] * phi * (1.0f + 3.0f * cu);
+    return W_G[Q] * phi * (1.0f + 4.0f * cu);
 }
 
 __device__ __forceinline__ 
@@ -77,14 +77,8 @@ float computeForce(
     const float aux, 
     const idx_t Q
 ) {
-    #if defined(D3Q19)
-        return coeff * feq * ((CIX[Q] - ux) * ffx +
-                              (CIY[Q] - uy) * ffy +
-                              (CIZ[Q] - uz) * ffz) * aux;
-    #elif defined(D3Q27)
-        const float cu = 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]);
-        return coeff * W[Q] * ((3.0f * (CIX[Q] - ux) + 3.0f * cu * CIX[Q] ) * ffx +
-                               (3.0f * (CIY[Q] - uy) + 3.0f * cu * CIY[Q] ) * ffy +
-                               (3.0f * (CIZ[Q] - uz) + 3.0f * cu * CIZ[Q] ) * ffz);
-    #endif 
+    const float cu = 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]);
+    return coeff * W[Q] * ((3.0f * (CIX[Q] - ux) + 3.0f * cu * CIX[Q] ) * ffx +
+                            (3.0f * (CIY[Q] - uy) + 3.0f * cu * CIY[Q] ) * ffy +
+                            (3.0f * (CIZ[Q] - uz) + 3.0f * cu * CIZ[Q] ) * ffz);
 }

@@ -42,6 +42,6 @@ __constant__ float W_G[7] = { 1.0f / 4.0f,
                               1.0f / 8.0f, 1.0f / 8.0f, 
                               1.0f / 8.0f, 1.0f / 8.0f, 
                               1.0f / 8.0f, 1.0f / 8.0f };
-constexpr float W_G_1 = 1.0f / 4.0f; // 0
-constexpr float W_G_2 = 1.0f / 8.0f; // 1 to 6
+constexpr float WG_0 = 1.0f / 4.0f; // 0
+constexpr float WG_1 = 1.0f / 8.0f; // 1 to 6
 constexpr idx_t GLINKS = 7;   

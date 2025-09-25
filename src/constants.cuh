@@ -11,8 +11,8 @@
 
 #if defined(RUN_MODE)
 
-    static constexpr int MACRO_SAVE = 100;
-    static constexpr int NSTEPS = 10000;
+    static constexpr int MACRO_SAVE = 1000;
+    static constexpr int NSTEPS = 100000;
     
 #elif defined(SAMPLE_MODE)
 
@@ -39,7 +39,7 @@
 
     static constexpr float U_REF    = 0.05f; 
     static constexpr int   REYNOLDS = 5000;     
-    static constexpr int   WEBER    = 500;  
+    static constexpr int   WEBER    = 2000;  
 
 #elif defined(DROPLET)
 
@@ -57,7 +57,7 @@
     
 #endif 
 
-static constexpr float GAMMA = 0.45;
+static constexpr float GAMMA = 0.9f;
 static constexpr float INT_W = 4.0f / GAMMA; 
 //static constexpr float GAMMA = 4.0f / INT_W; 
 

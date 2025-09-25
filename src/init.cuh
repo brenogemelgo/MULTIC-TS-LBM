@@ -57,7 +57,7 @@ void setDistros(
 
 #if defined(JET)
 
-#define INFLOW_CASE_THREE
+#define INFLOW_CASE_ONE
 
 __global__
 void setJet(LBMFields d) {

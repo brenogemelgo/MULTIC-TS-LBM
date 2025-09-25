@@ -115,31 +115,39 @@ void streamCollide(
         #if !defined(VISC_CONTRAST)
         const float phi = d.phi[idx3];
         #endif
-        d.g[idx3] = W_G_1 * phi;
 
-        const float phiNorm = W_G_2 * GAMMA * phi * (1.0f - phi);
-        const float multPhi = W_G_2 * phi;
-        const float a3 = 3.0f * multPhi;
+        // Q0
+        d.g[idx3] = WG_0 * phi;
 
-        float feq = multPhi + a3 * ux;
-        float force = phiNorm * d.normx[idx3];
-        d.g[global4(x+1,y,z,1)] = feq + force;
+        const float multPhi = WG_1 * phi;
+        const float phiNorm = GAMMA * multPhi * (1.0f - phi);
+        const float a4      = 4.0f * multPhi;
+
+        // -------------------------------- X+ (Q1)
+        float geq = multPhi + a4 * ux;
+        float hi = phiNorm * d.normx[idx3];
+        d.g[global4(x+1,y,z,1)] = geq + hi;
         
-        feq = multPhi - a3 * ux;
-        d.g[global4(x-1,y,z,2)] = feq - force;
+        // -------------------------------- X- (Q2)
+        geq = multPhi - a4 * ux;
+        d.g[global4(x-1,y,z,2)] = geq - hi;
 
-        feq = multPhi + a3 * uy;
-        force = phiNorm * d.normy[idx3];
-        d.g[global4(x,y+1,z,3)] = feq + force;
+        // -------------------------------- Y+ (Q3)
+        geq = multPhi + a4 * uy;
+        hi = phiNorm * d.normy[idx3];
+        d.g[global4(x,y+1,z,3)] = geq + hi;
 
-        feq = multPhi - a3 * uy;
-        d.g[global4(x,y-1,z,4)] = feq - force;
+        // -------------------------------- Y- (Q4)
+        geq = multPhi - a4 * uy;
+        d.g[global4(x,y-1,z,4)] = geq - hi;
 
-        feq = multPhi + a3 * uz;
-        force = phiNorm * d.normz[idx3];
-        d.g[global4(x,y,z+1,5)] = feq + force;
+        // -------------------------------- Z+ (Q5)
+        geq = multPhi + a4 * uz;
+        hi = phiNorm * d.normz[idx3];
+        d.g[global4(x,y,z+1,5)] = geq + hi;
 
-        feq = multPhi - a3 * uz;
-        d.g[global4(x,y,z-1,6)] = feq - force;
+        // -------------------------------- Z- (Q6)
+        geq = multPhi - a4 * uz;
+        d.g[global4(x,y,z-1,6)] = geq - hi;
     } // ============================================= END ============================================= //
 }
