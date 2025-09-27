@@ -67,18 +67,16 @@ float computeNeq(
 __device__ __forceinline__ 
 float computeForce(
     const float coeff, 
-    const float feq, 
     const float ux, 
     const float uy, 
     const float uz, 
     const float ffx, 
     const float ffy, 
     const float ffz, 
-    const float aux, 
     const idx_t Q
 ) {
     const float cu = 3.0f * (ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q]);
     return coeff * W[Q] * ((3.0f * (CIX[Q] - ux) + 3.0f * cu * CIX[Q] ) * ffx +
-                            (3.0f * (CIY[Q] - uy) + 3.0f * cu * CIY[Q] ) * ffy +
-                            (3.0f * (CIZ[Q] - uz) + 3.0f * cu * CIZ[Q] ) * ffz);
+                           (3.0f * (CIY[Q] - uy) + 3.0f * cu * CIY[Q] ) * ffy +
+                           (3.0f * (CIZ[Q] - uz) + 3.0f * cu * CIZ[Q] ) * ffz);
 }

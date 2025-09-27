@@ -38,8 +38,8 @@
     static constexpr float R2     = RADIUS * RADIUS; 
 
     static constexpr float U_REF    = 0.05f; 
-    static constexpr int   REYNOLDS = 5000;     
-    static constexpr int   WEBER    = 2000;  
+    static constexpr int   REYNOLDS = 100; // 100, 2000, 5000    
+    static constexpr int   WEBER    = 2000; // 100, 500, 2000 
 
 #elif defined(DROPLET)
 
