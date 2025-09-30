@@ -21,10 +21,10 @@ int main(int argc, char* argv[]) {
     //#define BENCHMARK
     setDevice();
     
-    constexpr dim3 block(32u, 2u, 2u); 
-    constexpr dim3 blockX(16u, 16u, 1u);
-    constexpr dim3 blockY(16u, 16u, 1u);
-    constexpr dim3 blockZ(16u, 16u, 1u);
+    constexpr dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, BLOCK_SIZE_Z); 
+    constexpr dim3 blockX(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
+    constexpr dim3 blockY(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
+    constexpr dim3 blockZ(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
 
     constexpr dim3 grid(divUp(NX, block.x),
                         divUp(NY, block.y),

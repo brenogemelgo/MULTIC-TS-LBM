@@ -16,9 +16,9 @@
 #include <cstdint>
 #include <cmath>    
 
-inline constexpr unsigned BLOCK_SIZE_X = 256u;
-inline constexpr unsigned BLOCK_SIZE_Y = 1u;
-inline constexpr unsigned BLOCK_SIZE_Z = 1u;
+inline constexpr unsigned BLOCK_SIZE_X = 32u;
+inline constexpr unsigned BLOCK_SIZE_Y = 2u;
+inline constexpr unsigned BLOCK_SIZE_Z = 2u;
 
 inline constexpr int HALO   = 1;
 inline constexpr int TILE_X = static_cast<int>(BLOCK_SIZE_X) + 2*HALO;

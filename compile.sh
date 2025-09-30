@@ -19,7 +19,7 @@ fi
 #if [ "$VELOCITY_SET" = "D3Q27" ]; then
 #    MAXRREG=72
 #else
-    MAXRREG=68
+#    MAXRREG=68
 #fi
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
@@ -47,7 +47,7 @@ nvcc -O3 --restrict \
      -gencode arch=compute_${CC},code=sm_${CC} -rdc=true --ptxas-options=-v \
      --use_fast_math --fmad=true \
      -I"${SRC_DIR}" \
-     "${SRC_DIR}/main.cu" \
+     -std=c++17 "${SRC_DIR}/main.cu" \
      -D${VELOCITY_SET} -D${FLOW_CASE} \
      -o "${EXECUTABLE}"
 
