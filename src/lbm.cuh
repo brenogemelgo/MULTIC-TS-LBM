@@ -76,8 +76,7 @@ void streamCollide(
     d.uy[idx3] = uy; 
     d.uz[idx3] = uz;
 
-    #include "../include/momentumFluxAU.cuh" // Agressive Unrolling
-    //#include "../include/momentumFluxNT.cuh" // No Temps
+    #include "../include/momentumFlux.cuh" 
 
     d.pxx[idx3] = pxx;
     d.pyy[idx3] = pyy;
@@ -112,9 +111,7 @@ void streamCollide(
     #include "../include/streamCollide.cuh" 
 
     { // ====================================== ADVECTION-DIFFUSION ====================================== //
-        #if !defined(VISC_CONTRAST)
         const float phi = d.phi[idx3];
-        #endif
 
         // Q0
         d.g[idx3] = WG_0 * phi;

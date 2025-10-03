@@ -179,7 +179,7 @@ void applyOutflow(
     d.f[26 * PLANE + fluidNode] = to_pop(feq + OMCO_ZMAX * fneq);
     #endif 
 
-    feq = computeGeq(d.phi[idx3_zm1],uxOut,uyOut,uzOut,6);
+    feq = computeGeq(d.phi[idx3_zm1],0.0f,0.0f,U_REF,6);
     d.g[6 * PLANE + idx3_zm1] = feq;
 }
 

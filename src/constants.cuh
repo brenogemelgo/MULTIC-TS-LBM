@@ -1,8 +1,8 @@
 #pragma once
-#include "../aux/cudaUtils.cuh"
-#include "../aux/velocitySets.cuh"
+#include "../helpers/cudaUtils.cuh"
+#include "../helpers/velocitySets.cuh"
 #if defined(PERTURBATION)
-#include "../aux/perturbationData.cuh"
+#include "../helpers/perturbationData.cuh"
 #endif
 
 #define RUN_MODE
@@ -17,7 +17,7 @@
 #elif defined(SAMPLE_MODE)
 
     static constexpr int MACRO_SAVE = 100;
-    static constexpr int NSTEPS = 1000;
+    static constexpr int NSTEPS = 10000;
 
 #elif defined(DEBUG_MODE)
 
@@ -37,9 +37,9 @@
     static constexpr float RADIUS = 0.5f * static_cast<float>(DIAM);
     static constexpr float R2     = RADIUS * RADIUS; 
 
-    static constexpr float U_REF    = 0.05f; 
-    static constexpr int   REYNOLDS = 100; // 100, 2000, 5000    
-    static constexpr int   WEBER    = 2000; // 100, 500, 2000 
+    static constexpr float U_REF    = 0.0267f; 
+    static constexpr int   REYNOLDS = 5000; // 100, 2000, 5000    
+    static constexpr int   WEBER    = 100; // 100, 500, 2000 
 
 #elif defined(DROPLET)
 
@@ -64,6 +64,9 @@ static constexpr float INT_W = 4.0f / GAMMA;
 static constexpr float CENTER_X = (NX-1) * 0.5f;
 static constexpr float CENTER_Y = (NY-1) * 0.5f;
 static constexpr float CENTER_Z = (NZ-1) * 0.5f;
+
+static constexpr float RHO_WATER = 1.0f;
+static constexpr float RHO_OIL   = 0.8f;
 
 //#define VISC_CONTRAST
 #if defined(VISC_CONTRAST)
@@ -92,6 +95,7 @@ static constexpr float CENTER_Z = (NZ-1) * 0.5f;
 static constexpr float SIGMA = (U_REF * U_REF * DIAM) / WEBER; 
 static constexpr float CSSQ  = 1.0f / 3.0f;  
 static constexpr float CSCO  = 1.0f - CSSQ;
+static constexpr float OMCO  = 1.0f - OMEGA_REF;
 
 #if defined(JET)
 

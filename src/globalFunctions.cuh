@@ -20,8 +20,14 @@ idx_t global4(
     return Q * PLANE + global3(x,y,z);
 }
 
-#include "../include/discontinued/constexprBased/lbmFunctions.cuh"
-#include "../include/discontinued/functionBased/lbmFunctions.cuh"
+__device__ __forceinline__ 
+float rhoFromPhi(
+    float phi
+) {
+    return fmaf(phi, (RHO_OIL - RHO_WATER), RHO_WATER);
+}
+
+#include "../include/lbmFunctions.cuh"
 
 #if defined(JET)
 

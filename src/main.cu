@@ -3,9 +3,9 @@
 #include "phase.cuh"
 #include "lbm.cuh"
 #include "bcs.cuh"
-#include "../aux/hostFunctions.cuh"
+#include "../helpers/hostFunctions.cuh"
 #if defined(D_FIELDS)
-#include "../aux/derivedFields.cuh"
+#include "../helpers/derivedFields.cuh"
 #endif 
 
 int main(int argc, char* argv[]) {

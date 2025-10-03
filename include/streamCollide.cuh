@@ -1,7 +1,7 @@
 #if defined(D3Q19)
 { 
     float feq, force, fneq;
-    const float coeff = (0.5f + 0.5f * omcoLocal) * 3.0f * invRho;
+    const float coeff = 1.5f * invRho;
     const float uf = ux*ffx + uy*ffy + uz*ffz;
     const float cspi = CSSQ * (pxx + pyy + pzz);
     const float uu = 1.5f * (ux*ux + uy*uy + uz*uz);

@@ -1,4 +1,3 @@
-
 __global__ 
 void computePhase(
     LBMFields d
