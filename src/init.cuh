@@ -59,8 +59,9 @@ void setDistros(
 
 #define INFLOW_CASE_ONE
 
-__global__ void setJet(LBMFields d)
-{
+__global__ void setJet(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = 0;
@@ -97,8 +98,10 @@ __global__ void setJet(LBMFields d)
 
 #elif defined(DROPLET)
 
-__global__ void setDroplet(LBMFields d)
-{
+__global__ void 
+setDroplet(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;

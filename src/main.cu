@@ -5,7 +5,7 @@
 #include "bcs.cuh"
 #include "../helpers/hostFunctions.cuh"
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     if (argc < 4) {
         std::cerr << "Error: Usage: " << argv[0] << " <flow case> <velocity set> <ID>\n";
         return 1;

@@ -1,12 +1,12 @@
 #pragma once
 #include "constants.cuh"
 
-__host__ __forceinline__ 
-static std::string createSimulationDirectory(
+[[nodiscard]] static __host__ __forceinline__ 
+std::string createSimulationDirectory(
     const std::string &FLOW_CASE,
     const std::string &VELOCITY_SET,
     const std::string &SIM_ID
-) {
+) noexcept(false) {
     std::filesystem::path BASE_DIR = std::filesystem::current_path();
 
     std::filesystem::path SIM_DIR = BASE_DIR / "bin" / FLOW_CASE / VELOCITY_SET / SIM_ID;
@@ -17,13 +17,13 @@ static std::string createSimulationDirectory(
     return SIM_DIR.string() + std::string(1, std::filesystem::path::preferred_separator);
 }
 
-__host__ __forceinline__ 
-static void generateSimulationInfoFile(
+[[gnu::cold]] static __host__ __forceinline__
+void generateSimulationInfoFile(
     const std::string &SIM_DIR,
     const std::string &SIM_ID,
     const std::string &VELOCITY_SET,
     const double MLUPS
-) {
+) noexcept(false) {
     std::filesystem::path INFO_PATH = std::filesystem::path(SIM_DIR) / (SIM_ID + "_info.txt");
 
     try {
@@ -53,15 +53,15 @@ static void generateSimulationInfoFile(
     }
 }
 
-__host__ __forceinline__ 
-static void copyAndSaveToBinary(
+[[gnu::cold]] static __host__ __forceinline__ 
+void copyAndSaveToBinary(
     const float *d_data,
     const size_t SIZE,
     const std::string &SIM_DIR,
     [[maybe_unused]] const std::string &ID,
     const int STEP,
     const std::string &VAR_NAME
-) {
+) noexcept(false) {
     std::error_code EC;
     std::filesystem::create_directories(std::filesystem::path(SIM_DIR), EC);
 
@@ -83,10 +83,10 @@ static void copyAndSaveToBinary(
     file.close();
 }
 
-__host__ __forceinline__ 
-static int setDeviceFromEnv(
+[[nodiscard]] [[gnu::cold]] static __host__ __forceinline__ 
+int setDeviceFromEnv(
     /* empty */
-) {
+) noexcept {
     int dev = 0;
     if (const char *env = std::getenv("GPU_INDEX")) {
         char *end = nullptr;
@@ -112,18 +112,18 @@ static int setDeviceFromEnv(
     return dev;
 }
 
-__host__ __forceinline__ 
-static constexpr unsigned divUp(
+[[nodiscard]] static __host__ __forceinline__ constexpr
+unsigned divUp(
     const unsigned a,
     const unsigned b
-) {
+) noexcept {
     return (a + b - 1u) / b;
 }
 
-__host__ __forceinline__ 
+[[gnu::cold]] static __host__ __forceinline__ 
 void setDeviceFields(
     /* empty */
-) {
+) noexcept(false) {
     constexpr size_t NCELLS = static_cast<size_t>(NX) * static_cast<size_t>(NY) * static_cast<size_t>(NZ);
     constexpr size_t SIZE = NCELLS * sizeof(float);
     constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);

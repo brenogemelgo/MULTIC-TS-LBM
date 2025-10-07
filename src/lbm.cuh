@@ -1,6 +1,6 @@
 #pragma once
 
-__global__ __launch_bounds__(128) 
+__global__ __launch_bounds__(128)
 void streamCollide(
     LBMFields d
 ) {
@@ -79,7 +79,6 @@ void streamCollide(
     float pxx = 0.0f, pyy = 0.0f, pzz = 0.0f, pxy = 0.0f, pxz = 0.0f, pyz = 0.0f;
     #if defined(D3Q19)
     #include "../include/momentumFlux19.cuh"
-    // #include "../include/functionalMomentumFlux.cuh"
     #elif defined(D3Q27)
     #include "../include/momentumFlux27.cuh"
     #endif

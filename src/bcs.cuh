@@ -206,7 +206,7 @@ __global__ void periodicX(LBMFields d)
     d.f[23 * PLANE + bL] = d.f[23 * PLANE + bR];
     d.f[26 * PLANE + bL] = d.f[26 * PLANE + bR];
     #endif
-    d.g[PLANE + bL] = d.g[PLANE + bR];
+    d.g[     PLANE + bL] = d.g[     PLANE + bR];
 
     // negative x contributions
     d.f[2  * PLANE + bR] = d.f[2  * PLANE + bL];
@@ -220,10 +220,10 @@ __global__ void periodicX(LBMFields d)
     d.f[24 * PLANE + bR] = d.f[24 * PLANE + bL];
     d.f[25 * PLANE + bR] = d.f[25 * PLANE + bL];
     #endif
-    d.g[2 * PLANE + bR] = d.g[2 * PLANE + bL];
+    d.g[2  * PLANE + bR] = d.g[2  * PLANE + bL];
 
     // ghost cells
-    d.phi[global3(0,y,z)] = d.phi[bR];
+    d.phi[global3(0,y,z)]    = d.phi[bR];
     d.phi[global3(NX-1,y,z)] = d.phi[bL];
 }
 
@@ -249,7 +249,7 @@ __global__ void periodicY(LBMFields d)
     d.f[24 * PLANE + bB] = d.f[24 * PLANE + bT];
     d.f[25 * PLANE + bB] = d.f[25 * PLANE + bT];
     #endif
-    d.g[3 * PLANE + bB] = d.g[3 * PLANE + bT];
+    d.g[3  * PLANE + bB] = d.g[3  * PLANE + bT];
 
     // negative y contributions
     d.f[4  * PLANE + bT] = d.f[4  * PLANE + bB];
@@ -263,10 +263,10 @@ __global__ void periodicY(LBMFields d)
     d.f[23 * PLANE + bT] = d.f[23 * PLANE + bB];
     d.f[26 * PLANE + bT] = d.f[26 * PLANE + bB];
     #endif
-    d.g[4 * PLANE + bT] = d.g[4 * PLANE + bB];
+    d.g[4   * PLANE + bT] = d.g[4   * PLANE + bB];
 
     // ghost cells
-    d.phi[global3(x,0,z)] = d.phi[bT];
+    d.phi[global3(x,0,z)]    = d.phi[bT];
     d.phi[global3(x,NY-1,z)] = d.phi[bB];
 }
 

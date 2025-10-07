@@ -29,17 +29,17 @@ static inline constexpr int TILE_Z = static_cast<int>(BLOCK_SIZE_Z) + 2 * HALO;
 #include <cuda_fp16.h>
 using pop_t = __half;
 
-__host__ __device__ __forceinline__ 
+[[nodiscard]] __device__ __forceinline__ 
 pop_t toPop(
-    float x
-) {
+    const float x
+) noexcept {
     return __float2half(x); 
 }
 
-__host__ __device__ __forceinline__ 
+[[nodiscard]] __device__ __forceinline__ 
 float fromPop(
-    pop_t x
-) {
+    const pop_t x
+) noexcept {
     return __half2float(x);
 }
 
@@ -47,17 +47,17 @@ float fromPop(
 
 using pop_t = float;
 
-__host__ __device__ __forceinline__ 
+[[nodiscard]] __device__ __forceinline__ constexpr 
 pop_t toPop(
-    float x
-) {
+    const float x
+) noexcept {
     return x;
 }
 
-__host__ __device__ __forceinline__ 
+[[nodiscard]] __device__ __forceinline__ constexpr
 float fromPop(
-    pop_t x
-) {
+    const pop_t x
+) noexcept {
     return x;
 }
 
@@ -71,6 +71,7 @@ using idx_t = uint32_t;
 #define getLastCudaError(msg) __getLastCudaError((msg), __FILE__, __LINE__)
 #define getLastCudaErrorOutline(msg) __getLastCudaErrorOutline((msg), __FILE__, __LINE__)
 
+static __host__ 
 void __checkCudaErrorsOutline(
     cudaError_t err,
     const char *const func,
@@ -85,20 +86,7 @@ void __checkCudaErrorsOutline(
     }
 }
 
-inline void __checkCudaErrors(
-    cudaError_t err,
-    const char *const func,
-    const char *const file,
-    const int line
-) noexcept {
-    if (err != cudaSuccess) {
-        fprintf(stderr, "CUDA error at %s(%d) \"%s\": [%d] %s.\n",
-                file, line, func, (int)err, cudaGetErrorString(err));
-        fflush(stderr);
-        std::abort();
-    }
-}
-
+static __host__ 
 void __getLastCudaErrorOutline(
     const char *const errorMessage,
     const char *const file,
@@ -113,7 +101,23 @@ void __getLastCudaErrorOutline(
     }
 }
 
-inline void __getLastCudaError(
+static __host__ __forceinline__
+void __checkCudaErrors(
+    cudaError_t err,
+    const char *const func,
+    const char *const file,
+    const int line
+) noexcept {
+    if (err != cudaSuccess) {
+        fprintf(stderr, "CUDA error at %s(%d) \"%s\": [%d] %s.\n",
+                file, line, func, (int)err, cudaGetErrorString(err));
+        fflush(stderr);
+        std::abort();
+    }
+}
+
+static __host__ __forceinline__
+void __getLastCudaError(
     const char *const errorMessage,
     const char *const file,
     const int line

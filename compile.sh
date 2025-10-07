@@ -57,9 +57,9 @@ nvcc -O3 --restrict \
      -rdc=true --ptxas-options=-v \
      --use_fast_math --fmad=true \
      -I"${SRC_DIR}" \
-     -std=c++17 "${SRC_DIR}/main.cu" \
+     -std=c++20 "${SRC_DIR}/main.cu" \
      -D${VELOCITY_SET} -D${FLOW_CASE} \
-     -DLBM_ENABLE_FP16=1 \
+     -DENABLE_FP16=1 \
      -DPERTURBATION=1 \
      --extended-lambda \
      -o "${EXECUTABLE}"
