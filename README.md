@@ -16,10 +16,11 @@
 
 ## 🗂️ Structure
 
-- `src/` – C/C++ and CUDA sources  
-- `include/` – auxiliary CUDA headers/scripts  
-- `post/` – Python post-processing to VTK  
 - `bin/` – compiled binaries & results  
+- `helpers/` – auxiliary CUDA headers/scripts  
+- `include/` – core LBM includes and functions
+- `post/` – Python post-processing to VTK  
+- `src/` – C/C++ and CUDA sources  
 - `compile.sh` – build script  
 - `pipeline.sh` – compile → run → post-process  
 
@@ -38,34 +39,6 @@ Pipeline: compile → simulate → post-process
 
 ---
 
-## 🧠 File Responsibilities
-
-### `include/` – headers
-
-- `cudaUtils.cuh` – CUDA utilities (types, constants, FP16 helpers, error checks)    
-- `derivedFields.cuh` – optional kernel for derived fields (velocity/vorticity magnitudes)    
-- `hostFunctions.cuh` – host utilities (dirs, occupancy, info/logs, memory alloc/copy)    
-- `perturbationData.cuh` – predefined perturbation array for simulations   
-- `velocitySets.cuh` – lattice velocity sets & weights (D3Q19, D3Q27, D3Q7)    
-
-### `post/` – post-processing (Python)
-
-- `getSimInfo.py` – file discovery & metadata  
-- `gridToVTK.py` – VTK conversion (`pyevtk`)  
-- `processSteps.py` – batch `.vtr` generation  
-- `runPost.sh` – wrapper for `processSteps.py`  
-
-### `src/` – simulation (CUDA)
-
-- `bcs.cu` – boundary condition kernels (inflow, outflow, periodic)
-- `constants.cuh` – global simulation parameters (mesh, case setup, relaxation, strides)    
-- `deviceUtils.cuh` – core GPU data structures & device helpers (LBM fields, equilibria, forcing)   
-- `init.cuh` – initialization kernels (fields, jet/droplet shapes, distributions)
-- `lbm.cuh` – main CUDA kernels (moments, collision-stream, phase-field, normals, forces)  
-- `main.cu` – simulation entry point (initialization, time loop, output, performance stats)   
-
----
-
 ## ⚡ Benchmark
 
 Performance is reported in **MLUPS** (Million Lattice Updates Per Second).  
@@ -73,7 +46,7 @@ Each GPU entry shows the average across multiple runs.
 
 | GPU            | D3Q19 (MLUPS) | D3Q27 (MLUPS) |
 |----------------|---------------|---------------|
-| RTX 3050 (4GB) | **710**       | **565**       |
+| RTX 3050 (4GB) | **760**       | –             |
 | RTX 4090 (24GB)| –             | –             |
 | A100 (40GB)    | –             | –             |
 

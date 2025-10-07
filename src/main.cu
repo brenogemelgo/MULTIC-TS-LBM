@@ -1,14 +1,11 @@
-#include "globalFunctions.cuh"
+#include "deviceFunctions.cuh"
 #include "init.cuh"
 #include "phase.cuh"
 #include "lbm.cuh"
 #include "bcs.cuh"
 #include "../helpers/hostFunctions.cuh"
-#if defined(D_FIELDS)
-#include "../helpers/derivedFields.cuh"
-#endif 
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     if (argc < 4) {
         std::cerr << "Error: Usage: " << argv[0] << " <flow case> <velocity set> <ID>\n";
         return 1;
@@ -18,29 +15,20 @@ int main(int argc, char* argv[]) {
     const std::string SIM_ID       = argv[3];
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-    //#define BENCHMARK
-    setDevice();
-    
-    constexpr dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, BLOCK_SIZE_Z); 
+    if (setDeviceFromEnv() < 0) return 1;
+    // #define BENCHMARK
+
+    setDeviceFields();
+
+    constexpr dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, BLOCK_SIZE_Z);
     constexpr dim3 blockX(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
     constexpr dim3 blockY(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
     constexpr dim3 blockZ(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
 
-    constexpr dim3 grid(divUp(NX, block.x),
-                        divUp(NY, block.y),
-                        divUp(NZ, block.z));
-
-    constexpr dim3 gridX(divUp(NY, blockX.x),
-                         divUp(NZ, blockX.y),
-                         1u);
-
-    constexpr dim3 gridY(divUp(NX, blockY.x),
-                         divUp(NZ, blockY.y),
-                         1u);
-
-    constexpr dim3 gridZ(divUp(NX, blockZ.x),
-                         divUp(NY, blockZ.y),
-                         1u);
+    constexpr dim3 grid(divUp(NX, block.x), divUp(NY, block.y), divUp(NZ, block.z));
+    constexpr dim3 gridX(divUp(NY, blockX.x), divUp(NZ, blockX.y), 1u);
+    constexpr dim3 gridY(divUp(NX, blockY.x), divUp(NZ, blockY.y), 1u);
+    constexpr dim3 gridZ(divUp(NX, blockZ.x), divUp(NY, blockZ.y), 1u);
 
     constexpr size_t dynamic = 0;
 
@@ -49,50 +37,54 @@ int main(int argc, char* argv[]) {
 
     // =========================== INITIALIZATION =========================== //
 
-        setFields <<<grid, block, dynamic, queue>>>(lbm);
+        setFields<<<grid, block, dynamic, queue>>>(fields);
 
         #if defined(JET)
-        setJet<<<grid, block, dynamic, queue>>>(lbm);
+        setJet<<<grid, block, dynamic, queue>>>(fields);
         #elif defined(DROPLET)
-        setDroplet<<<grid, block, dynamic, queue>>>(lbm);
+        setDroplet<<<grid, block, dynamic, queue>>>(fields);
         #endif
 
-        setDistros<<<grid, block, dynamic, queue>>>(lbm);
-    
+        setDistros<<<grid, block, dynamic, queue>>>(fields);
+
     // ===================================================================== //
 
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (int STEP = 0; STEP <= NSTEPS; ++STEP) {
         #if !defined(BENCHMARK)
-        //std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
+        // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
         #endif
 
         // ======================== LATTICE BOLTZMANN RELATED ======================== //
 
-            computePhase  <<<grid, block, dynamic, queue>>>(lbm);
-            computeNormals<<<grid, block, dynamic, queue>>>(lbm);
-            computeForces <<<grid, block, dynamic, queue>>>(lbm);
-            streamCollide <<<grid, block, dynamic, queue>>>(lbm);
+            if (STEP == 0) {
+                streamCollide <<<grid, block, dynamic, queue>>>(fields);
+                computePhase  <<<grid, block, dynamic, queue>>>(fields);
+                computeNormals<<<grid, block, dynamic, queue>>>(fields);
+                computeForces <<<grid, block, dynamic, queue>>>(fields);
+            } else {
+                computePhase  <<<grid, block, dynamic, queue>>>(fields);
+                computeNormals<<<grid, block, dynamic, queue>>>(fields);
+                computeForces <<<grid, block, dynamic, queue>>>(fields);
+                streamCollide <<<grid, block, dynamic, queue>>>(fields);
+            }
 
         // ========================================================================== //
 
-
         // ============================== BOUNDARY CONDITIONS ============================== //
-        
+
             #if defined(JET)
-            applyInflow <<<gridZ, blockZ, dynamic, queue>>>(lbm, STEP);
-            applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(lbm);
-            periodicX   <<<gridX, blockX, dynamic, queue>>>(lbm);
-            periodicY   <<<gridY, blockY, dynamic, queue>>>(lbm);
+            applyInflow <<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
+            applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+            periodicX   <<<gridX, blockX, dynamic, queue>>>(fields);
+            periodicY   <<<gridY, blockY, dynamic, queue>>>(fields);
             #elif defined(DROPLET)
-            // undefined
+            // periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
+            // periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
+            // periodicZ<<<gridZ, blockZ, dynamic, queue>>>(fields);
             #endif
 
         // ================================================================================= //
-
-        #if defined(D_FIELDS)
-        computeDerived<<<grid, block, dynamic, queue>>>(lbm, dfields);
-        #endif 
 
         #if !defined(BENCHMARK)
 
@@ -100,19 +92,15 @@ int main(int argc, char* argv[]) {
 
         if (STEP % MACRO_SAVE == 0) {
 
-            copyAndSaveToBinary(lbm.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
-            copyAndSaveToBinary(lbm.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
+            // copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
+            copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
             #if defined(JET)
-            copyAndSaveToBinary(lbm.uz,  PLANE, SIM_DIR, SIM_ID, STEP, "uz");
+            copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
             #elif defined(DROPLET)
-            copyAndSaveToBinary(lbm.ux,  PLANE, SIM_DIR, SIM_ID, STEP, "ux");
-            copyAndSaveToBinary(lbm.uy,  PLANE, SIM_DIR, SIM_ID, STEP, "uy");
-            copyAndSaveToBinary(lbm.uz,  PLANE, SIM_DIR, SIM_ID, STEP, "uz");
+            copyAndSaveToBinary(fields.ux, PLANE, SIM_DIR, SIM_ID, STEP, "ux");
+            copyAndSaveToBinary(fields.uy, PLANE, SIM_DIR, SIM_ID, STEP, "uy");
+            copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
             #endif
-            #if defined(D_FIELDS)
-            copyAndSaveToBinary(dfields.vorticity_mag, PLANE, SIM_DIR, SIM_ID, STEP, "vorticity_mag");
-            copyAndSaveToBinary(dfields.velocity_mag,  PLANE, SIM_DIR, SIM_ID, STEP, "velocity_mag");
-            #endif 
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
 
         }
@@ -123,35 +111,30 @@ int main(int argc, char* argv[]) {
     const auto END_TIME = std::chrono::high_resolution_clock::now();
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
 
-    cudaFree(lbm.f);
-    cudaFree(lbm.g);
-    cudaFree(lbm.phi);
-    cudaFree(lbm.rho);
-    cudaFree(lbm.normx);
-    cudaFree(lbm.normy);
-    cudaFree(lbm.normz);
-    cudaFree(lbm.ux);
-    cudaFree(lbm.uy);
-    cudaFree(lbm.uz);
-    cudaFree(lbm.pxx);
-    cudaFree(lbm.pyy);
-    cudaFree(lbm.pzz);
-    cudaFree(lbm.pxy);
-    cudaFree(lbm.pxz);
-    cudaFree(lbm.pyz);
-    cudaFree(lbm.ind);
-    cudaFree(lbm.ffx);
-    cudaFree(lbm.ffy);
-    cudaFree(lbm.ffz);
-
-    #if defined(D_FIELDS)
-    cudaFree(dfields.vorticity_mag);
-    cudaFree(dfields.velocity_mag);
-    #endif 
+    cudaFree(fields.f);
+    cudaFree(fields.g);
+    cudaFree(fields.phi);
+    cudaFree(fields.rho);
+    cudaFree(fields.normx);
+    cudaFree(fields.normy);
+    cudaFree(fields.normz);
+    cudaFree(fields.ux);
+    cudaFree(fields.uy);
+    cudaFree(fields.uz);
+    cudaFree(fields.pxx);
+    cudaFree(fields.pyy);
+    cudaFree(fields.pzz);
+    cudaFree(fields.pxy);
+    cudaFree(fields.pxz);
+    cudaFree(fields.pyz);
+    cudaFree(fields.ind);
+    cudaFree(fields.ffx);
+    cudaFree(fields.ffy);
+    cudaFree(fields.ffz);
 
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
     const uint64_t TOTAL_CELLS = static_cast<uint64_t>(NX) * NY * NZ * static_cast<uint64_t>(NSTEPS ? NSTEPS : 1);
-    const double   MLUPS       = static_cast<double>(TOTAL_CELLS) / (ELAPSED_TIME.count() * 1e6);
+    const double MLUPS = static_cast<double>(TOTAL_CELLS) / (ELAPSED_TIME.count() * 1e6);
 
     std::cout << "\n// =============================================== //\n";
     std::cout << "     Total execution time    : " << ELAPSED_TIME.count() << " s\n";
