@@ -7,7 +7,9 @@ static inline constexpr float RHO_OIL   = 0.8f;
 #if !defined(DROPLET)
     static inline constexpr float RADIUS = 0.5f * static_cast<float>(DIAM);
 #endif
-    static inline constexpr float R2 = RADIUS * RADIUS;
+
+static inline constexpr float R2 = RADIUS * RADIUS;
+
 #if !defined(JET)
     static inline constexpr int DIAM = 2 * RADIUS;
 #endif

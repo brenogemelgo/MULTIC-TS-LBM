@@ -34,15 +34,16 @@ void generateSimulationInfoFile(
         }
 
         file << "---------------------------- SIMULATION METADATA ----------------------------\n"
-             << "ID:                " << SIM_ID << '\n'
-             << "Velocity set:      " << VELOCITY_SET << '\n'
-             << "Reference velocity:" << " " << U_REF << '\n'
-             << "Reynolds number:   " << REYNOLDS << '\n'
-             << "Weber number:      " << WEBER << "\n\n"
-             << "Domain size:       NX=" << NX << ", NY=" << NY << ", NZ=" << NZ << '\n'
-             << "Timesteps:         " << NSTEPS << '\n'
-             << "Output interval:   " << MACRO_SAVE << "\n\n"
-             << "Performance:       " << MLUPS << " MLUPS\n"
+             << "ID:                 " << SIM_ID << '\n'
+             << "Velocity set:       " << VELOCITY_SET << '\n'
+             << "Reference velocity: " << U_REF << '\n'
+             << "Reynolds number:    " << REYNOLDS << '\n'
+             << "Weber number:       " << WEBER << "\n\n"
+             << "Domain size:        NX=" << NX << ", NY=" << NY << ", NZ=" << NZ << '\n'
+             << "Diameter:           D=" << DIAM << '\n'
+             << "Timesteps:          " << NSTEPS << '\n'
+             << "Output interval:    " << MACRO_SAVE << "\n\n"
+             << "Performance:        " << MLUPS << " MLUPS\n"
              << "-----------------------------------------------------------------------------\n";
 
         file.close();

@@ -11,7 +11,7 @@
 
 #if defined(RUN_MODE)
 
-static inline constexpr int MACRO_SAVE = 1000;
+static inline constexpr int MACRO_SAVE = 100;
 static inline constexpr int NSTEPS = 100000;
 
 #elif defined(SAMPLE_MODE)
@@ -41,16 +41,16 @@ static inline constexpr int WEBER = 100;
 
 #elif defined(DROPLET)
 
-static inline constexpr idx_t MESH = 128;
+static inline constexpr idx_t MESH = 256;
 static inline constexpr idx_t NX = MESH;
 static inline constexpr idx_t NY = MESH;
 static inline constexpr idx_t NZ = MESH;
 
-static inline constexpr int RADIUS = 20;
+static inline constexpr int RADIUS = 35;
 
 static inline constexpr float U_REF = 0.05f;
 static inline constexpr int REYNOLDS = 200;
-static inline constexpr int WEBER = 4;
+static inline constexpr int WEBER = 1;
 
 #endif
 

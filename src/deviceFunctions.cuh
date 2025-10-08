@@ -110,6 +110,8 @@ float computeForce(
     #endif
 }
 
+#if defined(JET)
+
 [[nodiscard]] __device__ __forceinline__ 
 float cubicSponge(
     const idx_t z
@@ -120,6 +122,8 @@ float cubicSponge(
     const float ramp = s2 * s;
     return fmaf(ramp, OMEGA_DELTA, OMEGA_REF);
 }
+
+#endif
 
 [[nodiscard]] __device__ __forceinline__ 
 float smoothstep(
