@@ -170,11 +170,4 @@
     pyy += fneq;
     pzz += fneq;
     pyz -= fneq;
-
-    d.pxx[idx3] = pxx;
-    d.pyy[idx3] = pyy;
-    d.pzz[idx3] = pzz;
-    d.pxy[idx3] = pxy;
-    d.pxz[idx3] = pxz;
-    d.pyz[idx3] = pyz;
 }

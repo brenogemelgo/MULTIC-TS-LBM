@@ -57,18 +57,11 @@ int main(int argc, char* argv[]) {
 
         // ======================== LATTICE BOLTZMANN RELATED ======================== //
 
-            if (STEP == 0) {
-                streamCollide <<<grid, block, dynamic, queue>>>(fields);
-                computePhase  <<<grid, block, dynamic, queue>>>(fields);
-                computeNormals<<<grid, block, dynamic, queue>>>(fields);
-                computeForces <<<grid, block, dynamic, queue>>>(fields);
-            } else {
-                computePhase  <<<grid, block, dynamic, queue>>>(fields);
-                computeNormals<<<grid, block, dynamic, queue>>>(fields);
-                computeForces <<<grid, block, dynamic, queue>>>(fields);
-                streamCollide <<<grid, block, dynamic, queue>>>(fields);
-            }
-
+            computePhase  <<<grid, block, dynamic, queue>>>(fields);
+            computeNormals<<<grid, block, dynamic, queue>>>(fields);
+            computeForces <<<grid, block, dynamic, queue>>>(fields);
+            streamCollide <<<grid, block, dynamic, queue>>>(fields);
+            
         // ========================================================================== //
 
         // ============================== BOUNDARY CONDITIONS ============================== //
@@ -95,10 +88,6 @@ int main(int argc, char* argv[]) {
             copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
             copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
             #if defined(JET)
-            copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
-            #elif defined(DROPLET)
-            copyAndSaveToBinary(fields.ux, PLANE, SIM_DIR, SIM_ID, STEP, "ux");
-            copyAndSaveToBinary(fields.uy, PLANE, SIM_DIR, SIM_ID, STEP, "uy");
             copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
             #endif
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";

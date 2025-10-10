@@ -83,6 +83,13 @@ void streamCollide(
     #include "../include/momentumFlux27.cuh"
     #endif
 
+    d.pxx[idx3] = pxx;
+    d.pyy[idx3] = pyy;
+    d.pzz[idx3] = pzz;
+    d.pxy[idx3] = pxy;
+    d.pxz[idx3] = pxz;
+    d.pyz[idx3] = pyz;
+
     float omcoLocal;
     #if defined(VISC_CONTRAST)
     {
@@ -108,7 +115,6 @@ void streamCollide(
 
     #if defined(D3Q19)
     #include "../include/streamCollide19.cuh"
-    // #include "../include/functionalStreamCollide.cuh"
     #elif defined(D3Q27)
     #include "../include/streamCollide27.cuh"
     #endif

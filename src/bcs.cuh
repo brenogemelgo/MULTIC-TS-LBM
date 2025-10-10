@@ -184,8 +184,10 @@ void applyOutflow(
     d.g[6 * PLANE + idx3_zm1] = feq;
 }
 
-__global__ void periodicX(LBMFields d)
-{
+__global__ 
+void periodicX(
+    LBMFields d
+) {
     const idx_t y = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t z = threadIdx.y + blockIdx.y * blockDim.y;
 
@@ -227,8 +229,10 @@ __global__ void periodicX(LBMFields d)
     d.phi[global3(NX-1,y,z)] = d.phi[bL];
 }
 
-__global__ void periodicY(LBMFields d)
-{
+__global__ 
+void periodicY(
+    LBMFields d
+) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t z = threadIdx.y + blockIdx.y * blockDim.y;
 
@@ -271,7 +275,5 @@ __global__ void periodicY(LBMFields d)
 }
 
 #elif defined(DROPLET)
-
-// undefined
 
 #endif
