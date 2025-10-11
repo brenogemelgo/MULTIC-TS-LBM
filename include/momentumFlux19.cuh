@@ -1,4 +1,9 @@
 {
+    //#if defined(D3Q19) //         0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18
+    //__constant__ ci_t CIX[19] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0 };
+    //__constant__ ci_t CIY[19] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 1,-1 };
+    //__constant__ ci_t CIZ[19] = { 0, 0, 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1, 0, 0,-1, 1,-1, 1 };
+    
     float feq, force, fneq, tmp;
     const float coeff = 1.5f * invRho;
     const float uf = ux*ffx + uy*ffy + uz*ffz;

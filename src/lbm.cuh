@@ -1,6 +1,6 @@
 #pragma once
 
-__global__ __launch_bounds__(128)
+[[nodiscard]] __global__ __launch_bounds__(128)
 void streamCollide(
     LBMFields d
 ) {
@@ -15,39 +15,41 @@ void streamCollide(
 
     const idx_t idx3 = global3(x,y,z);
 
-    const float pop0 = fromPop(d.f[idx3]);
-    const float pop1 = fromPop(d.f[PLANE + idx3]);
-    const float pop2 = fromPop(d.f[2 * PLANE + idx3]);
-    const float pop3 = fromPop(d.f[3 * PLANE + idx3]);
-    const float pop4 = fromPop(d.f[4 * PLANE + idx3]);
-    const float pop5 = fromPop(d.f[5 * PLANE + idx3]);
-    const float pop6 = fromPop(d.f[6 * PLANE + idx3]);
-    const float pop7 = fromPop(d.f[7 * PLANE + idx3]);
-    const float pop8 = fromPop(d.f[8 * PLANE + idx3]);
-    const float pop9 = fromPop(d.f[9 * PLANE + idx3]);
-    const float pop10 = fromPop(d.f[10 * PLANE + idx3]);
-    const float pop11 = fromPop(d.f[11 * PLANE + idx3]);
-    const float pop12 = fromPop(d.f[12 * PLANE + idx3]);
-    const float pop13 = fromPop(d.f[13 * PLANE + idx3]);
-    const float pop14 = fromPop(d.f[14 * PLANE + idx3]);
-    const float pop15 = fromPop(d.f[15 * PLANE + idx3]);
-    const float pop16 = fromPop(d.f[16 * PLANE + idx3]);
-    const float pop17 = fromPop(d.f[17 * PLANE + idx3]);
-    const float pop18 = fromPop(d.f[18 * PLANE + idx3]);
+    float pop[FLINKS];
+
+    const float pop[0] = fromPop(d.f[idx3]);
+    const float pop[1] = fromPop(d.f[PLANE + idx3]);
+    const float pop[2] = fromPop(d.f[2 * PLANE + idx3]);
+    const float pop[3] = fromPop(d.f[3 * PLANE + idx3]);
+    const float pop[4] = fromPop(d.f[4 * PLANE + idx3]);
+    const float pop[5] = fromPop(d.f[5 * PLANE + idx3]);
+    const float pop[6] = fromPop(d.f[6 * PLANE + idx3]);
+    const float pop[7] = fromPop(d.f[7 * PLANE + idx3]);
+    const float pop[8] = fromPop(d.f[8 * PLANE + idx3]);
+    const float pop[9] = fromPop(d.f[9 * PLANE + idx3]);
+    const float pop[10] = fromPop(d.f[10 * PLANE + idx3]);
+    const float pop[11] = fromPop(d.f[11 * PLANE + idx3]);
+    const float pop[12] = fromPop(d.f[12 * PLANE + idx3]);
+    const float pop[13] = fromPop(d.f[13 * PLANE + idx3]);
+    const float pop[14] = fromPop(d.f[14 * PLANE + idx3]);
+    const float pop[15] = fromPop(d.f[15 * PLANE + idx3]);
+    const float pop[16] = fromPop(d.f[16 * PLANE + idx3]);
+    const float pop[17] = fromPop(d.f[17 * PLANE + idx3]);
+    const float pop[18] = fromPop(d.f[18 * PLANE + idx3]);
     #if defined(D3Q27)
-    const float pop19 = fromPop(d.f[19 * PLANE + idx3]);
-    const float pop20 = fromPop(d.f[20 * PLANE + idx3]);
-    const float pop21 = fromPop(d.f[21 * PLANE + idx3]);
-    const float pop22 = fromPop(d.f[22 * PLANE + idx3]);
-    const float pop23 = fromPop(d.f[23 * PLANE + idx3]);
-    const float pop24 = fromPop(d.f[24 * PLANE + idx3]);
-    const float pop25 = fromPop(d.f[25 * PLANE + idx3]);
-    const float pop26 = fromPop(d.f[26 * PLANE + idx3]);
+    const float pop[19] = fromPop(d.f[19 * PLANE + idx3]);
+    const float pop[20] = fromPop(d.f[20 * PLANE + idx3]);
+    const float pop[21] = fromPop(d.f[21 * PLANE + idx3]);
+    const float pop[22] = fromPop(d.f[22 * PLANE + idx3]);
+    const float pop[23] = fromPop(d.f[23 * PLANE + idx3]);
+    const float pop[24] = fromPop(d.f[24 * PLANE + idx3]);
+    const float pop[25] = fromPop(d.f[25 * PLANE + idx3]);
+    const float pop[26] = fromPop(d.f[26 * PLANE + idx3]);
     #endif
 
-    float rho = pop0 + pop1 + pop2 + pop3 + pop4 + pop5 + pop6 + pop7 + pop8 + pop9 + pop10 + pop11 + pop12 + pop13 + pop14 + pop15 + pop16 + pop17 + pop18;
+    float rho = pop[0] + pop[1] + pop[2] + pop[3] + pop[4] + pop[5] + pop[6] + pop[7] + pop[8] + pop[9] + pop[10] + pop[11] + pop[12] + pop[13] + pop[14] + pop[15] + pop[16] + pop[17] + pop[18];
     #if defined(D3Q27)
-    rho += pop19 + pop20 + pop21 + pop22 + pop23 + pop24 + pop25 + pop26;
+    rho += pop[19] + pop[20] + pop[21] + pop[22] + pop[23] + pop[24] + pop[25] + pop[26];
     #endif
     rho += 1.0f;
     d.rho[idx3] = rho;
@@ -59,13 +61,13 @@ void streamCollide(
     const float invRho = 1.0f / rho;
 
     #if defined(D3Q19)
-    float ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16);
-    float uy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18);
-    float uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17);
+    float ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
+    float uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
+    float uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
     #elif defined(D3Q27)
-    float ux = invRho * (pop1 - pop2 + pop7 - pop8 + pop9 - pop10 + pop13 - pop14 + pop15 - pop16 + pop19 - pop20 + pop21 - pop22 + pop23 - pop24 + pop26 - pop25);
-    float uy = invRho * (pop3 - pop4 + pop7 - pop8 + pop11 - pop12 + pop14 - pop13 + pop17 - pop18 + pop19 - pop20 + pop21 - pop22 + pop24 - pop23 + pop25 - pop26);
-    float uz = invRho * (pop5 - pop6 + pop9 - pop10 + pop11 - pop12 + pop16 - pop15 + pop18 - pop17 + pop19 - pop20 + pop22 - pop21 + pop23 - pop24 + pop25 - pop26);
+    float ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
+    float uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
+    float uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
     #endif
 
     ux += ffx * 0.5f * invRho;
@@ -76,7 +78,9 @@ void streamCollide(
     d.uy[idx3] = uy;
     d.uz[idx3] = uz;
 
-    float pxx = 0.0f, pyy = 0.0f, pzz = 0.0f, pxy = 0.0f, pxz = 0.0f, pyz = 0.0f;
+    float pxx = 0.0f, pyy = 0.0f, pzz = 0.0f;
+    float pxy = 0.0f, pxz = 0.0f, pyz = 0.0f;
+    
     #if defined(D3Q19)
     #include "../include/momentumFlux19.cuh"
     #elif defined(D3Q27)

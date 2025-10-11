@@ -49,7 +49,8 @@ EXECUTABLE="${OUTPUT_DIR}/${ID}sim_${FLOW_CASE}_${VELOCITY_SET}_sm${CC}"
 
 mkdir -p "${OUTPUT_DIR}"
 
-echo "Project root detected: ${BASE_DIR}" echo "Compiling to ${EXECUTABLE}..."
+echo "Project root detected: ${BASE_DIR}" 
+echo "Compiling to ${EXECUTABLE}..."
 
 nvcc -O3 --restrict \
      -gencode arch=compute_${CC},code=sm_${CC} \

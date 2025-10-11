@@ -1,4 +1,4 @@
-__global__ 
+[[nodiscard]] __global__ 
 void computePhase(
     LBMFields d
 ) {
@@ -25,7 +25,7 @@ void computePhase(
     d.phi[idx3] = phi;
 }
 
-__global__ 
+[[nodiscard]] __global__ 
 void computeNormals(
     LBMFields d
 ) {
@@ -91,7 +91,7 @@ void computeNormals(
     d.normz[idx3] = normZ;
 }
 
-__global__ 
+[[nodiscard]] __global__ 
 void computeForces(
     LBMFields d
 ) {

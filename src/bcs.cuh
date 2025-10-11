@@ -2,7 +2,7 @@
 
 #if defined(JET)
 
-__global__ 
+[[nodiscard]] __global__ 
 void applyInflow(
     LBMFields d,
     const int STEP
@@ -98,7 +98,7 @@ void applyInflow(
     d.g[5 * PLANE + global3(x,y,1)] = feq;
 }
 
-__global__ 
+[[nodiscard]] __global__ 
 void applyOutflow(
     LBMFields d
 ) {
@@ -184,7 +184,7 @@ void applyOutflow(
     d.g[6 * PLANE + idx3_zm1] = feq;
 }
 
-__global__ 
+[[nodiscard]] __global__ 
 void periodicX(
     LBMFields d
 ) {
@@ -229,7 +229,7 @@ void periodicX(
     d.phi[global3(NX-1,y,z)] = d.phi[bL];
 }
 
-__global__ 
+[[nodiscard]] __global__ 
 void periodicY(
     LBMFields d
 ) {
