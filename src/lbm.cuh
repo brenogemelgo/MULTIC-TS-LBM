@@ -1,6 +1,6 @@
 #pragma once
 
-[[nodiscard]] __global__ __launch_bounds__(128)
+__global__ __launch_bounds__(128)
 void streamCollide(
     LBMFields d
 ) {
@@ -13,38 +13,38 @@ void streamCollide(
         y == 0 || y == NY-1 ||
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = global3(x,y,z);
+    const idx_t idx3 = global3(x, y, z);
 
     float pop[FLINKS];
 
-    const float pop[0] = fromPop(d.f[idx3]);
-    const float pop[1] = fromPop(d.f[PLANE + idx3]);
-    const float pop[2] = fromPop(d.f[2 * PLANE + idx3]);
-    const float pop[3] = fromPop(d.f[3 * PLANE + idx3]);
-    const float pop[4] = fromPop(d.f[4 * PLANE + idx3]);
-    const float pop[5] = fromPop(d.f[5 * PLANE + idx3]);
-    const float pop[6] = fromPop(d.f[6 * PLANE + idx3]);
-    const float pop[7] = fromPop(d.f[7 * PLANE + idx3]);
-    const float pop[8] = fromPop(d.f[8 * PLANE + idx3]);
-    const float pop[9] = fromPop(d.f[9 * PLANE + idx3]);
-    const float pop[10] = fromPop(d.f[10 * PLANE + idx3]);
-    const float pop[11] = fromPop(d.f[11 * PLANE + idx3]);
-    const float pop[12] = fromPop(d.f[12 * PLANE + idx3]);
-    const float pop[13] = fromPop(d.f[13 * PLANE + idx3]);
-    const float pop[14] = fromPop(d.f[14 * PLANE + idx3]);
-    const float pop[15] = fromPop(d.f[15 * PLANE + idx3]);
-    const float pop[16] = fromPop(d.f[16 * PLANE + idx3]);
-    const float pop[17] = fromPop(d.f[17 * PLANE + idx3]);
-    const float pop[18] = fromPop(d.f[18 * PLANE + idx3]);
+    pop[0] = fromPop(d.f[idx3]);
+    pop[1] = fromPop(d.f[PLANE + idx3]);
+    pop[2] = fromPop(d.f[2 * PLANE + idx3]);
+    pop[3] = fromPop(d.f[3 * PLANE + idx3]);
+    pop[4] = fromPop(d.f[4 * PLANE + idx3]);
+    pop[5] = fromPop(d.f[5 * PLANE + idx3]);
+    pop[6] = fromPop(d.f[6 * PLANE + idx3]);
+    pop[7] = fromPop(d.f[7 * PLANE + idx3]);
+    pop[8] = fromPop(d.f[8 * PLANE + idx3]);
+    pop[9] = fromPop(d.f[9 * PLANE + idx3]);
+    pop[10] = fromPop(d.f[10 * PLANE + idx3]);
+    pop[11] = fromPop(d.f[11 * PLANE + idx3]);
+    pop[12] = fromPop(d.f[12 * PLANE + idx3]);
+    pop[13] = fromPop(d.f[13 * PLANE + idx3]);
+    pop[14] = fromPop(d.f[14 * PLANE + idx3]);
+    pop[15] = fromPop(d.f[15 * PLANE + idx3]);
+    pop[16] = fromPop(d.f[16 * PLANE + idx3]);
+    pop[17] = fromPop(d.f[17 * PLANE + idx3]);
+    pop[18] = fromPop(d.f[18 * PLANE + idx3]);
     #if defined(D3Q27)
-    const float pop[19] = fromPop(d.f[19 * PLANE + idx3]);
-    const float pop[20] = fromPop(d.f[20 * PLANE + idx3]);
-    const float pop[21] = fromPop(d.f[21 * PLANE + idx3]);
-    const float pop[22] = fromPop(d.f[22 * PLANE + idx3]);
-    const float pop[23] = fromPop(d.f[23 * PLANE + idx3]);
-    const float pop[24] = fromPop(d.f[24 * PLANE + idx3]);
-    const float pop[25] = fromPop(d.f[25 * PLANE + idx3]);
-    const float pop[26] = fromPop(d.f[26 * PLANE + idx3]);
+    pop[19] = fromPop(d.f[19 * PLANE + idx3]);
+    pop[20] = fromPop(d.f[20 * PLANE + idx3]);
+    pop[21] = fromPop(d.f[21 * PLANE + idx3]);
+    pop[22] = fromPop(d.f[22 * PLANE + idx3]);
+    pop[23] = fromPop(d.f[23 * PLANE + idx3]);
+    pop[24] = fromPop(d.f[24 * PLANE + idx3]);
+    pop[25] = fromPop(d.f[25 * PLANE + idx3]);
+    pop[26] = fromPop(d.f[26 * PLANE + idx3]);
     #endif
 
     float rho = pop[0] + pop[1] + pop[2] + pop[3] + pop[4] + pop[5] + pop[6] + pop[7] + pop[8] + pop[9] + pop[10] + pop[11] + pop[12] + pop[13] + pop[14] + pop[15] + pop[16] + pop[17] + pop[18];
@@ -81,11 +81,7 @@ void streamCollide(
     float pxx = 0.0f, pyy = 0.0f, pzz = 0.0f;
     float pxy = 0.0f, pxz = 0.0f, pyz = 0.0f;
     
-    #if defined(D3Q19)
-    #include "../include/momentumFlux19.cuh"
-    #elif defined(D3Q27)
-    #include "../include/momentumFlux27.cuh"
-    #endif
+    #include "../include/CTmomentumFlux.cuh"
 
     d.pxx[idx3] = pxx;
     d.pyy[idx3] = pyy;
@@ -117,11 +113,7 @@ void streamCollide(
     }
     #endif
 
-    #if defined(D3Q19)
-    #include "../include/streamCollide19.cuh"
-    #elif defined(D3Q27)
-    #include "../include/streamCollide27.cuh"
-    #endif
+    #include "../include/CTstreamCollide.cuh"
 
     { // ====================================== ADVECTION-DIFFUSION ====================================== //
         const float phi = d.phi[idx3];

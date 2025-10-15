@@ -1,4 +1,4 @@
-[[nodiscard]] __global__ 
+__global__ 
 void computePhase(
     LBMFields d
 ) {
@@ -11,7 +11,7 @@ void computePhase(
         y == 0 || y == NY-1 ||
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = global3(x,y,z);
+    const idx_t idx3 = global3(x, y, z);
 
     const float phi =
         d.g[idx3] +
@@ -25,7 +25,7 @@ void computePhase(
     d.phi[idx3] = phi;
 }
 
-[[nodiscard]] __global__ 
+__global__ 
 void computeNormals(
     LBMFields d
 ) {
@@ -38,7 +38,7 @@ void computeNormals(
         y == 0 || y == NY-1 ||
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = global3(x,y,z);
+    const idx_t idx3 = global3(x, y, z);
 
     float sumGradX = W_1 * (d.phi[global3(x+1,y,z)]   - d.phi[global3(x-1,y,z)]) +
                      W_2 * (d.phi[global3(x+1,y+1,z)] - d.phi[global3(x-1,y-1,z)] +
@@ -78,7 +78,7 @@ void computeNormals(
     const float gradY = 3.0f * sumGradY;
     const float gradZ = 3.0f * sumGradZ;
 
-    const float ind = sqrtf(gradX*gradX + gradY*gradY + gradZ*gradZ);
+    const float ind = sqrtf(gradX * gradX + gradY * gradY + gradZ * gradZ);
     const float invInd = 1.0f / (ind + 1e-9f);
 
     const float normX = gradX * invInd;
@@ -91,7 +91,7 @@ void computeNormals(
     d.normz[idx3] = normZ;
 }
 
-[[nodiscard]] __global__ 
+__global__ 
 void computeForces(
     LBMFields d
 ) {
@@ -104,7 +104,7 @@ void computeForces(
         y == 0 || y == NY-1 ||
         z == 0 || z == NZ-1) return;
 
-    const idx_t idx3 = global3(x,y,z);
+    const idx_t idx3 = global3(x, y, z);
 
     float sumCurvX = W_1 * (d.normx[global3(x+1,y,z)] - d.normx[global3(x-1,y,z)]) +
                      W_2 * (d.normx[global3(x+1,y+1,z)] - d.normx[global3(x-1,y-1,z)] +

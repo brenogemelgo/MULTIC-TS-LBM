@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
     if (setDeviceFromEnv() < 0) return 1;
-    // #define BENCHMARK
+    //#define BENCHMARK
 
     setDeviceFields();
 

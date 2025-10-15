@@ -13,7 +13,7 @@
 
     feq   = W_1 * rho * (1.0f - uu + 3.0f*ux + 4.5f*ux*ux) - W_1;
     force = coeff * feq * (ffx - uf);
-    fneq  = pop1 - feq + force;
+    fneq  = pop[1] - feq + force;
 
     pxx += fneq;
 
@@ -21,7 +21,7 @@
 
     feq   = W_1 * rho * (1.0f - uu - 3.0f*ux + 4.5f*ux*ux) - W_1;
     force = coeff * feq * (ffx + uf);
-    fneq  = pop2 - feq - force;
+    fneq  = pop[2] - feq - force;
 
     pxx += fneq;
 
@@ -29,7 +29,7 @@
 
     feq   = W_1 * rho * (1.0f - uu + 3.0f*uy + 4.5f*uy*uy) - W_1;
     force = coeff * feq * (ffy - uf);
-    fneq  = pop3 - feq + force;
+    fneq  = pop[3] - feq + force;
 
     pyy += fneq;
 
@@ -37,7 +37,7 @@
 
     feq   = W_1 * rho * (1.0f - uu - 3.0f*uy + 4.5f*uy*uy) - W_1;
     force = coeff * feq * (ffy + uf);
-    fneq  = pop4 - feq - force;
+    fneq  = pop[4] - feq - force;
 
     pyy += fneq;
 
@@ -45,7 +45,7 @@
 
     feq   = W_1 * rho * (1.0f - uu + 3.0f*uz + 4.5f*uz*uz) - W_1;
     force = coeff * feq * (ffz - uf);
-    fneq  = pop5 - feq + force;
+    fneq  = pop[5] - feq + force;
 
     pzz += fneq;
 
@@ -53,7 +53,7 @@
 
     feq   = W_1 * rho * (1.0f - uu - 3.0f*uz + 4.5f*uz*uz) - W_1;
     force = coeff * feq * (ffz + uf);
-    fneq  = pop6 - feq - force;
+    fneq  = pop[6] - feq - force;
 
     pzz += fneq;
 
@@ -62,7 +62,7 @@
     tmp   = ux + uy;
     feq   = W_2 * rho * (1.0f - uu + 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffx + ffy - uf);
-    fneq  = pop7 - feq + force;
+    fneq  = pop[7] - feq + force;
 
     pxx += fneq;
     pyy += fneq;
@@ -72,7 +72,7 @@
 
     feq   = W_2 * rho * (1.0f - uu - 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffx + ffy + uf);
-    fneq  = pop8 - feq - force;
+    fneq  = pop[8] - feq - force;
 
     pxx += fneq;
     pyy += fneq;
@@ -83,7 +83,7 @@
     tmp   = ux + uz;
     feq   = W_2 * rho * (1.0f - uu + 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffx + ffz - uf);
-    fneq  = pop9 - feq + force;
+    fneq  = pop[9] - feq + force;
 
     pxx += fneq;
     pzz += fneq;
@@ -93,7 +93,7 @@
 
     feq   = W_2 * rho * (1.0f - uu - 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffx + ffz + uf);
-    fneq  = pop10 - feq - force;
+    fneq  = pop[10] - feq - force;
 
     pxx += fneq;
     pzz += fneq;
@@ -104,7 +104,7 @@
     tmp   = uy + uz;
     feq   = W_2 * rho * (1.0f - uu + 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffy + ffz - uf);
-    fneq  = pop11 - feq + force;
+    fneq  = pop[11] - feq + force;
 
     pyy += fneq;
     pzz += fneq;
@@ -114,7 +114,7 @@
 
     feq   = W_2 * rho * (1.0f - uu - 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffy + ffz + uf);
-    fneq  = pop12 - feq - force;
+    fneq  = pop[12] - feq - force;
 
     pyy += fneq;
     pzz += fneq;
@@ -125,7 +125,7 @@
     tmp   = ux - uy;
     feq   = W_2 * rho * (1.0f - uu + 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffx - ffy - uf);
-    fneq  = pop13 - feq + force;
+    fneq  = pop[13] - feq + force;
 
     pxx += fneq;
     pyy += fneq;
@@ -135,7 +135,7 @@
 
     feq   = W_2 * rho * (1.0f - uu - 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffy - ffx - uf);
-    fneq  = pop14 - feq + force;
+    fneq  = pop[14] - feq + force;
 
     pxx += fneq;
     pyy += fneq;
@@ -146,7 +146,7 @@
     tmp   = ux - uz;
     feq   = W_2 * rho * (1.0f - uu + 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffx - ffz - uf);
-    fneq  = pop15 - feq + force;
+    fneq  = pop[15] - feq + force;
 
     pxx += fneq;
     pzz += fneq;
@@ -156,7 +156,7 @@
 
     feq   = W_2 * rho * (1.0f - uu - 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffz - ffx - uf);
-    fneq  = pop16 - feq + force;
+    fneq  = pop[16] - feq + force;
 
     pxx += fneq;
     pzz += fneq;
@@ -167,7 +167,7 @@
     tmp   = uy - uz;
     feq   = W_2 * rho * (1.0f - uu + 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffy - ffz - uf);
-    fneq  = pop17 - feq + force;
+    fneq  = pop[17] - feq + force;
 
     pyy += fneq;
     pzz += fneq;
@@ -177,7 +177,7 @@
 
     feq   = W_2 * rho * (1.0f - uu - 3.0f*tmp + 4.5f*tmp*tmp) - W_2;
     force = coeff * feq * (ffz - ffy - uf);
-    fneq  = pop18 - feq + force;
+    fneq  = pop[18] - feq + force;
 
     pyy += fneq;
     pzz += fneq;

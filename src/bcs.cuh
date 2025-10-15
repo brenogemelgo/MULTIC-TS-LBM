@@ -2,14 +2,13 @@
 
 #if defined(JET)
 
-[[nodiscard]] __global__ 
+__global__ 
 void applyInflow(
     LBMFields d,
     const int STEP
 ) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
-    // const idx_t z = 0;
 
     if (x >= NX || y >= NY) return;
 
@@ -18,173 +17,140 @@ void applyInflow(
     const float r2 = dx * dx + dy * dy;
     if (r2 > R2) return;
 
-    const idx_t idx3_in = global3(x,y,0);
+    const idx_t idx3_in = global3(x, y, 0);
     
     const float uzIn =
     #if defined(PERTURBATION)
-    d.uz[idx3_in] * (1.0f + PERTURBATION_DATA[(STEP / MACRO_SAVE) % 200] * 10.0f);
+        d.uz[idx3_in] * (1.0f + PERTURBATION_DATA[(STEP / MACRO_SAVE) % 200] * 10.0f);
     #else
-    d.uz[idx3_in];
+        d.uz[idx3_in];
     #endif
 
-    const float uu = uzIn*uzIn;
+    const float P = 1.0f + 3.0f * uzIn + 3.0f * uzIn * uzIn;
 
-    idx_t fluidNode = global3(x,y,1);
-    float feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,5);
-    float fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                            d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                            d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],5);
-    d.f[5 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
+    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
+        constexpr idx_t Q = decltype(I)::value;
 
-    fluidNode = global3(x+1,y,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,9);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],9);
-    d.f[9 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
+        if constexpr (FDir<Q>::cz == 1) { 
+            const idx_t xx = x + static_cast<idx_t>(FDir<Q>::cx);
+            const idx_t yy = y + static_cast<idx_t>(FDir<Q>::cy);
 
-    fluidNode = global3(x,y+1,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,11);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],11);
-    d.f[11 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
+            idx_t fluidNode = global3(xx, yy, 1);
 
-    fluidNode = global3(x-1,y,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,16);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],16);
-    d.f[16 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
+            #if defined(D3Q19)
+                const float feq = FDir<Q>::w * d.rho[fluidNode] * P - FDir<Q>::w; 
+            #elif defined(D3Q27)
+                const float feq = FDir<Q>::w * d.rho[fluidNode] * P - FDir<Q>::w; 
+            #endif
 
-    fluidNode = global3(x,y-1,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,18);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],18);
-    d.f[18 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
+            #if defined(D3Q19)
+                const float fneq = (FDir<Q>::w * 4.5f) *
+                    ((static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) - CSSQ) * d.pxx[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - CSSQ) * d.pyy[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ) * d.pzz[fluidNode] +
+                      2.0f * (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * d.pxy[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) * d.pxz[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) * d.pyz[fluidNode]));
+            #elif defined(D3Q27)
+                const float fneq = (FDir<Q>::w * 4.5f) *
+                    ((static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) - CSSQ) * d.pxx[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - CSSQ) * d.pyy[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ) * d.pzz[fluidNode] +
+                      2.0f * (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * d.pxy[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) * d.pxz[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) * d.pyz[fluidNode]) +
+                     (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) - 3.0f * CSSQ * static_cast<float>(FDir<Q>::cx)) * (3.0f * d.ux[fluidNode] * d.pxx[fluidNode]) +
+                     (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - 3.0f * CSSQ * static_cast<float>(FDir<Q>::cy)) * (3.0f * d.uy[fluidNode] * d.pyy[fluidNode]) +
+                     (static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - 3.0f * CSSQ * static_cast<float>(FDir<Q>::cz)) * (3.0f * d.uz[fluidNode] * d.pzz[fluidNode]) +
+                      3.0f * ((static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) - CSSQ * static_cast<float>(FDir<Q>::cy)) * (d.pxx[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxy[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cz)) * (d.pxx[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxz[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - CSSQ * static_cast<float>(FDir<Q>::cx)) * (d.pxy[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pyy[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cz)) * (d.pyy[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pyz[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cx)) * (d.pxz[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pzz[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cy)) * (d.pyz[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pzz[fluidNode])) +
+                            6.0f * (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz)) * (d.pxy[fluidNode] * d.uz[fluidNode] + d.ux[fluidNode] * d.pyz[fluidNode] + d.uy[fluidNode] * d.pxz[fluidNode]));
+            #endif
 
-    #if defined(D3Q27)
-    fluidNode = global3(x+1,y+1,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,19);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                        d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],19);
-    d.f[19 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
+            d.f[Q * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
+        }
+    });
 
-    fluidNode = global3(x-1,y-1,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,22);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                        d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],22);
-    d.f[22 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
-
-    fluidNode = global3(x+1,y-1,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,23);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                        d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],23);
-    d.f[23 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
-
-    fluidNode = global3(x-1,y+1,1);
-    feq  = computeFeq(d.rho[fluidNode],0.0f,0.0f,uzIn,uu,25);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                        d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                        d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],25);
-    d.f[25 * PLANE + fluidNode] = toPop(feq + OMCO_ZMIN * fneq);
-    #endif
-
-    feq = computeGeq(d.phi[idx3_in],0.0f,0.0f,uzIn,5);
-    d.g[5 * PLANE + global3(x,y,1)] = feq;
+    d.g[5 * PLANE + global3(x, y, 1)] = GDir<5>::wg * d.phi[idx3_in] * (1.0f + 4.0f * uzIn);
 }
 
-[[nodiscard]] __global__ 
+__global__ 
 void applyOutflow(
     LBMFields d
 ) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
-    // const idx_t z = NZ-1;
 
     if (x >= NX || y >= NY) return;
 
-    const idx_t idx3_zm1 = global3(x,y,NZ-2);
-    d.phi[global3(x,y,NZ-1)] = d.phi[idx3_zm1];
+    const idx_t idx3_zm1 = global3(x, y, NZ-2);
+    d.phi[global3(x, y, NZ-1)] = d.phi[idx3_zm1];
  
     const float uxOut = d.ux[idx3_zm1];
     const float uyOut = d.uy[idx3_zm1];
     const float uzOut = d.uz[idx3_zm1];
-    const float uu = uxOut*uxOut + uyOut*uyOut + uzOut*uzOut;
+    const float uu = 1.5f * (uxOut * uxOut + uyOut * uyOut + uzOut * uzOut);
 
-    float feq  = computeFeq(d.rho[idx3_zm1],uxOut,uyOut,uzOut,uu,6);
-    float fneq = computeNeq(d.pxx[idx3_zm1],d.pyy[idx3_zm1],d.pzz[idx3_zm1],
-                            d.pxy[idx3_zm1],d.pxz[idx3_zm1],d.pyz[idx3_zm1],
-                            d.ux[idx3_zm1],d.uy[idx3_zm1],d.uz[idx3_zm1],6);
-    d.f[6 * PLANE + idx3_zm1] = toPop(feq + OMCO_ZMAX * fneq);
+    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
+        constexpr idx_t Q = decltype(I)::value;
 
-    idx_t fluidNode = global3(x-1,y,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,10);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],10);
-    d.f[10 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
+        if constexpr (FDir<Q>::cz == -1) { 
+            const idx_t xx = x + static_cast<idx_t>(FDir<Q>::cx);
+            const idx_t yy = y + static_cast<idx_t>(FDir<Q>::cy);
 
-    fluidNode = global3(x,y-1,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,12);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],12);
-    d.f[12 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
+            idx_t fluidNode = global3(xx, yy, NZ-2);
 
-    fluidNode = global3(x+1,y,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,15);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],15);
-    d.f[15 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
+            const float cu = 3.0f * 
+                (uxOut * static_cast<float>(FDir<Q>::cx) + 
+                 uyOut * static_cast<float>(FDir<Q>::cy) + 
+                 uzOut * static_cast<float>(FDir<Q>::cz));
 
-    fluidNode = global3(x,y+1,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,17);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],17);
-    d.f[17 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
+            #if defined(D3Q19)
+                const float feq = FDir<Q>::w * d.rho[fluidNode] * (1.0f - uu + cu + 0.5f*cu*cu) - FDir<Q>::w; 
+            #elif defined(D3Q27)
+                const float feq = FDir<Q>::w * d.rho[fluidNode] * (1.0f - uu + cu + 0.5f*cu*cu + OOS*cu*cu*cu - uu*cu) - FDir<Q>::w; 
+            #endif
 
-    #if defined(D3Q27)
-    fluidNode = global3(x-1,y-1,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,20);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],20);
-    d.f[20 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
+            #if defined(D3Q19)
+                const float fneq = (FDir<Q>::w * 4.5f) *
+                    ((static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) - CSSQ) * d.pxx[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - CSSQ) * d.pyy[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ) * d.pzz[fluidNode] +
+                      2.0f * (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * d.pxy[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) * d.pxz[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) * d.pyz[fluidNode]));
+            #elif defined(D3Q27)
+                const float fneq = (FDir<Q>::w * 4.5f) *
+                    ((static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) - CSSQ) * d.pxx[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - CSSQ) * d.pyy[fluidNode] +
+                     (static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ) * d.pzz[fluidNode] +
+                      2.0f * (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * d.pxy[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) * d.pxz[fluidNode] + 
+                              static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) * d.pyz[fluidNode]) +
+                     (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) - 3.0f * CSSQ * static_cast<float>(FDir<Q>::cx)) * (3.0f * d.ux[fluidNode] * d.pxx[fluidNode]) +
+                     (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - 3.0f * CSSQ * static_cast<float>(FDir<Q>::cy)) * (3.0f * d.uy[fluidNode] * d.pyy[fluidNode]) +
+                     (static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - 3.0f * CSSQ * static_cast<float>(FDir<Q>::cz)) * (3.0f * d.uz[fluidNode] * d.pzz[fluidNode]) +
+                      3.0f * ((static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) - CSSQ * static_cast<float>(FDir<Q>::cy)) * (d.pxx[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxy[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cz)) * (d.pxx[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxz[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) - CSSQ * static_cast<float>(FDir<Q>::cx)) * (d.pxy[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pyy[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cz)) * (d.pyy[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pyz[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cx)) * (d.pxz[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pzz[fluidNode]) +
+                              (static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz) * static_cast<float>(FDir<Q>::cz) - CSSQ * static_cast<float>(FDir<Q>::cy)) * (d.pyz[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pzz[fluidNode])) +
+                            6.0f * (static_cast<float>(FDir<Q>::cx) * static_cast<float>(FDir<Q>::cy) * static_cast<float>(FDir<Q>::cz)) * (d.pxy[fluidNode] * d.uz[fluidNode] + d.ux[fluidNode] * d.pyz[fluidNode] + d.uy[fluidNode] * d.pxz[fluidNode]));
+            #endif
 
-    fluidNode = global3(x+1,y+1,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,21);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],21);
-    d.f[21 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
+            d.f[Q * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
+        }
+    });
 
-    fluidNode = global3(x-1,y+1,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,24);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],24);
-    d.f[24 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
-
-    fluidNode = global3(x+1,y-1,NZ-2);
-    feq  = computeFeq(d.rho[fluidNode],uxOut,uyOut,uzOut,uu,26);
-    fneq = computeNeq(d.pxx[fluidNode],d.pyy[fluidNode],d.pzz[fluidNode],
-                      d.pxy[fluidNode],d.pxz[fluidNode],d.pyz[fluidNode],
-                      d.ux[fluidNode],d.uy[fluidNode],d.uz[fluidNode],26);
-    d.f[26 * PLANE + fluidNode] = toPop(feq + OMCO_ZMAX * fneq);
-    #endif
-
-    feq = computeGeq(d.phi[idx3_zm1],0.0f,0.0f,U_REF,6);
-    d.g[6 * PLANE + idx3_zm1] = feq;
+    d.g[6 * PLANE + idx3_zm1] = GDir<6>::wg * d.phi[idx3_zm1] * (1.0f - 4.0f * U_REF);
 }
 
-[[nodiscard]] __global__ 
+__global__ 
 void periodicX(
     LBMFields d
 ) {
@@ -193,8 +159,8 @@ void periodicX(
 
     if (y <= 0 || y >= NY-1 || z <= 0 || z >= NZ-1) return;
 
-    const idx_t bL = global3(1,y,z);
-    const idx_t bR = global3(NX-2,y,z);
+    const idx_t bL = global3(1, y, z);
+    const idx_t bR = global3(NX-2, y, z);
 
     // positive x contributions
     d.f[     PLANE + bL] = d.f[     PLANE + bR];
@@ -225,11 +191,11 @@ void periodicX(
     d.g[2  * PLANE + bR] = d.g[2  * PLANE + bL];
 
     // ghost cells
-    d.phi[global3(0,y,z)]    = d.phi[bR];
-    d.phi[global3(NX-1,y,z)] = d.phi[bL];
+    d.phi[global3(0, y, z)]    = d.phi[bR];
+    d.phi[global3(NX-1, y, z)] = d.phi[bL];
 }
 
-[[nodiscard]] __global__ 
+__global__ 
 void periodicY(
     LBMFields d
 ) {
@@ -238,8 +204,8 @@ void periodicY(
 
     if (x <= 0 || x >= NX-1 || z <= 0 || z >= NZ-1) return;
 
-    const idx_t bB = global3(x,1,z);
-    const idx_t bT = global3(x,NY-2,z);
+    const idx_t bB = global3(x, 1, z);
+    const idx_t bT = global3(x, NY-2, z);
 
     // positive y contributions
     d.f[3  * PLANE + bB] = d.f[3  * PLANE + bT];
@@ -270,8 +236,8 @@ void periodicY(
     d.g[4   * PLANE + bT] = d.g[4   * PLANE + bB];
 
     // ghost cells
-    d.phi[global3(x,0,z)]    = d.phi[bT];
-    d.phi[global3(x,NY-1,z)] = d.phi[bB];
+    d.phi[global3(x, 0, z)]    = d.phi[bT];
+    d.phi[global3(x, NY-1, z)] = d.phi[bB];
 }
 
 #elif defined(DROPLET)

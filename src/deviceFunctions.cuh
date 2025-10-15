@@ -12,12 +12,12 @@ idx_t global3(
 
 [[nodiscard]] __device__ __forceinline__ 
 idx_t global4(
-    const idx_t x,
+    const idx_t x, 
     const idx_t y,
     const idx_t z,
     const idx_t Q
 ) noexcept {
-    return Q * PLANE + global3(x,y,z);
+    return Q * PLANE + global3(x, y, z);
 }
 
 [[nodiscard]] __device__ __forceinline__ 
@@ -29,11 +29,11 @@ float computeFeq(
     const float uu,
     const idx_t Q
 ) noexcept{
-    const float cu = ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q];
+    const float cu = ux * CIX[Q] + uy * CIY[Q] + uz * CIZ[Q];
     #if defined(D3Q19)
-        return W[Q] * rho * (1.0f - 1.5f*uu + 3.0f*cu + 4.5f*cu*cu) - W[Q];
+        return W[Q] * rho * (1.0f - 1.5f * uu + 3.0f * cu + 4.5f * cu * cu) - W[Q];
     #elif defined(D3Q27)
-        return W[Q] * rho * (1.0f - 1.5f*uu + 3.0f*cu + 4.5f*cu*cu + 4.5f*cu*cu*cu - 4.5f*uu*cu) - W[Q];
+        return W[Q] * rho * (1.0f - 1.5f * uu + 3.0f * cu + 4.5f * cu * cu + 4.5f * cu * cu * cu - 4.5f * uu * cu) - W[Q];
     #endif
 }
 
@@ -45,7 +45,7 @@ float computeGeq(
     const float uz,
     const idx_t Q
 ) noexcept {
-    const float cu = ux*CIX[Q] + uy*CIY[Q] + uz*CIZ[Q];
+    const float cu = ux * CIX[Q] + uy * CIY[Q] + uz * CIZ[Q];
     return W_G[Q] * phi * (1.0f + 4.0f * cu);
 }
 
@@ -72,7 +72,9 @@ float computeNeq(
                ((CIX[Q] * CIX[Q] - CSSQ) * pxx +
                 (CIY[Q] * CIY[Q] - CSSQ) * pyy +
                 (CIZ[Q] * CIZ[Q] - CSSQ) * pzz +
-                2.0f * (CIX[Q] * CIY[Q] * pxy + CIX[Q] * CIZ[Q] * pxz + CIY[Q] * CIZ[Q] * pyz) +
+                2.0f * (CIX[Q] * CIY[Q] * pxy + 
+                        CIX[Q] * CIZ[Q] * pxz + 
+                        CIY[Q] * CIZ[Q] * pyz) +
                 (CIX[Q] * CIX[Q] * CIX[Q] - 3.0f * CSSQ * CIX[Q]) * (3.0f * ux * pxx) +
                 (CIY[Q] * CIY[Q] * CIY[Q] - 3.0f * CSSQ * CIY[Q]) * (3.0f * uy * pyy) +
                 (CIZ[Q] * CIZ[Q] * CIZ[Q] - 3.0f * CSSQ * CIZ[Q]) * (3.0f * uz * pzz) +
@@ -194,4 +196,5 @@ struct LBMFields {
     pop_t *f;
     float *g;
 };
+
 LBMFields fields{};
