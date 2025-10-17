@@ -43,16 +43,21 @@ void setDistros(
 
     const idx_t idx3 = global3(x, y, z);
 
-    const float uu = d.ux[idx3] * d.ux[idx3] + d.uy[idx3] * d.uy[idx3] + d.uz[idx3] * d.uz[idx3];
+    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
+        constexpr idx_t Q = decltype(I)::value;
 
-    #pragma unroll FLINKS
-    for (idx_t Q = 0; Q < FLINKS; ++Q) {
-        d.f[global4(x,y,z,Q)] = computeFeq(d.rho[idx3],d.ux[idx3],d.uy[idx3],d.uz[idx3],uu,Q);
-    }
-    #pragma unroll GLINKS
-    for (idx_t Q = 0; Q < GLINKS; ++Q) {
-        d.g[global4(x+CIX[Q],y+CIY[Q],z+CIZ[Q],Q)] = computeGeq(d.phi[idx3],d.ux[idx3],d.uy[idx3],d.uz[idx3],Q);
-    }
+        d.f[global4(x, y, z, Q)] = FDir<Q>::w * d.rho[idx3] - FDir<Q>::w;
+    });
+
+    constexpr_for<0, GLINKS>([&] __device__ (auto I) {
+        constexpr idx_t Q = decltype(I)::value;
+
+        const idx_t xx = x + static_cast<idx_t>(FDir<Q>::cx);
+        const idx_t yy = y + static_cast<idx_t>(FDir<Q>::cy);
+        const idx_t zz = z + static_cast<idx_t>(FDir<Q>::cz);
+
+        d.f[global4(xx, yy, zz, Q)] = GDir<Q>::wg * d.phi[idx3];
+    });
 }
 
 #if defined(JET)
@@ -106,9 +111,9 @@ setDroplet(
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ ||
-        x == 0 || x == NX-1 ||
-        y == 0 || y == NY-1 ||
-        z == 0 || z == NZ-1) return;
+        x == 0 || x == NX - 1 ||
+        y == 0 || y == NY - 1 ||
+        z == 0 || z == NZ - 1) return;
 
     const idx_t idx3 = global3(x, y, z);
 

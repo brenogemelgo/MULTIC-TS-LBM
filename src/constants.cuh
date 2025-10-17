@@ -28,19 +28,19 @@
 
 #if defined(JET)
 
-    static inline constexpr idx_t MESH = 64;
+    static inline constexpr idx_t MESH = 128;
     static inline constexpr idx_t NX   = MESH;
     static inline constexpr idx_t NY   = MESH;
     static inline constexpr idx_t NZ   = MESH*2;
 
-    static inline constexpr int DIAM   = 10;
+    static inline constexpr int DIAM   = 13;
     static inline constexpr int RADIUS = DIAM / 2;
 
     static inline constexpr float U_REF    = 0.05f;
     static inline constexpr int   REYNOLDS = 5000;
     static inline constexpr int   WEBER    = 500;
 
-    static inline constexpr float GAMMA = 0.9f;
+    static inline constexpr float GAMMA = 1.0f;
 
 #elif defined(DROPLET)
 
@@ -55,7 +55,7 @@
     static inline constexpr float TAU   = 0.55f;
     static inline constexpr float SIGMA = 0.1f;
 
-    static inline constexpr float GAMMA = 0.45f;
+    static inline constexpr float GAMMA = 1.0f;
 
 #endif
 

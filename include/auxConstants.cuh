@@ -50,8 +50,6 @@ static inline constexpr float R2 = RADIUS * RADIUS;
 
 static inline constexpr float CSSQ = 1.0f / 3.0f;
 static inline constexpr float CSCO = 1.0f - CSSQ;
-static inline constexpr float SQCS = 3.0f * CSSQ;
-static inline constexpr float SQCO = 1.0f - SQCS;
 static inline constexpr float OMCO = 1.0f - OMEGA_REF;
 static inline constexpr float OOS  = 1.0f / 6.0f;
 

@@ -7,9 +7,9 @@ void computePhase(
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ ||
-        x == 0 || x == NX-1 ||
-        y == 0 || y == NY-1 ||
-        z == 0 || z == NZ-1) return;
+        x == 0 || x == NX - 1 ||
+        y == 0 || y == NY - 1 ||
+        z == 0 || z == NZ - 1) return;
 
     const idx_t idx3 = global3(x, y, z);
 
@@ -34,9 +34,9 @@ void computeNormals(
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ ||
-        x == 0 || x == NX-1 ||
-        y == 0 || y == NY-1 ||
-        z == 0 || z == NZ-1) return;
+        x == 0 || x == NX - 1 ||
+        y == 0 || y == NY - 1 ||
+        z == 0 || z == NZ - 1) return;
 
     const idx_t idx3 = global3(x, y, z);
 
@@ -100,25 +100,25 @@ void computeForces(
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
     if (x >= NX || y >= NY || z >= NZ ||
-        x == 0 || x == NX-1 ||
-        y == 0 || y == NY-1 ||
-        z == 0 || z == NZ-1) return;
+        x == 0 || x == NX - 1 ||
+        y == 0 || y == NY - 1 ||
+        z == 0 || z == NZ - 1) return;
 
     const idx_t idx3 = global3(x, y, z);
 
-    float sumCurvX = W_1 * (d.normx[global3(x+1,y,z)] - d.normx[global3(x-1,y,z)]) +
+    float sumCurvX = W_1 * (d.normx[global3(x+1,y,z)]   - d.normx[global3(x-1,y,z)]) +
                      W_2 * (d.normx[global3(x+1,y+1,z)] - d.normx[global3(x-1,y-1,z)] +
                             d.normx[global3(x+1,y,z+1)] - d.normx[global3(x-1,y,z-1)] +
                             d.normx[global3(x+1,y-1,z)] - d.normx[global3(x-1,y+1,z)] +
                             d.normx[global3(x+1,y,z-1)] - d.normx[global3(x-1,y,z+1)]);
 
-    float sumCurvY = W_1 * (d.normy[global3(x,y+1,z)] - d.normy[global3(x,y-1,z)]) +
+    float sumCurvY = W_1 * (d.normy[global3(x,y+1,z)]   - d.normy[global3(x,y-1,z)]) +
                      W_2 * (d.normy[global3(x+1,y+1,z)] - d.normy[global3(x-1,y-1,z)] +
                             d.normy[global3(x,y+1,z+1)] - d.normy[global3(x,y-1,z-1)] +
                             d.normy[global3(x-1,y+1,z)] - d.normy[global3(x+1,y-1,z)] +
                             d.normy[global3(x,y+1,z-1)] - d.normy[global3(x,y-1,z+1)]);
 
-    float sumCurvZ = W_1 * (d.normz[global3(x,y,z+1)] - d.normz[global3(x,y,z-1)]) +
+    float sumCurvZ = W_1 * (d.normz[global3(x,y,z+1)]   - d.normz[global3(x,y,z-1)]) +
                      W_2 * (d.normz[global3(x+1,y,z+1)] - d.normz[global3(x-1,y,z-1)] +
                             d.normz[global3(x,y+1,z+1)] - d.normz[global3(x,y-1,z-1)] +
                             d.normz[global3(x-1,y,z+1)] - d.normz[global3(x+1,y,z-1)] +

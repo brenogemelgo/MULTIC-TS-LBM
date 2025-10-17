@@ -20,10 +20,10 @@ int main(int argc, char* argv[]) {
 
     setDeviceFields();
 
-    constexpr dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, BLOCK_SIZE_Z);
-    constexpr dim3 blockX(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
-    constexpr dim3 blockY(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
-    constexpr dim3 blockZ(BLOCK_SIZE_X / 2, BLOCK_SIZE_Y / 2, 1u);
+    constexpr dim3 block(blockSizeX, blockSizeY, blockSizeZ);
+    constexpr dim3 blockX(blockSizeX, blockSizeY, 1u);
+    constexpr dim3 blockY(blockSizeX, blockSizeY, 1u);
+    constexpr dim3 blockZ(blockSizeX, blockSizeY, 1u);
 
     constexpr dim3 grid(divUp(NX, block.x), divUp(NY, block.y), divUp(NZ, block.z));
     constexpr dim3 gridX(divUp(NY, blockX.x), divUp(NZ, blockX.y), 1u);
@@ -40,9 +40,9 @@ int main(int argc, char* argv[]) {
         setFields<<<grid, block, dynamic, queue>>>(fields);
 
         #if defined(JET)
-        setJet<<<grid, block, dynamic, queue>>>(fields);
+            setJet<<<grid, block, dynamic, queue>>>(fields);
         #elif defined(DROPLET)
-        setDroplet<<<grid, block, dynamic, queue>>>(fields);
+            setDroplet<<<grid, block, dynamic, queue>>>(fields);
         #endif
 
         setDistros<<<grid, block, dynamic, queue>>>(fields);
@@ -52,15 +52,22 @@ int main(int argc, char* argv[]) {
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (int STEP = 0; STEP <= NSTEPS; ++STEP) {
         #if !defined(BENCHMARK)
-        // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
+            // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
         #endif
 
         // ======================== LATTICE BOLTZMANN RELATED ======================== //
 
-            computePhase  <<<grid, block, dynamic, queue>>>(fields);
-            computeNormals<<<grid, block, dynamic, queue>>>(fields);
-            computeForces <<<grid, block, dynamic, queue>>>(fields);
-            streamCollide <<<grid, block, dynamic, queue>>>(fields);
+            if (STEP == 0) {
+                streamCollide <<<grid, block, dynamic, queue>>>(fields);
+                computePhase  <<<grid, block, dynamic, queue>>>(fields);
+                computeNormals<<<grid, block, dynamic, queue>>>(fields);
+                computeForces <<<grid, block, dynamic, queue>>>(fields);
+            } else {
+                computePhase  <<<grid, block, dynamic, queue>>>(fields);
+                computeNormals<<<grid, block, dynamic, queue>>>(fields);
+                computeForces <<<grid, block, dynamic, queue>>>(fields);
+                streamCollide <<<grid, block, dynamic, queue>>>(fields);
+            }
             
         // ========================================================================== //
 
@@ -81,18 +88,18 @@ int main(int argc, char* argv[]) {
 
         #if !defined(BENCHMARK)
 
-        checkCudaErrors(cudaDeviceSynchronize());
+            checkCudaErrors(cudaDeviceSynchronize());
 
-        if (STEP % MACRO_SAVE == 0) {
+            if (STEP % MACRO_SAVE == 0) {
 
-            copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
-            copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
-            #if defined(JET)
-            copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
-            #endif
-            std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
+                //copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
+                copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
+                #if defined(JET)
+                    copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
+                #endif
+                std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
 
-        }
+            }
 
         #endif
     }

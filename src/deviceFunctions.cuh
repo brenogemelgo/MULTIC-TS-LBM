@@ -21,101 +21,66 @@ idx_t global4(
 }
 
 [[nodiscard]] __device__ __forceinline__ 
-float computeFeq(
-    const float rho,
-    const float ux,
-    const float uy,
-    const float uz,
-    const float uu,
-    const idx_t Q
-) noexcept{
-    const float cu = ux * CIX[Q] + uy * CIY[Q] + uz * CIZ[Q];
-    #if defined(D3Q19)
-        return W[Q] * rho * (1.0f - 1.5f * uu + 3.0f * cu + 4.5f * cu * cu) - W[Q];
-    #elif defined(D3Q27)
-        return W[Q] * rho * (1.0f - 1.5f * uu + 3.0f * cu + 4.5f * cu * cu + 4.5f * cu * cu * cu - 4.5f * uu * cu) - W[Q];
-    #endif
+seed_t hash32(
+    seed_t x
+) noexcept {
+    x ^= x >> 16; x *= 0x7FEB352Du;
+    x ^= x >> 15; x *= 0x846CA68Bu;
+    x ^= x >> 16;
+    return x;
 }
 
-[[nodiscard]] __device__ __forceinline__ 
-float computeGeq(
-    const float phi,
-    const float ux,
-    const float uy,
-    const float uz,
-    const idx_t Q
+
+[[nodiscard]] __device__ __forceinline__
+float u01(
+    const seed_t x
 ) noexcept {
-    const float cu = ux * CIX[Q] + uy * CIY[Q] + uz * CIZ[Q];
-    return W_G[Q] * phi * (1.0f + 4.0f * cu);
+    return (__uint2float_rn(x) + 0.5f) * 2.3283064365386963e-10f; 
 }
 
-[[nodiscard]] __device__ __forceinline__ 
-float computeNeq(
-    const float pxx,
-    const float pyy,
-    const float pzz,
-    const float pxy,
-    const float pxz,
-    const float pyz,
-    const float ux,
-    const float uy,
-    const float uz,
-    const idx_t Q
+__device__ __forceinline__ 
+void box_muller(
+    float u1, 
+    const float u2, 
+    float &z1, 
+    float &z2
 ) noexcept {
-    #if defined(D3Q19)
-        return (W[Q] * 4.5f) * ((CIX[Q] * CIX[Q] - CSSQ) * pxx +
-                                (CIY[Q] * CIY[Q] - CSSQ) * pyy +
-                                (CIZ[Q] * CIZ[Q] - CSSQ) * pzz +
-                                2.0f * (CIX[Q] * CIY[Q] * pxy + CIX[Q] * CIZ[Q] * pxz + CIY[Q] * CIZ[Q] * pyz));
-    #elif defined(D3Q27)
-        return (W[Q] * 4.5f) *
-               ((CIX[Q] * CIX[Q] - CSSQ) * pxx +
-                (CIY[Q] * CIY[Q] - CSSQ) * pyy +
-                (CIZ[Q] * CIZ[Q] - CSSQ) * pzz +
-                2.0f * (CIX[Q] * CIY[Q] * pxy + 
-                        CIX[Q] * CIZ[Q] * pxz + 
-                        CIY[Q] * CIZ[Q] * pyz) +
-                (CIX[Q] * CIX[Q] * CIX[Q] - 3.0f * CSSQ * CIX[Q]) * (3.0f * ux * pxx) +
-                (CIY[Q] * CIY[Q] * CIY[Q] - 3.0f * CSSQ * CIY[Q]) * (3.0f * uy * pyy) +
-                (CIZ[Q] * CIZ[Q] * CIZ[Q] - 3.0f * CSSQ * CIZ[Q]) * (3.0f * uz * pzz) +
-                3.0f * ((CIX[Q] * CIX[Q] * CIY[Q] - CSSQ * CIY[Q]) * (pxx * uy + 2.0f * ux * pxy) +
-                        (CIX[Q] * CIX[Q] * CIZ[Q] - CSSQ * CIZ[Q]) * (pxx * uz + 2.0f * ux * pxz) +
-                        (CIX[Q] * CIY[Q] * CIY[Q] - CSSQ * CIX[Q]) * (pxy * uy + 2.0f * ux * pyy) +
-                        (CIY[Q] * CIY[Q] * CIZ[Q] - CSSQ * CIZ[Q]) * (pyy * uz + 2.0f * uy * pyz) +
-                        (CIX[Q] * CIZ[Q] * CIZ[Q] - CSSQ * CIX[Q]) * (pxz * uz + 2.0f * ux * pzz) +
-                        (CIY[Q] * CIZ[Q] * CIZ[Q] - CSSQ * CIY[Q]) * (pyz * uz + 2.0f * uy * pzz)) +
-                6.0f * (CIX[Q] * CIY[Q] * CIZ[Q]) * (pxy * uz + ux * pyz + uy * pxz));
-    #endif
+    u1 = fmaxf(u1, 1e-12f);
+    const float r = __fsqrt_rn(-2.0f * __logf(u1));
+    const float ang = 6.2831853071795864769f * u2; 
+    float s, c; __sincosf(ang, &s, &c);
+    z1 = r * c;
+    z2 = r * s;
 }
 
-[[nodiscard]] __device__ __forceinline__ 
-float computeForce(
-    const float feq,
-    const float ux,
-    const float uy,
-    const float uz,
-    const float ffx,
-    const float ffy,
-    const float ffz,
-    const float aux,
-    const idx_t Q
+template<idx_t NOISE_PERIOD = 10>
+[[nodiscard]] __device__ __forceinline__
+float normal_from_xy_everyN(
+    const idx_t x, 
+    const idx_t y, 
+    const idx_t STEP
 ) noexcept {
-    #if defined(D3Q19)
-        return feq * ((CIX[Q] - ux) * ffx + 
-                      (CIY[Q] - uy) * ffy + 
-                      (CIZ[Q] - uz) * ffz) * aux;
-    #elif defined(D3Q27)
-        const float cu = 3.0f * (ux * CIX[Q] + uy * CIY[Q] + uz * CIZ[Q]);
-        return W[Q] * ((3.0f * (CIX[Q] - ux) + 3.0f * cu * CIX[Q]) * ffx +
-                       (3.0f * (CIY[Q] - uy) + 3.0f * cu * CIY[Q]) * ffy +
-                       (3.0f * (CIZ[Q] - uz) + 3.0f * cu * CIZ[Q]) * ffz);
-    #endif
+    const idx_t call_idx = STEP / NOISE_PERIOD;     
+    const idx_t pair_idx = call_idx >> 1;           
+    const bool use_second = (call_idx & 1) != 0;  
+
+    const seed_t base =
+        0x9E3779B9u
+        ^ x
+        ^ (y * 0x85EBCA6Bu)
+        ^ (pair_idx * 0xC2B2AE35u);
+
+    const float u1 = u01(hash32(base));
+    const float u2 = u01(hash32(base ^ 0x68BC21EBu));
+
+    float z1, z2; box_muller(u1, u2, z1, z2);
+    return use_second ? z2 : z1;
 }
 
 #if defined(JET)
 
 [[nodiscard]] __device__ __forceinline__ 
-float cubicSponge(
+float cubic_sponge(
     const idx_t z
 ) noexcept {
     const float zn = static_cast<float>(z) * INV_NZ_M1;
@@ -138,7 +103,7 @@ float smoothstep(
 }
 
 [[nodiscard]] __device__ __forceinline__ 
-float interpolateRho(
+float interpolate_rho(
     float phi
 ) noexcept {
     return fmaf(phi, (RHO_OIL - RHO_WATER), RHO_WATER);
