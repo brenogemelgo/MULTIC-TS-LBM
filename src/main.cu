@@ -50,24 +50,17 @@ int main(int argc, char* argv[]) {
     // ===================================================================== //
 
     const auto START_TIME = std::chrono::high_resolution_clock::now();
-    for (int STEP = 0; STEP <= NSTEPS; ++STEP) {
+    for (idx_t STEP = 0; STEP <= NSTEPS; ++STEP) {
         #if !defined(BENCHMARK)
             // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
         #endif
 
         // ======================== LATTICE BOLTZMANN RELATED ======================== //
 
-            if (STEP == 0) {
-                streamCollide <<<grid, block, dynamic, queue>>>(fields);
-                computePhase  <<<grid, block, dynamic, queue>>>(fields);
-                computeNormals<<<grid, block, dynamic, queue>>>(fields);
-                computeForces <<<grid, block, dynamic, queue>>>(fields);
-            } else {
-                computePhase  <<<grid, block, dynamic, queue>>>(fields);
-                computeNormals<<<grid, block, dynamic, queue>>>(fields);
-                computeForces <<<grid, block, dynamic, queue>>>(fields);
-                streamCollide <<<grid, block, dynamic, queue>>>(fields);
-            }
+            computePhase  <<<grid, block, dynamic, queue>>>(fields);
+            computeNormals<<<grid, block, dynamic, queue>>>(fields);
+            computeForces <<<grid, block, dynamic, queue>>>(fields);
+            streamCollide <<<grid, block, dynamic, queue>>>(fields);
             
         // ========================================================================== //
 
@@ -92,7 +85,7 @@ int main(int argc, char* argv[]) {
 
             if (STEP % MACRO_SAVE == 0) {
 
-                //copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
+                copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
                 copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
                 #if defined(JET)
                     copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");

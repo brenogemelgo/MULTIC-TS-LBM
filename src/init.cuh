@@ -56,7 +56,7 @@ void setDistros(
         const idx_t yy = y + static_cast<idx_t>(FDir<Q>::cy);
         const idx_t zz = z + static_cast<idx_t>(FDir<Q>::cz);
 
-        d.f[global4(xx, yy, zz, Q)] = GDir<Q>::wg * d.phi[idx3];
+        d.g[global4(xx, yy, zz, Q)] = GDir<Q>::wg * d.phi[idx3];
     });
 }
 

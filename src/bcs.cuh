@@ -19,9 +19,10 @@ void applyInflow(
 
     const idx_t idx3_in = global3(x, y, 0);
     
-    const float z = normal_from_xy_everyN<10>(x, y, STEP);   
+    //const float z = normal_from_xy_everyN<10>(x, y, STEP);   
     //const float uz = d.uz[idx3_in] * (1.0f + 0.004f * z);
-    const float uz = d.uz[idx3_in] + 0.004f * z;
+    //const float uz = d.uz[idx3_in] + 0.004f * z;
+    const float uz = d.uz[idx3_in];
 
     const float P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
 

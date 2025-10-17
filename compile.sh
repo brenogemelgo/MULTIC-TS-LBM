@@ -61,7 +61,6 @@ nvcc -O3 --restrict \
      -std=c++20 "${SRC_DIR}/main.cu" \
      -D${VELOCITY_SET} -D${FLOW_CASE} \
      -DENABLE_FP16=1 \
-     -DPERTURBATION=1 \
      --extended-lambda \
      -o "${EXECUTABLE}"
 

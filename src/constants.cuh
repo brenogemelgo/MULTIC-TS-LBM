@@ -1,9 +1,7 @@
 #pragma once
 #include "../helpers/cudaUtils.cuh"
+#include "../helpers/globalStructs.cuh"
 #include "../helpers/velocitySets.cuh"
-#if defined(PERTURBATION)
-#include "../helpers/perturbationData.cuh"
-#endif
 
 #define RUN_MODE
 //#define SAMPLE_MODE
