@@ -17,15 +17,14 @@ void applyInflow(
     const float r2 = dx * dx + dy * dy;
     if (r2 > R2) return;
 
-    const idx_t idx3_in = global3(x, y, 0);
-    
-    //const float z = normal_from_xy_everyN<10>(x, y, STEP);   
-    //const float uz = d.uz[idx3_in] * (1.0f + 0.004f * z);
-    //const float uz = d.uz[idx3_in] + 0.004f * z;
-    const float uz = d.uz[idx3_in];
+    const idx_t idx3_bnd = global3(x, y, 0);
+    //const idx_t idx3_zp1 = global3(x, y, 1);
+
+    //d.rho[idx3_bnd] = d.rho[idx3_zp1];
+
+    const float uz = d.uz[idx3_bnd];
 
     const float P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
-
     constexpr_for<0, FLINKS>([&] __device__ (auto I) {
         constexpr idx_t Q = decltype(I)::value;
 
@@ -76,7 +75,7 @@ void applyInflow(
         }
     });
 
-    d.g[5 * PLANE + global3(x, y, 1)] = GDir<5>::wg * d.phi[idx3_in] * (1.0f + 4.0f * uz);
+    d.g[5 * PLANE + global3(x, y, 1)] = GDir<5>::wg * d.phi[idx3_bnd] * (1.0f + 4.0f * uz);
 }
 
 __global__ 
@@ -88,14 +87,20 @@ void applyOutflow(
 
     if (x >= NX || y >= NY) return;
 
-    const idx_t idx3_zm1 = global3(x, y, NZ-2);
-    d.phi[global3(x, y, NZ-1)] = d.phi[idx3_zm1];
+    const idx_t idx3_bnd = global3(x, y, NZ - 1);
+    const idx_t idx3_zm1 = global3(x, y, NZ - 2);
+
+    d.rho[idx3_bnd] = d.rho[idx3_zm1];
+    d.phi[idx3_bnd] = d.phi[idx3_zm1];
+    d.ux[idx3_bnd] = d.ux[idx3_zm1];
+    d.uy[idx3_bnd] = d.uy[idx3_zm1];
+    d.uz[idx3_bnd] = d.uz[idx3_zm1];
  
     const float ux = d.ux[idx3_zm1];
     const float uy = d.uy[idx3_zm1];
     const float uz = d.uz[idx3_zm1];
-
     const float uu = 1.5f * (ux*ux + uy*uy + uz*uz);
+
     constexpr_for<0, FLINKS>([&] __device__ (auto I) {
         constexpr idx_t Q = decltype(I)::value;
 
@@ -165,7 +170,7 @@ void periodicX(
     if (y <= 0 || y >= NY-1 || z <= 0 || z >= NZ-1) return;
 
     const idx_t bL = global3(1, y, z);
-    const idx_t bR = global3(NX-2, y, z);
+    const idx_t bR = global3(NX - 2, y, z);
 
     // positive x contributions
     d.f[     PLANE + bL] = d.f[     PLANE + bR];
@@ -195,9 +200,24 @@ void periodicX(
     #endif
     d.g[2  * PLANE + bR] = d.g[2  * PLANE + bL];
 
+    const idx_t gL = global3(0, y, z);
+    const idx_t gR = global3(NX - 1, y, z);
+
     // ghost cells
-    d.phi[global3(0, y, z)]    = d.phi[bR];
-    d.phi[global3(NX-1, y, z)] = d.phi[bL];
+    d.phi[gL] = d.phi[bR];
+    d.phi[gR] = d.phi[bL];
+
+    d.rho[gL] = d.rho[bR];
+    d.rho[gR] = d.rho[bL];
+
+    d.ux[gL] = d.ux[bR];
+    d.ux[gR] = d.ux[bL];
+
+    d.uy[gL] = d.uy[bR];
+    d.uy[gR] = d.uy[bL];
+
+    d.uz[gL] = d.uz[bR];
+    d.uz[gR] = d.uz[bL];
 }
 
 __global__ 
@@ -210,7 +230,7 @@ void periodicY(
     if (x <= 0 || x >= NX-1 || z <= 0 || z >= NZ-1) return;
 
     const idx_t bB = global3(x, 1, z);
-    const idx_t bT = global3(x, NY-2, z);
+    const idx_t bT = global3(x, NY - 2, z);
 
     // positive y contributions
     d.f[3  * PLANE + bB] = d.f[3  * PLANE + bT];
@@ -240,9 +260,24 @@ void periodicY(
     #endif
     d.g[4   * PLANE + bT] = d.g[4   * PLANE + bB];
 
+    const idx_t gB = global3(x, 0, z);
+    const idx_t gT = global3(x, NY - 1, z);
+
     // ghost cells
-    d.phi[global3(x, 0, z)]    = d.phi[bT];
-    d.phi[global3(x, NY-1, z)] = d.phi[bB];
+    d.phi[gB] = d.phi[bT];
+    d.phi[gT] = d.phi[bB];
+
+    d.rho[gB] = d.rho[bT];
+    d.rho[gT] = d.rho[bB];
+
+    d.ux[gB] = d.ux[bT];
+    d.ux[gT] = d.ux[bB];
+
+    d.uy[gB] = d.uy[bT];
+    d.uy[gT] = d.uy[bB];
+
+    d.uz[gB] = d.uz[bT];
+    d.uz[gT] = d.uz[bB];
 }
 
 #elif defined(DROPLET)

@@ -3,8 +3,8 @@
 #include "../helpers/globalStructs.cuh"
 #include "../helpers/velocitySets.cuh"
 
-#define RUN_MODE
-//#define SAMPLE_MODE
+//#define RUN_MODE
+#define SAMPLE_MODE
 //#define DEBUG_MODE
 
 #if defined(RUN_MODE)
@@ -15,7 +15,7 @@
 #elif defined(SAMPLE_MODE)
 
     static inline constexpr int MACRO_SAVE = 100;
-    static inline constexpr int NSTEPS = 1000;
+    static inline constexpr int NSTEPS = 20000;
 
 #elif defined(DEBUG_MODE)
 
@@ -26,12 +26,12 @@
 
 #if defined(JET)
 
-    static inline constexpr idx_t MESH = 128;
+    static inline constexpr idx_t MESH = 64;
     static inline constexpr idx_t NX   = MESH;
     static inline constexpr idx_t NY   = MESH;
     static inline constexpr idx_t NZ   = MESH*2;
 
-    static inline constexpr int DIAM   = 13;
+    static inline constexpr int DIAM   = 10;
     static inline constexpr int RADIUS = DIAM / 2;
 
     static inline constexpr float U_REF    = 0.05f;

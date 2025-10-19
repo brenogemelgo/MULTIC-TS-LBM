@@ -20,15 +20,15 @@ int main(int argc, char* argv[]) {
 
     setDeviceFields();
 
-    constexpr dim3 block(blockSizeX, blockSizeY, blockSizeZ);
-    constexpr dim3 blockX(blockSizeX, blockSizeY, 1u);
-    constexpr dim3 blockY(blockSizeX, blockSizeY, 1u);
-    constexpr dim3 blockZ(blockSizeX, blockSizeY, 1u);
+    const dim3 block(blockSizeX, blockSizeY, blockSizeZ);
+    const dim3 blockX(blockSizeX, blockSizeY, 1u);
+    const dim3 blockY(blockSizeX, blockSizeY, 1u);
+    const dim3 blockZ(blockSizeX, blockSizeY, 1u);
 
-    constexpr dim3 grid(divUp(NX, block.x), divUp(NY, block.y), divUp(NZ, block.z));
-    constexpr dim3 gridX(divUp(NY, blockX.x), divUp(NZ, blockX.y), 1u);
-    constexpr dim3 gridY(divUp(NX, blockY.x), divUp(NZ, blockY.y), 1u);
-    constexpr dim3 gridZ(divUp(NX, blockZ.x), divUp(NY, blockZ.y), 1u);
+    const dim3 grid(divUp(NX, block.x), divUp(NY, block.y), divUp(NZ, block.z));
+    const dim3 gridX(divUp(NY, blockX.x), divUp(NZ, blockX.y), 1u);
+    const dim3 gridY(divUp(NX, blockY.x), divUp(NZ, blockY.y), 1u);
+    const dim3 gridZ(divUp(NX, blockZ.x), divUp(NY, blockZ.y), 1u);
 
     constexpr size_t dynamic = 0;
 
@@ -88,6 +88,8 @@ int main(int argc, char* argv[]) {
                 copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
                 copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
                 #if defined(JET)
+                    copyAndSaveToBinary(fields.ux, PLANE, SIM_DIR, SIM_ID, STEP, "ux");
+                    copyAndSaveToBinary(fields.uy, PLANE, SIM_DIR, SIM_ID, STEP, "uy");
                     copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
                 #endif
                 std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";

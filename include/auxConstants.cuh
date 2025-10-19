@@ -53,6 +53,8 @@ static inline constexpr float CSCO = 1.0f - CSSQ;
 static inline constexpr float OMCO = 1.0f - OMEGA_REF;
 static inline constexpr float OOS  = 1.0f / 6.0f;
 
+static inline constexpr float TWO_PI = 2.0f * CUDART_PI_F;
+
 static inline constexpr float CENTER_X = (NX - 1) * 0.5f;
 static inline constexpr float CENTER_Y = (NY - 1) * 0.5f;
 static inline constexpr float CENTER_Z = (NZ - 1) * 0.5f;
