@@ -4,8 +4,7 @@
 
 __global__ 
 void applyInflow(
-    LBMFields d,
-    const idx_t STEP
+    LBMFields d
 ) {
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -15,67 +14,66 @@ void applyInflow(
     const float dx = static_cast<float>(x) - CENTER_X;
     const float dy = static_cast<float>(y) - CENTER_Y;
     const float r2 = dx * dx + dy * dy;
-    if (r2 > R2) return;
+    //if (r2 > R2) return;
 
     const idx_t idx3_bnd = global3(x, y, 0);
-    //const idx_t idx3_zp1 = global3(x, y, 1);
+    d.rho[idx3_bnd] = d.rho[global3(x, y, 1)];
 
-    //d.rho[idx3_bnd] = d.rho[idx3_zp1];
+    if (r2 <= R2) {
+        const float uz = d.uz[idx3_bnd];
+        const float P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
+        constexpr_for<0, FLINKS>([&] __device__ (auto I) {
+            constexpr idx_t Q = decltype(I)::value;
 
-    const float uz = d.uz[idx3_bnd];
+            if constexpr (FDir<Q>::cz == 1) { 
+                const idx_t xx = x + static_cast<idx_t>(FDir<Q>::cx);
+                const idx_t yy = y + static_cast<idx_t>(FDir<Q>::cy);
 
-    const float P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
-    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
-        constexpr idx_t Q = decltype(I)::value;
+                idx_t fluidNode = global3(xx, yy, 1);
 
-        if constexpr (FDir<Q>::cz == 1) { 
-            const idx_t xx = x + static_cast<idx_t>(FDir<Q>::cx);
-            const idx_t yy = y + static_cast<idx_t>(FDir<Q>::cy);
+                constexpr float w  = FDir<Q>::w;
+                constexpr float cx = static_cast<float>(FDir<Q>::cx);
+                constexpr float cy = static_cast<float>(FDir<Q>::cy);
+                constexpr float cz = static_cast<float>(FDir<Q>::cz);
 
-            idx_t fluidNode = global3(xx, yy, 1);
+                const float feq = w * d.rho[fluidNode] * P - w; 
 
-            constexpr float w  = FDir<Q>::w;
-            constexpr float cx = static_cast<float>(FDir<Q>::cx);
-            constexpr float cy = static_cast<float>(FDir<Q>::cy);
-            constexpr float cz = static_cast<float>(FDir<Q>::cz);
+                #if defined(D3Q19)
+                    const float fneq = (w * 4.5f) *
+                        ((cx * cx - CSSQ) * d.pxx[fluidNode] +
+                        (cy * cy - CSSQ) * d.pyy[fluidNode] +
+                        (cz * cz - CSSQ) * d.pzz[fluidNode] +
+                        2.0f * (cx * cy * d.pxy[fluidNode] + 
+                                cx * cz * d.pxz[fluidNode] + 
+                                cy * cz * d.pyz[fluidNode]));
+                #elif defined(D3Q27)
+                    const float fneq = (w * 4.5f) *
+                        ((cx * cx - CSSQ) * d.pxx[fluidNode] +
+                        (cy * cy - CSSQ) * d.pyy[fluidNode] +
+                        (cz * cz - CSSQ) * d.pzz[fluidNode] +
+                        2.0f * (cx * cy * d.pxy[fluidNode] + 
+                                cx * cz * d.pxz[fluidNode] + 
+                                cy * cz * d.pyz[fluidNode]) +
+                        (cx * cx * cx - 3.0f * CSSQ * cx) * (3.0f * d.ux[fluidNode] * d.pxx[fluidNode]) +
+                        (cy * cy * cy - 3.0f * CSSQ * cy) * (3.0f * d.uy[fluidNode] * d.pyy[fluidNode]) +
+                        (cz * cz * cz - 3.0f * CSSQ * cz) * (3.0f * d.uz[fluidNode] * d.pzz[fluidNode]) +
+                        3.0f * ((cx * cx * cy - CSSQ * cy) * (d.pxx[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxy[fluidNode]) +
+                                (cx * cx * cz - CSSQ * cz) * (d.pxx[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxz[fluidNode]) +
+                                (cx * cy * cy - CSSQ * cx) * (d.pxy[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pyy[fluidNode]) +
+                                (cy * cy * cz - CSSQ * cz) * (d.pyy[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pyz[fluidNode]) +
+                                (cx * cz * cz - CSSQ * cx) * (d.pxz[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pzz[fluidNode]) +
+                                (cy * cz * cz - CSSQ * cy) * (d.pyz[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pzz[fluidNode])) +
+                                6.0f * (cx * cy * cz) * (d.ux[fluidNode] * d.pyz[fluidNode] + 
+                                                        d.uy[fluidNode] * d.pxz[fluidNode] +
+                                                        d.uz[fluidNode] * d.pxy[fluidNode]));
+                #endif
 
-            const float feq = w * d.rho[fluidNode] * P - w; 
+                d.f[Q * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
+            }
+        });
 
-            #if defined(D3Q19)
-                const float fneq = (w * 4.5f) *
-                    ((cx * cx - CSSQ) * d.pxx[fluidNode] +
-                     (cy * cy - CSSQ) * d.pyy[fluidNode] +
-                     (cz * cz - CSSQ) * d.pzz[fluidNode] +
-                      2.0f * (cx * cy * d.pxy[fluidNode] + 
-                              cx * cz * d.pxz[fluidNode] + 
-                              cy * cz * d.pyz[fluidNode]));
-            #elif defined(D3Q27)
-                const float fneq = (w * 4.5f) *
-                    ((cx * cx - CSSQ) * d.pxx[fluidNode] +
-                     (cy * cy - CSSQ) * d.pyy[fluidNode] +
-                     (cz * cz - CSSQ) * d.pzz[fluidNode] +
-                      2.0f * (cx * cy * d.pxy[fluidNode] + 
-                              cx * cz * d.pxz[fluidNode] + 
-                              cy * cz * d.pyz[fluidNode]) +
-                     (cx * cx * cx - 3.0f * CSSQ * cx) * (3.0f * d.ux[fluidNode] * d.pxx[fluidNode]) +
-                     (cy * cy * cy - 3.0f * CSSQ * cy) * (3.0f * d.uy[fluidNode] * d.pyy[fluidNode]) +
-                     (cz * cz * cz - 3.0f * CSSQ * cz) * (3.0f * d.uz[fluidNode] * d.pzz[fluidNode]) +
-                      3.0f * ((cx * cx * cy - CSSQ * cy) * (d.pxx[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxy[fluidNode]) +
-                              (cx * cx * cz - CSSQ * cz) * (d.pxx[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxz[fluidNode]) +
-                              (cx * cy * cy - CSSQ * cx) * (d.pxy[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pyy[fluidNode]) +
-                              (cy * cy * cz - CSSQ * cz) * (d.pyy[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pyz[fluidNode]) +
-                              (cx * cz * cz - CSSQ * cx) * (d.pxz[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pzz[fluidNode]) +
-                              (cy * cz * cz - CSSQ * cy) * (d.pyz[fluidNode] * d.uz[fluidNode] + 2.0f * d.uy[fluidNode] * d.pzz[fluidNode])) +
-                            6.0f * (cx * cy * cz) * (d.ux[fluidNode] * d.pyz[fluidNode] + 
-                                                     d.uy[fluidNode] * d.pxz[fluidNode] +
-                                                     d.uz[fluidNode] * d.pxy[fluidNode]));
-            #endif
-
-            d.f[Q * PLANE + fluidNode] = to_pop(feq + OMCO_ZMIN * fneq);
-        }
-    });
-
-    d.g[5 * PLANE + global3(x, y, 1)] = GDir<5>::wg * d.phi[idx3_bnd] * (1.0f + 4.0f * uz);
+        d.g[5 * PLANE + global3(x, y, 1)] = GDir<5>::wg * d.phi[idx3_bnd] * (1.0f + 4.0f * uz);
+    }
 }
 
 __global__ 

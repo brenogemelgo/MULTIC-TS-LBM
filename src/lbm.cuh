@@ -1,6 +1,6 @@
 #pragma once
 
-__global__ __launch_bounds__(128)
+__global__ __launch_bounds__(blockSizeX * blockSizeY * blockSizeZ)
 void streamCollide(
     LBMFields d
 ) {
@@ -101,35 +101,32 @@ void streamCollide(
         // Q0
         d.g[idx3] = WG_0 * phi;
 
-        const float multPhi = WG_1 * phi;
-        const float phiNorm = GAMMA * multPhi * (1.0f - phi);
-        const float a4 = 4.0f * multPhi;
-
         // -------------------------------- X+ (Q1)
-        float geq = multPhi + a4 * ux;
-        float hi = phiNorm * d.normx[idx3];
-        d.g[global4(x+1,y,z,1)] = geq + hi;
+        float geq = WG_1 * phi * (1.0f + 4.0f * ux);
+        float hi = WG_1 * GAMMA * phi * (1.0f - phi) * d.normx[idx3];
+        d.g[global4(x + 1, y, z, 1)] = geq + hi;
 
         // -------------------------------- X- (Q2)
-        geq = multPhi - a4 * ux;
-        d.g[global4(x-1,y,z,2)] = geq - hi;
+        geq = WG_1 * phi * (1.0f - 4.0f * ux);
+        d.g[global4(x - 1, y, z, 2)] = geq - hi;
 
         // -------------------------------- Y+ (Q3)
-        geq = multPhi + a4 * uy;
-        hi = phiNorm * d.normy[idx3];
-        d.g[global4(x,y+1,z,3)] = geq + hi;
+        geq = WG_1 * phi * (1.0f + 4.0f * uy);
+        hi = WG_1 * GAMMA * phi * (1.0f - phi) * d.normy[idx3];
+        d.g[global4(x, y + 1, z, 3)] = geq + hi;
 
         // -------------------------------- Y- (Q4)
-        geq = multPhi - a4 * uy;
-        d.g[global4(x,y-1,z,4)] = geq - hi;
+        geq = WG_1 * phi * (1.0f - 4.0f * uy);
+        d.g[global4(x, y - 1, z, 4)] = geq - hi;
 
         // -------------------------------- Z+ (Q5)
-        geq = multPhi + a4 * uz;
-        hi = phiNorm * d.normz[idx3];
-        d.g[global4(x,y,z+1,5)] = geq + hi;
+        geq = WG_1 * phi * (1.0f + 4.0f * uz);
+        hi = WG_1 * GAMMA * phi * (1.0f - phi) * d.normz[idx3];
+        d.g[global4(x, y, z + 1, 5)] = geq + hi;
 
         // -------------------------------- Z- (Q6)
-        geq = multPhi - a4 * uz;
-        d.g[global4(x,y,z-1,6)] = geq - hi;
+        geq = WG_1 * phi * (1.0f - 4.0f * uz);
+        d.g[global4(x, y, z - 1, 6)] = geq - hi;
     } // ============================================= END ============================================= //
 }
+

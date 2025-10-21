@@ -19,10 +19,10 @@ constexpr_for<0, FLINKS>([&] __device__ (auto I) {
     #endif
 
     #if defined(D3Q19)
-        const float force = 1.5f * invRho * feq * 
+        const float force = 0.5f * feq * 
             ((cx - ux) * ffx + 
              (cy - uy) * ffy + 
-             (cz - uz) * ffz);
+             (cz - uz) * ffz) * 3.0f * invRho;
     #elif defined(D3Q27)
         const float force = 0.5f * w * 
             ((3.0f * (cx - ux) + 3.0f * cu * cx) * ffx +

@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
     if (setDeviceFromEnv() < 0) return 1;
-    //#define BENCHMARK
+    #define BENCHMARK
 
     setDeviceFields();
 
@@ -49,6 +49,7 @@ int main(int argc, char* argv[]) {
 
     // ===================================================================== //
 
+    checkCudaErrors(cudaDeviceSynchronize());
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (idx_t STEP = 0; STEP <= NSTEPS; ++STEP) {
         #if !defined(BENCHMARK)
@@ -67,14 +68,12 @@ int main(int argc, char* argv[]) {
         // ============================== BOUNDARY CONDITIONS ============================== //
 
             #if defined(JET)
-            applyInflow <<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
-            applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-            periodicX   <<<gridX, blockX, dynamic, queue>>>(fields);
-            periodicY   <<<gridY, blockY, dynamic, queue>>>(fields);
+                applyInflow <<<gridZ, blockZ, dynamic, queue>>>(fields);
+                applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+                periodicX   <<<gridX, blockX, dynamic, queue>>>(fields);
+                periodicY   <<<gridY, blockY, dynamic, queue>>>(fields);
             #elif defined(DROPLET)
-            // periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
-            // periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
-            // periodicZ<<<gridZ, blockZ, dynamic, queue>>>(fields);
+                // undefined
             #endif
 
         // ================================================================================= //
@@ -88,8 +87,6 @@ int main(int argc, char* argv[]) {
                 copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
                 copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
                 #if defined(JET)
-                    copyAndSaveToBinary(fields.ux, PLANE, SIM_DIR, SIM_ID, STEP, "ux");
-                    copyAndSaveToBinary(fields.uy, PLANE, SIM_DIR, SIM_ID, STEP, "uy");
                     copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
                 #endif
                 std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";

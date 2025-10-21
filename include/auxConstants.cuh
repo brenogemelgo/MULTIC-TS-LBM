@@ -42,7 +42,7 @@ static inline constexpr float R2 = RADIUS * RADIUS;
 
     #endif
 
-#else 
+#elif defined(DROPLET)
 
     static inline constexpr float OMEGA_REF = 1.0f / (0.5f + 3.0f * VISC_REF);
 

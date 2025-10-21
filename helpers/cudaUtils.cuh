@@ -16,9 +16,19 @@
 #include <cstdlib>
 #include <filesystem>
 
-static inline constexpr unsigned blockSizeX = 32u;
-static inline constexpr unsigned blockSizeY = 2u;
-static inline constexpr unsigned blockSizeZ = 2u;
+#if defined(JET)
+
+    static inline constexpr unsigned blockSizeX = 32u;
+    static inline constexpr unsigned blockSizeY = 2u;
+    static inline constexpr unsigned blockSizeZ = 2u;
+
+#elif defined(DROPLET)
+
+    static inline constexpr unsigned blockSizeX = 8u;
+    static inline constexpr unsigned blockSizeY = 8u;
+    static inline constexpr unsigned blockSizeZ = 8u;
+
+#endif
 
 static inline constexpr int haloPad = 1;
 static inline constexpr int tileX = static_cast<int>(blockSizeX) + 2 * haloPad;

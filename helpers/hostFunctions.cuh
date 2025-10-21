@@ -136,9 +136,9 @@ void setDeviceFields(
     static_assert(G_DIST_SIZE / sizeof(float) == NCELLS * size_t(GLINKS), "G_DIST_SIZE overflow");
 
     checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ux, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.uy, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.uz, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ux,  SIZE));
+    checkCudaErrors(cudaMalloc(&fields.uy,  SIZE));
+    checkCudaErrors(cudaMalloc(&fields.uz,  SIZE));
     checkCudaErrors(cudaMalloc(&fields.pxx, SIZE));
     checkCudaErrors(cudaMalloc(&fields.pyy, SIZE));
     checkCudaErrors(cudaMalloc(&fields.pzz, SIZE));
@@ -146,14 +146,14 @@ void setDeviceFields(
     checkCudaErrors(cudaMalloc(&fields.pxz, SIZE));
     checkCudaErrors(cudaMalloc(&fields.pyz, SIZE));
 
-    checkCudaErrors(cudaMalloc(&fields.phi, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.phi,   SIZE));
     checkCudaErrors(cudaMalloc(&fields.normx, SIZE));
     checkCudaErrors(cudaMalloc(&fields.normy, SIZE));
     checkCudaErrors(cudaMalloc(&fields.normz, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ind, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ffx, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ffy, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ffz, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ind,   SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ffx,   SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ffy,   SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ffz,   SIZE));
 
     checkCudaErrors(cudaMalloc(&fields.f, F_DIST_SIZE));
     checkCudaErrors(cudaMalloc(&fields.g, G_DIST_SIZE));
