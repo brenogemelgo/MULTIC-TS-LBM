@@ -7,7 +7,7 @@ idx_t global3(
     const idx_t y,
     const idx_t z
 ) noexcept {
-    return x + y * NX + z * STRIDE;
+    return x + y * mesh::nx + z * STRIDE;
 }
 
 [[nodiscard]] __device__ __forceinline__ 
@@ -18,6 +18,18 @@ idx_t global4(
     const idx_t Q
 ) noexcept {
     return Q * PLANE + global3(x, y, z);
+}
+
+[[nodiscard]] __device__ __forceinline__  
+idx_t globalThreadIdx(
+    const idx_t tx, 
+    const idx_t ty, 
+    const idx_t tz,
+    const idx_t bx, 
+    const idx_t by, 
+    const idx_t bz
+) noexcept {
+    return (tx + block::nx * (ty + block::ny * (tz + block::nz * (bx + NUM_BLOCK_X * (by + NUM_BLOCK_Y * bz)))));
 }
 
 [[nodiscard]] __device__ __forceinline__ 

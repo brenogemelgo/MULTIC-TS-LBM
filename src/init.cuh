@@ -8,7 +8,7 @@ void setFields(
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= NX || y >= NY || z >= NZ) return;
+    if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz) return;
 
     const idx_t idx3 = global3(x, y, z);
 
@@ -39,7 +39,7 @@ __global__ void setJet(
     const idx_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
 
-    if (x >= NX || y >= NY) return;
+    if (x >= mesh::nx || y >= mesh::ny) return;
 
     const float dx = static_cast<float>(x) - CENTER_X;
     const float dy = static_cast<float>(y) - CENTER_Y;
@@ -49,7 +49,7 @@ __global__ void setJet(
     const idx_t idx3_in = global3(x, y, 0);
 
     d.phi[idx3_in] = 1.0f;
-    d.uz[idx3_in] = U_REF;
+    d.uz[idx3_in] = physics::u_ref;
 }
 
 #elif defined(DROPLET)
@@ -62,10 +62,10 @@ setDroplet(
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= NX || y >= NY || z >= NZ ||
-        x == 0 || x == NX - 1 ||
-        y == 0 || y == NY - 1 ||
-        z == 0 || z == NZ - 1) return;
+    if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
+        x == 0 || x == mesh::nx - 1 ||
+        y == 0 || y == mesh::ny - 1 ||
+        z == 0 || z == mesh::nz - 1) return;
 
     const idx_t idx3 = global3(x, y, z);
 
@@ -74,7 +74,7 @@ setDroplet(
     const float dz = static_cast<float>(z) - CENTER_Z;
     const float radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
 
-    const float phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<float>(RADIUS) - radialDist) / 3.0f);
+    const float phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<float>(mesh::radius) - radialDist) / 3.0f);
     d.phi[idx3] = phi;
 }
 
@@ -88,7 +88,7 @@ void setDistros(
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= NX || y >= NY || z >= NZ)  return;
+    if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)  return;
 
     const idx_t idx3 = global3(x, y, z);
 
@@ -100,17 +100,21 @@ void setDistros(
     constexpr_for<0, FLINKS>([&] __device__ (auto I) {
         constexpr idx_t Q = decltype(I)::value;
 
-        constexpr float w  = FDir<Q>::w;
-        constexpr float cx = static_cast<float>(FDir<Q>::cx); 
-        constexpr float cy = static_cast<float>(FDir<Q>::cy); 
-        constexpr float cz = static_cast<float>(FDir<Q>::cz); 
+        constexpr float w  = VelocitySet::F<Q>::w;
+        constexpr float cx = static_cast<float>(VelocitySet::F<Q>::cx); 
+        constexpr float cy = static_cast<float>(VelocitySet::F<Q>::cy); 
+        constexpr float cz = static_cast<float>(VelocitySet::F<Q>::cz); 
 
-        const float cu = 3.0f * (ux*cx + uy*cy + uz*cz);
+        const float cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
         #if defined(D3Q19)
-            const float feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f*cu*cu) - w;
+
+            const float feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu) - w;
+
         #elif defined(D3Q27)
-            const float feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f*cu*cu + OOS*cu*cu*cu - uu*cu) - w;
+
+            const float feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu + OOS * cu * cu * cu - uu * cu) - w;
+            
         #endif
 
         d.f[global4(x, y, z, Q)] = to_pop(feq);
@@ -119,16 +123,16 @@ void setDistros(
     constexpr_for<0, GLINKS>([&] __device__ (auto I) {
         constexpr idx_t Q = decltype(I)::value;
 
-        const idx_t xx = x + static_cast<idx_t>(GDir<Q>::cx);
-        const idx_t yy = y + static_cast<idx_t>(GDir<Q>::cy);
-        const idx_t zz = z + static_cast<idx_t>(GDir<Q>::cz);
+        const idx_t xx = x + static_cast<idx_t>(VelocitySet::G<Q>::cx);
+        const idx_t yy = y + static_cast<idx_t>(VelocitySet::G<Q>::cy);
+        const idx_t zz = z + static_cast<idx_t>(VelocitySet::G<Q>::cz);
 
-        constexpr float wg = GDir<Q>::wg;
-        constexpr float cx = static_cast<float>(GDir<Q>::cx); 
-        constexpr float cy = static_cast<float>(GDir<Q>::cy); 
-        constexpr float cz = static_cast<float>(GDir<Q>::cz); 
+        constexpr float wg = VelocitySet::G<Q>::wg;
+        constexpr float cx = static_cast<float>(VelocitySet::G<Q>::cx); 
+        constexpr float cy = static_cast<float>(VelocitySet::G<Q>::cy); 
+        constexpr float cz = static_cast<float>(VelocitySet::G<Q>::cz); 
 
-        const float cu = 4.0f * (ux*cx + uy*cy + uz*cz);
+        const float cu = 4.0f * (cx * ux + cy * uy + cz * uz);
 
         d.g[global4(xx, yy, zz, Q)] = wg * d.phi[idx3] * (1.0f + cu);
     });

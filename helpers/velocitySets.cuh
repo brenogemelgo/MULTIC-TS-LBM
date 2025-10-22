@@ -35,49 +35,57 @@ __constant__ float W_G[7] = { 1.0f / 4.0f,
                               1.0f / 8.0f, 1.0f / 8.0f, 
                               1.0f / 8.0f, 1.0f / 8.0f, 
                               1.0f / 8.0f, 1.0f / 8.0f };
-constexpr float WG_0 = 1.0f / 4.0f; // 0
-constexpr float WG_1 = 1.0f / 8.0f; // 1 to 6
-constexpr idx_t GLINKS = 7;   
+static constexpr float WG_0 = 1.0f / 4.0f; // 0
+static constexpr float WG_1 = 1.0f / 8.0f; // 1 to 6
+static constexpr idx_t GLINKS = 7;   
 
+namespace VelocitySet {
 
-template<idx_t Q> struct FDir;
+    template<idx_t Q> 
+    struct F;
 
-template<> struct FDir<0>  { static constexpr int cx= 0, cy= 0, cz= 0; static constexpr float w=W_0; };
-template<> struct FDir<1>  { static constexpr int cx= 1, cy= 0, cz= 0; static constexpr float w=W_1; };
-template<> struct FDir<2>  { static constexpr int cx=-1, cy= 0, cz= 0; static constexpr float w=W_1; };
-template<> struct FDir<3>  { static constexpr int cx= 0, cy= 1, cz= 0; static constexpr float w=W_1; };
-template<> struct FDir<4>  { static constexpr int cx= 0, cy=-1, cz= 0; static constexpr float w=W_1; };
-template<> struct FDir<5>  { static constexpr int cx= 0, cy= 0, cz= 1; static constexpr float w=W_1; };
-template<> struct FDir<6>  { static constexpr int cx= 0, cy= 0, cz=-1; static constexpr float w=W_1; };
-template<> struct FDir<7>  { static constexpr int cx= 1, cy= 1, cz= 0; static constexpr float w=W_2; };
-template<> struct FDir<8>  { static constexpr int cx=-1, cy=-1, cz= 0; static constexpr float w=W_2; };
-template<> struct FDir<9>  { static constexpr int cx= 1, cy= 0, cz= 1; static constexpr float w=W_2; };
-template<> struct FDir<10> { static constexpr int cx=-1, cy= 0, cz=-1; static constexpr float w=W_2; };
-template<> struct FDir<11> { static constexpr int cx= 0, cy= 1, cz= 1; static constexpr float w=W_2; };
-template<> struct FDir<12> { static constexpr int cx= 0, cy=-1, cz=-1; static constexpr float w=W_2; };
-template<> struct FDir<13> { static constexpr int cx= 1, cy=-1, cz= 0; static constexpr float w=W_2; };
-template<> struct FDir<14> { static constexpr int cx=-1, cy= 1, cz= 0; static constexpr float w=W_2; };
-template<> struct FDir<15> { static constexpr int cx= 1, cy= 0, cz=-1; static constexpr float w=W_2; };
-template<> struct FDir<16> { static constexpr int cx=-1, cy= 0, cz= 1; static constexpr float w=W_2; };
-template<> struct FDir<17> { static constexpr int cx= 0, cy= 1, cz=-1; static constexpr float w=W_2; };
-template<> struct FDir<18> { static constexpr int cx= 0, cy=-1, cz= 1; static constexpr float w=W_2; };
-#if defined(D3Q27)
-template<> struct FDir<19> { static constexpr int cx= 1, cy= 1, cz= 1; static constexpr float w=W_3; };
-template<> struct FDir<20> { static constexpr int cx=-1, cy=-1, cz=-1; static constexpr float w=W_3; };
-template<> struct FDir<21> { static constexpr int cx= 1, cy= 1, cz=-1; static constexpr float w=W_3; };
-template<> struct FDir<22> { static constexpr int cx=-1, cy=-1, cz= 1; static constexpr float w=W_3; };
-template<> struct FDir<23> { static constexpr int cx= 1, cy=-1, cz= 1; static constexpr float w=W_3; };
-template<> struct FDir<24> { static constexpr int cx=-1, cy= 1, cz=-1; static constexpr float w=W_3; };
-template<> struct FDir<25> { static constexpr int cx=-1, cy= 1, cz= 1; static constexpr float w=W_3; };
-template<> struct FDir<26> { static constexpr int cx= 1, cy=-1, cz=-1; static constexpr float w=W_3; };
-#endif
+    template<> struct F<0>  { static constexpr int cx= 0, cy= 0, cz= 0; static constexpr float w=W_0; };
+    template<> struct F<1>  { static constexpr int cx= 1, cy= 0, cz= 0; static constexpr float w=W_1; };
+    template<> struct F<2>  { static constexpr int cx=-1, cy= 0, cz= 0; static constexpr float w=W_1; };
+    template<> struct F<3>  { static constexpr int cx= 0, cy= 1, cz= 0; static constexpr float w=W_1; };
+    template<> struct F<4>  { static constexpr int cx= 0, cy=-1, cz= 0; static constexpr float w=W_1; };
+    template<> struct F<5>  { static constexpr int cx= 0, cy= 0, cz= 1; static constexpr float w=W_1; };
+    template<> struct F<6>  { static constexpr int cx= 0, cy= 0, cz=-1; static constexpr float w=W_1; };
+    template<> struct F<7>  { static constexpr int cx= 1, cy= 1, cz= 0; static constexpr float w=W_2; };
+    template<> struct F<8>  { static constexpr int cx=-1, cy=-1, cz= 0; static constexpr float w=W_2; };
+    template<> struct F<9>  { static constexpr int cx= 1, cy= 0, cz= 1; static constexpr float w=W_2; };
+    template<> struct F<10> { static constexpr int cx=-1, cy= 0, cz=-1; static constexpr float w=W_2; };
+    template<> struct F<11> { static constexpr int cx= 0, cy= 1, cz= 1; static constexpr float w=W_2; };
+    template<> struct F<12> { static constexpr int cx= 0, cy=-1, cz=-1; static constexpr float w=W_2; };
+    template<> struct F<13> { static constexpr int cx= 1, cy=-1, cz= 0; static constexpr float w=W_2; };
+    template<> struct F<14> { static constexpr int cx=-1, cy= 1, cz= 0; static constexpr float w=W_2; };
+    template<> struct F<15> { static constexpr int cx= 1, cy= 0, cz=-1; static constexpr float w=W_2; };
+    template<> struct F<16> { static constexpr int cx=-1, cy= 0, cz= 1; static constexpr float w=W_2; };
+    template<> struct F<17> { static constexpr int cx= 0, cy= 1, cz=-1; static constexpr float w=W_2; };
+    template<> struct F<18> { static constexpr int cx= 0, cy=-1, cz= 1; static constexpr float w=W_2; };
 
-template<idx_t Q> struct GDir;
+    #if defined(D3Q27)
 
-template<> struct GDir<0> { static constexpr int cx= 0, cy= 0, cz= 0; static constexpr float wg=WG_0; };
-template<> struct GDir<1> { static constexpr int cx= 1, cy= 0, cz= 0; static constexpr float wg=WG_1; };
-template<> struct GDir<2> { static constexpr int cx=-1, cy= 0, cz= 0; static constexpr float wg=WG_1; };
-template<> struct GDir<3> { static constexpr int cx= 0, cy= 1, cz= 0; static constexpr float wg=WG_1; };
-template<> struct GDir<4> { static constexpr int cx= 0, cy=-1, cz= 0; static constexpr float wg=WG_1; };
-template<> struct GDir<5> { static constexpr int cx= 0, cy= 0, cz= 1; static constexpr float wg=WG_1; };
-template<> struct GDir<6> { static constexpr int cx= 0, cy= 0, cz=-1; static constexpr float wg=WG_1; };
+        template<> struct F<19> { static constexpr int cx= 1, cy= 1, cz= 1; static constexpr float w=W_3; };
+        template<> struct F<20> { static constexpr int cx=-1, cy=-1, cz=-1; static constexpr float w=W_3; };
+        template<> struct F<21> { static constexpr int cx= 1, cy= 1, cz=-1; static constexpr float w=W_3; };
+        template<> struct F<22> { static constexpr int cx=-1, cy=-1, cz= 1; static constexpr float w=W_3; };
+        template<> struct F<23> { static constexpr int cx= 1, cy=-1, cz= 1; static constexpr float w=W_3; };
+        template<> struct F<24> { static constexpr int cx=-1, cy= 1, cz=-1; static constexpr float w=W_3; };
+        template<> struct F<25> { static constexpr int cx=-1, cy= 1, cz= 1; static constexpr float w=W_3; };
+        template<> struct F<26> { static constexpr int cx= 1, cy=-1, cz=-1; static constexpr float w=W_3; };
+
+    #endif
+
+    template<idx_t Q> 
+    struct G;
+
+    template<> struct G<0> { static constexpr int cx= 0, cy= 0, cz= 0; static constexpr float wg=WG_0; };
+    template<> struct G<1> { static constexpr int cx= 1, cy= 0, cz= 0; static constexpr float wg=WG_1; };
+    template<> struct G<2> { static constexpr int cx=-1, cy= 0, cz= 0; static constexpr float wg=WG_1; };
+    template<> struct G<3> { static constexpr int cx= 0, cy= 1, cz= 0; static constexpr float wg=WG_1; };
+    template<> struct G<4> { static constexpr int cx= 0, cy=-1, cz= 0; static constexpr float wg=WG_1; };
+    template<> struct G<5> { static constexpr int cx= 0, cy= 0, cz= 1; static constexpr float wg=WG_1; };
+    template<> struct G<6> { static constexpr int cx= 0, cy= 0, cz=-1; static constexpr float wg=WG_1; };
+
+}

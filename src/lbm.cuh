@@ -1,6 +1,6 @@
 #pragma once
 
-__global__ __launch_bounds__(blockSizeX * blockSizeY * blockSizeZ)
+__global__ __launch_bounds__(block::nx * block::ny * block::nz)
 void streamCollide(
     LBMFields d
 ) {
@@ -8,10 +8,10 @@ void streamCollide(
     const idx_t y = threadIdx.y + blockIdx.y * blockDim.y;
     const idx_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-    if (x >= NX || y >= NY || z >= NZ ||
-        x == 0 || x == NX - 1 ||
-        y == 0 || y == NY - 1 ||
-        z == 0 || z == NZ - 1) return;
+    if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
+        x == 0 || x == mesh::nx - 1 ||
+        y == 0 || y == mesh::ny - 1 ||
+        z == 0 || z == mesh::nz - 1) return;
 
     const idx_t idx3 = global3(x, y, z);
 
@@ -35,20 +35,26 @@ void streamCollide(
     pop[16] = from_pop(d.f[16 * PLANE + idx3]);
     pop[17] = from_pop(d.f[17 * PLANE + idx3]);
     pop[18] = from_pop(d.f[18 * PLANE + idx3]);
+
     #if defined(D3Q27)
-    pop[19] = from_pop(d.f[19 * PLANE + idx3]);
-    pop[20] = from_pop(d.f[20 * PLANE + idx3]);
-    pop[21] = from_pop(d.f[21 * PLANE + idx3]);
-    pop[22] = from_pop(d.f[22 * PLANE + idx3]);
-    pop[23] = from_pop(d.f[23 * PLANE + idx3]);
-    pop[24] = from_pop(d.f[24 * PLANE + idx3]);
-    pop[25] = from_pop(d.f[25 * PLANE + idx3]);
-    pop[26] = from_pop(d.f[26 * PLANE + idx3]);
+
+        pop[19] = from_pop(d.f[19 * PLANE + idx3]);
+        pop[20] = from_pop(d.f[20 * PLANE + idx3]);
+        pop[21] = from_pop(d.f[21 * PLANE + idx3]);
+        pop[22] = from_pop(d.f[22 * PLANE + idx3]);
+        pop[23] = from_pop(d.f[23 * PLANE + idx3]);
+        pop[24] = from_pop(d.f[24 * PLANE + idx3]);
+        pop[25] = from_pop(d.f[25 * PLANE + idx3]);
+        pop[26] = from_pop(d.f[26 * PLANE + idx3]);
+
     #endif
 
     float rho = pop[0] + pop[1] + pop[2] + pop[3] + pop[4] + pop[5] + pop[6] + pop[7] + pop[8] + pop[9] + pop[10] + pop[11] + pop[12] + pop[13] + pop[14] + pop[15] + pop[16] + pop[17] + pop[18];
+
     #if defined(D3Q27)
-    rho += pop[19] + pop[20] + pop[21] + pop[22] + pop[23] + pop[24] + pop[25] + pop[26];
+
+        rho += pop[19] + pop[20] + pop[21] + pop[22] + pop[23] + pop[24] + pop[25] + pop[26];
+
     #endif
 
     rho += 1.0f;
@@ -61,13 +67,17 @@ void streamCollide(
     const float invRho = 1.0f / rho;
 
     #if defined(D3Q19)
+
         float ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
         float uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
         float uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
+
     #elif defined(D3Q27)
+
         float ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
         float uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
         float uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
+        
     #endif
 
     ux += ffx * 0.5f * invRho;
@@ -90,7 +100,6 @@ void streamCollide(
     d.pxz[idx3] = pxz;
     d.pyz[idx3] = pyz;
 
-    float omcoLocal;
     #include "../include/relaxationFrequency.cuh"
 
     #include "../include/CTstreamCollide.cuh"
@@ -103,7 +112,7 @@ void streamCollide(
 
         // -------------------------------- X+ (Q1)
         float geq = WG_1 * phi * (1.0f + 4.0f * ux);
-        float hi = WG_1 * GAMMA * phi * (1.0f - phi) * d.normx[idx3];
+        float hi = WG_1 * physics::gamma * phi * (1.0f - phi) * d.normx[idx3];
         d.g[global4(x + 1, y, z, 1)] = geq + hi;
 
         // -------------------------------- X- (Q2)
@@ -112,7 +121,7 @@ void streamCollide(
 
         // -------------------------------- Y+ (Q3)
         geq = WG_1 * phi * (1.0f + 4.0f * uy);
-        hi = WG_1 * GAMMA * phi * (1.0f - phi) * d.normy[idx3];
+        hi = WG_1 * physics::gamma * phi * (1.0f - phi) * d.normy[idx3];
         d.g[global4(x, y + 1, z, 3)] = geq + hi;
 
         // -------------------------------- Y- (Q4)
@@ -121,7 +130,7 @@ void streamCollide(
 
         // -------------------------------- Z+ (Q5)
         geq = WG_1 * phi * (1.0f + 4.0f * uz);
-        hi = WG_1 * GAMMA * phi * (1.0f - phi) * d.normz[idx3];
+        hi = WG_1 * physics::gamma * phi * (1.0f - phi) * d.normz[idx3];
         d.g[global4(x, y, z + 1, 5)] = geq + hi;
 
         // -------------------------------- Z- (Q6)

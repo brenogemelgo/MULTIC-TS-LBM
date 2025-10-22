@@ -16,19 +16,23 @@ int main(int argc, char* argv[]) {
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
     if (setDeviceFromEnv() < 0) return 1;
-    #define BENCHMARK
+    //#define BENCHMARK
 
     setDeviceFields();
 
-    const dim3 block(blockSizeX, blockSizeY, blockSizeZ);
-    const dim3 blockX(blockSizeX, blockSizeY, 1u);
-    const dim3 blockY(blockSizeX, blockSizeY, 1u);
-    const dim3 blockZ(blockSizeX, blockSizeY, 1u);
+    const dim3 block3D(block::nx, block::ny, block::nz);
 
-    const dim3 grid(divUp(NX, block.x), divUp(NY, block.y), divUp(NZ, block.z));
-    const dim3 gridX(divUp(NY, blockX.x), divUp(NZ, blockX.y), 1u);
-    const dim3 gridY(divUp(NX, blockY.x), divUp(NZ, blockY.y), 1u);
-    const dim3 gridZ(divUp(NX, blockZ.x), divUp(NY, blockZ.y), 1u);
+    const dim3 grid3D(divUp(mesh::nx, block3D.x), 
+                      divUp(mesh::ny, block3D.y), 
+                      divUp(mesh::nz, block3D.z));
+
+    const dim3 blockX(block::nx, block::ny, 1u);
+    const dim3 blockY(block::nx, block::ny, 1u);
+    const dim3 blockZ(block::nx, block::ny, 1u);
+    
+    const dim3 gridX(divUp(mesh::ny, blockX.x), divUp(mesh::nz, blockX.y), 1u);
+    const dim3 gridY(divUp(mesh::nx, blockY.x), divUp(mesh::nz, blockY.y), 1u);
+    const dim3 gridZ(divUp(mesh::nx, blockZ.x), divUp(mesh::ny, blockZ.y), 1u);
 
     constexpr size_t dynamic = 0;
 
@@ -37,43 +41,54 @@ int main(int argc, char* argv[]) {
 
     // =========================== INITIALIZATION =========================== //
 
-        setFields<<<grid, block, dynamic, queue>>>(fields);
+        setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         #if defined(JET)
-            setJet<<<grid, block, dynamic, queue>>>(fields);
+
+            setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+
         #elif defined(DROPLET)
-            setDroplet<<<grid, block, dynamic, queue>>>(fields);
+
+            setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
+
         #endif
 
-        setDistros<<<grid, block, dynamic, queue>>>(fields);
+        setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // ===================================================================== //
 
     checkCudaErrors(cudaDeviceSynchronize());
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (idx_t STEP = 0; STEP <= NSTEPS; ++STEP) {
+
         #if !defined(BENCHMARK)
+
             // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
+
         #endif
 
         // ======================== LATTICE BOLTZMANN RELATED ======================== //
 
-            computePhase  <<<grid, block, dynamic, queue>>>(fields);
-            computeNormals<<<grid, block, dynamic, queue>>>(fields);
-            computeForces <<<grid, block, dynamic, queue>>>(fields);
-            streamCollide <<<grid, block, dynamic, queue>>>(fields);
+            computePhase  <<<grid3D, block3D, dynamic, queue>>>(fields);
+            computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
+            computeForces <<<grid3D, block3D, dynamic, queue>>>(fields);
+            streamCollide <<<grid3D, block3D, dynamic, queue>>>(fields);
             
         // ========================================================================== //
 
         // ============================== BOUNDARY CONDITIONS ============================== //
 
             #if defined(JET)
+
                 applyInflow <<<gridZ, blockZ, dynamic, queue>>>(fields);
                 applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
                 periodicX   <<<gridX, blockX, dynamic, queue>>>(fields);
                 periodicY   <<<gridY, blockY, dynamic, queue>>>(fields);
+
             #elif defined(DROPLET)
+
                 // undefined
+
             #endif
 
         // ================================================================================= //
@@ -86,9 +101,13 @@ int main(int argc, char* argv[]) {
 
                 copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
                 copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
+
                 #if defined(JET)
+
                     copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
+
                 #endif
+                
                 std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
 
             }
@@ -121,7 +140,7 @@ int main(int argc, char* argv[]) {
     cudaFree(fields.ffz);
 
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
-    const uint64_t TOTAL_CELLS = static_cast<uint64_t>(NX) * NY * NZ * static_cast<uint64_t>(NSTEPS ? NSTEPS : 1);
+    const uint64_t TOTAL_CELLS = static_cast<uint64_t>(mesh::nx) * mesh::ny * mesh::nz * static_cast<uint64_t>(NSTEPS ? NSTEPS : 1);
     const double MLUPS = static_cast<double>(TOTAL_CELLS) / (ELAPSED_TIME.count() * 1e6);
 
     std::cout << "\n// =============================================== //\n";

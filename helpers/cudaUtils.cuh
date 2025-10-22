@@ -16,24 +16,28 @@
 #include <cstdlib>
 #include <filesystem>
 
-#if defined(JET)
+struct block {
 
-    static inline constexpr unsigned blockSizeX = 32u;
-    static inline constexpr unsigned blockSizeY = 2u;
-    static inline constexpr unsigned blockSizeZ = 2u;
+    #if defined(JET)
 
-#elif defined(DROPLET)
+        static constexpr unsigned nx = 32u;
+        static constexpr unsigned ny = 2u;
+        static constexpr unsigned nz = 2u;
 
-    static inline constexpr unsigned blockSizeX = 8u;
-    static inline constexpr unsigned blockSizeY = 8u;
-    static inline constexpr unsigned blockSizeZ = 8u;
+    #elif defined(DROPLET)
 
-#endif
+        static constexpr unsigned nx = 8u;
+        static constexpr unsigned ny = 8u;
+        static constexpr unsigned nz = 8u;
 
-static inline constexpr int haloPad = 1;
-static inline constexpr int tileX = static_cast<int>(blockSizeX) + 2 * haloPad;
-static inline constexpr int tileY = static_cast<int>(blockSizeY) + 2 * haloPad;
-static inline constexpr int tileZ = static_cast<int>(blockSizeZ) + 2 * haloPad;
+    #endif
+
+    static constexpr int pad = 1;
+    static constexpr int tile_nx = static_cast<int>(nx) + 2 * pad;
+    static constexpr int tile_ny = static_cast<int>(ny) + 2 * pad;
+    static constexpr int tile_nz = static_cast<int>(nz) + 2 * pad;
+
+};
 
 #if defined(ENABLE_FP16)
 

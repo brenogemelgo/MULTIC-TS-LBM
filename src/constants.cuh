@@ -1,59 +1,76 @@
 #pragma once
 #include "../helpers/cudaUtils.cuh"
-#include "../helpers/globalStructs.cuh"
+#include "../helpers/commonStructs.cuh"
 #include "../helpers/velocitySets.cuh"
 
 //#define RUN_MODE
-#define SAMPLE_MODE
-//#define DEBUG_MODE
+//#define SAMPLE_MODE
+#define DEBUG_MODE
 
 #if defined(RUN_MODE)
 
-    static inline constexpr int MACRO_SAVE = 1000;
-    static inline constexpr int NSTEPS = 100000;
+    static constexpr int MACRO_SAVE = 1000;
+    static constexpr int NSTEPS = 100000;
 
 #elif defined(SAMPLE_MODE)
 
-    static inline constexpr int MACRO_SAVE = 100;
-    static inline constexpr int NSTEPS = 1000;
+    static constexpr int MACRO_SAVE = 100;
+    static constexpr int NSTEPS = 1000;
 
 #elif defined(DEBUG_MODE)
 
-    static inline constexpr int MACRO_SAVE = 1;
-    static inline constexpr int NSTEPS = 0;
+    static constexpr int MACRO_SAVE = 1;
+    static constexpr int NSTEPS = 0;
 
 #endif
 
 #if defined(JET)
 
-    static inline constexpr idx_t MESH = 128;
-    static inline constexpr idx_t NX   = MESH;
-    static inline constexpr idx_t NY   = MESH;
-    static inline constexpr idx_t NZ   = MESH * 2;
+    struct mesh {
 
-    static inline constexpr int DIAM   = 13;
-    static inline constexpr int RADIUS = DIAM / 2;
+        static constexpr idx_t res    = 128;
+        static constexpr idx_t nx     = res;
+        static constexpr idx_t ny     = res;
+        static constexpr idx_t nz     = res * 2;
+        static constexpr int   diam   = 13;
+        static constexpr int   radius = diam / 2;
 
-    static inline constexpr float U_REF    = 0.05f;
-    static inline constexpr int   REYNOLDS = 5000;
-    static inline constexpr int   WEBER    = 500;
+    };
 
-    static inline constexpr float GAMMA = 1.0f;
+    struct physics {
+
+        static constexpr float u_ref    = 0.05f;
+        static constexpr int   reynolds = 5000;
+        static constexpr int   weber    = 500;
+        static constexpr float sigma    = (u_ref * u_ref * mesh::diam) / weber;
+        static constexpr float gamma    = 1.0f;
+
+    };
 
 #elif defined(DROPLET)
 
-    static inline constexpr idx_t MESH = 64;
-    static inline constexpr idx_t NX   = MESH;
-    static inline constexpr idx_t NY   = MESH;
-    static inline constexpr idx_t NZ   = MESH;
+    struct mesh {
 
-    static inline constexpr int RADIUS = 8;
-    static inline constexpr int DIAM   = 2 * RADIUS;
+        static constexpr idx_t res    = 75;
+        static constexpr idx_t nx     = res;
+        static constexpr idx_t ny     = res;
+        static constexpr idx_t nz     = res;
+        static constexpr int   radius = 10;
+        static constexpr int   diam   = 2 * radius;
 
-    static inline constexpr float TAU   = 0.55f;
-    static inline constexpr float SIGMA = 0.1f;
+    };
 
-    static inline constexpr float GAMMA = 0.15f * 5.0f;
+    struct physics {
+
+        static constexpr float u_ref    = 0.0f; 
+        static constexpr int   reynolds = 0;
+        static constexpr int   weber    = 0;    
+        static constexpr float sigma    = 0.1f;
+        static constexpr float gamma    = 0.15f * 5.0f;
+
+        static constexpr float tau      = 0.55f;
+        static constexpr float visc_ref = (tau - 0.5f) / 3.0f;
+    };
 
 #endif
 

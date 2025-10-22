@@ -36,11 +36,11 @@ void generateSimulationInfoFile(
         file << "---------------------------- SIMULATION METADATA ----------------------------\n"
              << "ID:                 " << SIM_ID << '\n'
              << "Velocity set:       " << VELOCITY_SET << '\n'
-             << "Reference velocity: " << U_REF << '\n'
-             << "Reynolds number:    " << REYNOLDS << '\n'
-             << "Weber number:       " << WEBER << "\n\n"
-             << "Domain size:        NX=" << NX << ", NY=" << NY << ", NZ=" << NZ << '\n'
-             << "Diameter:           D=" << DIAM << '\n'
+             << "Reference velocity: " << physics::u_ref << '\n'
+             << "Reynolds number:    " << physics::reynolds << '\n'
+             << "Weber number:       " << physics::weber << "\n\n"
+             << "Domain size:        NX=" << mesh::nx << ", NY=" << mesh::ny << ", NZ=" << mesh::nz << '\n'
+             << "Diameter:           D=" << mesh::diam << '\n'
              << "Timesteps:          " << NSTEPS << '\n'
              << "Output interval:    " << MACRO_SAVE << "\n\n"
              << "Performance:        " << MLUPS << " MLUPS\n"
@@ -125,7 +125,7 @@ unsigned divUp(
 void setDeviceFields(
     /* empty */
 ) noexcept(false) {
-    constexpr size_t NCELLS = static_cast<size_t>(NX) * static_cast<size_t>(NY) * static_cast<size_t>(NZ);
+    constexpr size_t NCELLS = static_cast<size_t>(mesh::nx) * static_cast<size_t>(mesh::ny) * static_cast<size_t>(mesh::nz);
     constexpr size_t SIZE = NCELLS * sizeof(float);
     constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
     constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(GLINKS) * sizeof(float);
