@@ -74,4 +74,4 @@
 
 #endif
 
-#include "../include/auxConstants.cuh"
+#include "../helpers/auxConstants.cuh"

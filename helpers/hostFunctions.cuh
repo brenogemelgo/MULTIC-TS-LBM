@@ -128,12 +128,12 @@ void setDeviceFields(
     constexpr size_t NCELLS = static_cast<size_t>(mesh::nx) * static_cast<size_t>(mesh::ny) * static_cast<size_t>(mesh::nz);
     constexpr size_t SIZE = NCELLS * sizeof(float);
     constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
-    constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(GLINKS) * sizeof(float);
+    constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(float);
 
     static_assert(NCELLS > 0, "Empty grid?");
     static_assert(SIZE / sizeof(float) == NCELLS, "SIZE overflow");
     static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(FLINKS), "F_DIST_SIZE overflow");
-    static_assert(G_DIST_SIZE / sizeof(float) == NCELLS * size_t(GLINKS), "G_DIST_SIZE overflow");
+    static_assert(G_DIST_SIZE / sizeof(float) == NCELLS * size_t(FLINKS), "G_DIST_SIZE overflow");
 
     checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
     checkCudaErrors(cudaMalloc(&fields.ux,  SIZE));

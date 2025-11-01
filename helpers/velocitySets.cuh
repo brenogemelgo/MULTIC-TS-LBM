@@ -29,15 +29,7 @@
     static constexpr float W_3 = 1.0f / 216.0f; // 19 to 26
     static constexpr idx_t FLINKS = 27;
     
-#endif
-
-__constant__ float W_G[7] = { 1.0f / 4.0f, 
-                              1.0f / 8.0f, 1.0f / 8.0f, 
-                              1.0f / 8.0f, 1.0f / 8.0f, 
-                              1.0f / 8.0f, 1.0f / 8.0f };
-static constexpr float WG_0 = 1.0f / 4.0f; // 0
-static constexpr float WG_1 = 1.0f / 8.0f; // 1 to 6
-static constexpr idx_t GLINKS = 7;   
+#endif  
 
 namespace VelocitySet {
 
@@ -76,16 +68,5 @@ namespace VelocitySet {
         template<> struct F<26> { static constexpr int cx= 1, cy=-1, cz=-1; static constexpr float w=W_3; };
 
     #endif
-
-    template<idx_t Q> 
-    struct G;
-
-    template<> struct G<0> { static constexpr int cx= 0, cy= 0, cz= 0; static constexpr float wg=WG_0; };
-    template<> struct G<1> { static constexpr int cx= 1, cy= 0, cz= 0; static constexpr float wg=WG_1; };
-    template<> struct G<2> { static constexpr int cx=-1, cy= 0, cz= 0; static constexpr float wg=WG_1; };
-    template<> struct G<3> { static constexpr int cx= 0, cy= 1, cz= 0; static constexpr float wg=WG_1; };
-    template<> struct G<4> { static constexpr int cx= 0, cy=-1, cz= 0; static constexpr float wg=WG_1; };
-    template<> struct G<5> { static constexpr int cx= 0, cy= 0, cz= 1; static constexpr float wg=WG_1; };
-    template<> struct G<6> { static constexpr int cx= 0, cy= 0, cz=-1; static constexpr float wg=WG_1; };
 
 }

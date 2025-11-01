@@ -90,8 +90,53 @@ void streamCollide(
 
     float pxx = 0.0f, pyy = 0.0f, pzz = 0.0f;
     float pxy = 0.0f, pxz = 0.0f, pyz = 0.0f;
+    
+    const float uu = 1.5f * (ux * ux + uy * uy + uz * uz);
+    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
+        constexpr idx_t Q = decltype(I)::value; 
 
-    #include "../include/CTmomentumFlux.cuh"
+        constexpr float w  = VelocitySet::F<Q>::w;
+        constexpr float cx = static_cast<float>(VelocitySet::F<Q>::cx); 
+        constexpr float cy = static_cast<float>(VelocitySet::F<Q>::cy); 
+        constexpr float cz = static_cast<float>(VelocitySet::F<Q>::cz); 
+
+        const float cu = 3.0f * (cx * ux + cy * uy + cz * uz);
+
+        #if defined(D3Q19)
+
+            const float feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
+
+        #elif defined(D3Q27)
+
+            const float feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + OOS * cu * cu * cu - uu * cu) - w;
+            
+        #endif
+
+        #if defined(D3Q19)
+
+            const float force = 1.5f * feq * 
+                ((cx - ux) * ffx + 
+                 (cy - uy) * ffy + 
+                 (cz - uz) * ffz) * invRho;
+
+        #elif defined(D3Q27)
+
+            const float force = 0.5f * w * 
+                ((3.0f * (cx - ux) + 3.0f * cu * cx) * ffx +
+                 (3.0f * (cy - uy) + 3.0f * cu * cy) * ffy +
+                 (3.0f * (cz - uz) + 3.0f * cu * cz) * ffz);
+
+        #endif
+
+        const float fneq = pop[Q] - (feq - force);  
+
+        pxx += fneq * cx * cx;
+        pyy += fneq * cy * cy;
+        pzz += fneq * cz * cz;
+        pxy += fneq * cx * cy;
+        pxz += fneq * cx * cz;
+        pyz += fneq * cy * cz;
+    });
     
     d.pxx[idx3] = pxx;
     d.pyy[idx3] = pyy;
@@ -100,42 +145,135 @@ void streamCollide(
     d.pxz[idx3] = pxz;
     d.pyz[idx3] = pyz;
 
-    #include "../include/relaxationFrequency.cuh"
+    #if defined(VISC_CONTRAST)
 
-    #include "../include/CTstreamCollide.cuh"
+        float omcoLocal;
+        {
+            const float phi = d.phi[idx3];
+            const float nuLocal = fmaf(phi, (VISC_OIL - VISC_WATER), VISC_WATER);
+            const float omegaPhys = 1.0f / (0.5f + 3.0f * nuLocal);
 
-    { // ====================================== ADVECTION-DIFFUSION ====================================== //
-        const float phi = d.phi[idx3];
+            #if defined(JET)
 
-        // Q0
-        d.g[idx3] = WG_0 * phi;
+                omcoLocal = 1.0f - fminf(omegaPhys, cubic_sponge(z));
 
-        // -------------------------------- X+ (Q1)
-        float geq = WG_1 * phi * (1.0f + 4.0f * ux);
-        float hi = WG_1 * physics::gamma * phi * (1.0f - phi) * d.normx[idx3];
-        d.g[global4(x + 1, y, z, 1)] = geq + hi;
+            #elif defined(DROPLET)
 
-        // -------------------------------- X- (Q2)
-        geq = WG_1 * phi * (1.0f - 4.0f * ux);
-        d.g[global4(x - 1, y, z, 2)] = geq - hi;
+                omcoLocal = 1.0f - omegaPhys;
 
-        // -------------------------------- Y+ (Q3)
-        geq = WG_1 * phi * (1.0f + 4.0f * uy);
-        hi = WG_1 * physics::gamma * phi * (1.0f - phi) * d.normy[idx3];
-        d.g[global4(x, y + 1, z, 3)] = geq + hi;
+            #endif
+        }
 
-        // -------------------------------- Y- (Q4)
-        geq = WG_1 * phi * (1.0f - 4.0f * uy);
-        d.g[global4(x, y - 1, z, 4)] = geq - hi;
+    #else
 
-        // -------------------------------- Z+ (Q5)
-        geq = WG_1 * phi * (1.0f + 4.0f * uz);
-        hi = WG_1 * physics::gamma * phi * (1.0f - phi) * d.normz[idx3];
-        d.g[global4(x, y, z + 1, 5)] = geq + hi;
+        #if defined(JET)
 
-        // -------------------------------- Z- (Q6)
-        geq = WG_1 * phi * (1.0f - 4.0f * uz);
-        d.g[global4(x, y, z - 1, 6)] = geq - hi;
-    } // ============================================= END ============================================= //
+            const float omcoLocal = 1.0f - cubic_sponge(z);
+
+        #elif defined(DROPLET)
+
+            const float omcoLocal = 1.0f - OMEGA_REF;
+
+        #endif
+
+    #endif
+
+    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
+        constexpr idx_t Q = decltype(I)::value;
+
+        const idx_t xx = x + static_cast<idx_t>(VelocitySet::F<Q>::cx);
+        const idx_t yy = y + static_cast<idx_t>(VelocitySet::F<Q>::cy);
+        const idx_t zz = z + static_cast<idx_t>(VelocitySet::F<Q>::cz);
+
+        constexpr float w  = VelocitySet::F<Q>::w;
+        constexpr float cx = static_cast<float>(VelocitySet::F<Q>::cx); 
+        constexpr float cy = static_cast<float>(VelocitySet::F<Q>::cy); 
+        constexpr float cz = static_cast<float>(VelocitySet::F<Q>::cz); 
+
+        const float cu = 3.0f * (cx * ux + cy * uy + cz * uz);
+
+        #if defined(D3Q19)
+
+            const float feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
+
+        #elif defined(D3Q27)
+
+            const float feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + OOS * cu * cu * cu - uu * cu) - w;
+
+        #endif
+
+        #if defined(D3Q19)
+
+            const float force = 1.5f * feq * 
+                ((cx - ux) * ffx + 
+                 (cy - uy) * ffy + 
+                 (cz - uz) * ffz) * invRho;
+
+        #elif defined(D3Q27)
+
+            const float force = 0.5f * w * 
+                ((3.0f * (cx - ux) + 3.0f * cu * cx) * ffx +
+                 (3.0f * (cy - uy) + 3.0f * cu * cy) * ffy +
+                 (3.0f * (cz - uz) + 3.0f * cu * cz) * ffz);
+
+        #endif
+
+        #if defined(D3Q19)
+
+            const float fneq = (w * 4.5f) *
+                ((cx * cx - CSSQ) * pxx +
+                 (cy * cy - CSSQ) * pyy +
+                 (cz * cz - CSSQ) * pzz +
+                2.0f * (cx * cy * pxy + 
+                        cx * cz * pxz + 
+                        cy * cz * pyz));
+                        
+        #elif defined(D3Q27)
+
+            const float fneq = (w * 4.5f) *
+                ((cx * cx - CSSQ) * pxx +
+                 (cy * cy - CSSQ) * pyy +
+                 (cz * cz - CSSQ) * pzz +
+                2.0f * (cx * cy * pxy + 
+                        cx * cz * pxz + 
+                        cy * cz * pyz) +
+                (cx * cx * cx - 3.0f * CSSQ * cx) * (3.0f * ux * pxx) +
+                (cy * cy * cy - 3.0f * CSSQ * cy) * (3.0f * uy * pyy) +
+                (cz * cz * cz - 3.0f * CSSQ * cz) * (3.0f * uz * pzz) +
+                3.0f * ((cx * cx * cy - CSSQ * cy) * (pxx * uy + 2.0f * ux * pxy) +
+                        (cx * cx * cz - CSSQ * cz) * (pxx * uz + 2.0f * ux * pxz) +
+                        (cx * cy * cy - CSSQ * cx) * (pxy * uy + 2.0f * ux * pyy) +
+                        (cy * cy * cz - CSSQ * cz) * (pyy * uz + 2.0f * uy * pyz) +
+                        (cx * cz * cz - CSSQ * cx) * (pxz * uz + 2.0f * ux * pzz) +
+                        (cy * cz * cz - CSSQ * cy) * (pyz * uz + 2.0f * uy * pzz)) +
+                        6.0f * (cx * cy * cz) * (ux * pyz + uy * pxz + uz * pxy));
+                        
+        #endif
+
+        d.f[global4(xx, yy, zz, Q)] = to_pop(feq + omcoLocal * fneq + force);
+    });
+
+    const float phi = d.phi[idx3];
+    const float normx = d.normx[idx3];
+    const float normy = d.normy[idx3];
+    const float normz = d.normz[idx3];
+    const float phiNorm = GAMMA * phi * (1.0f - phi);
+    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
+        constexpr idx_t Q = decltype(I)::value; 
+
+        const idx_t xx = x + static_cast<idx_t>(VelocitySet::F<Q>::cx);
+        const idx_t yy = y + static_cast<idx_t>(VelocitySet::F<Q>::cy);
+        const idx_t zz = z + static_cast<idx_t>(VelocitySet::F<Q>::cz);
+
+        constexpr float w  = VelocitySet::F<Q>::w;
+        constexpr float cx = static_cast<float>(VelocitySet::F<Q>::cx); 
+        constexpr float cy = static_cast<float>(VelocitySet::F<Q>::cy); 
+        constexpr float cz = static_cast<float>(VelocitySet::F<Q>::cz); 
+
+        const float geq = w * phi * (1.0f + 3.0f * (cx * ux + cy * uy + cz * uz));
+        const float hi = w * phiNorm * (cx * normx + cy * normy + cz * normz);
+
+        d.g[global4(xx, yy, zz, Q)] = geq + hi;
+    });
 }
 

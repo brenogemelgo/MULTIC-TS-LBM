@@ -120,20 +120,18 @@ void setDistros(
         d.f[global4(x, y, z, Q)] = to_pop(feq);
     });
 
-    constexpr_for<0, GLINKS>([&] __device__ (auto I) {
+    constexpr_for<0, FLINKS>([&] __device__ (auto I) {
         constexpr idx_t Q = decltype(I)::value;
 
-        const idx_t xx = x + static_cast<idx_t>(VelocitySet::G<Q>::cx);
-        const idx_t yy = y + static_cast<idx_t>(VelocitySet::G<Q>::cy);
-        const idx_t zz = z + static_cast<idx_t>(VelocitySet::G<Q>::cz);
+        const idx_t xx = x + static_cast<idx_t>(VelocitySet::F<Q>::cx);
+        const idx_t yy = y + static_cast<idx_t>(VelocitySet::F<Q>::cy);
+        const idx_t zz = z + static_cast<idx_t>(VelocitySet::F<Q>::cz);
 
-        constexpr float wg = VelocitySet::G<Q>::wg;
-        constexpr float cx = static_cast<float>(VelocitySet::G<Q>::cx); 
-        constexpr float cy = static_cast<float>(VelocitySet::G<Q>::cy); 
-        constexpr float cz = static_cast<float>(VelocitySet::G<Q>::cz); 
+        constexpr float w  = VelocitySet::F<Q>::w;
+        constexpr float cx = static_cast<float>(VelocitySet::F<Q>::cx); 
+        constexpr float cy = static_cast<float>(VelocitySet::F<Q>::cy); 
+        constexpr float cz = static_cast<float>(VelocitySet::F<Q>::cz); 
 
-        const float cu = 4.0f * (cx * ux + cy * uy + cz * uz);
-
-        d.g[global4(xx, yy, zz, Q)] = wg * d.phi[idx3] * (1.0f + cu);
+        d.g[global4(xx, yy, zz, Q)] = w * d.phi[idx3] * (1.0f + 3.0f * (cx * ux + cy * uy + cz * uz));
     });
 }

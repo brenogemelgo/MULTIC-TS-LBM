@@ -1,8 +1,8 @@
-#include "deviceFunctions.cuh"
-#include "init.cuh"
-#include "phase.cuh"
+#include "globalFunctions.cuh"
+#include "setupFields.cuh"
+#include "interface.cuh"
 #include "lbm.cuh"
-#include "bcs.cuh"
+#include "boundaryConditions.cuh"
 #include "../helpers/hostFunctions.cuh"
 
 int main(int argc, char* argv[]) {
