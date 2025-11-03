@@ -1,35 +1,38 @@
-#include "globalFunctions.cuh"
+#include "../helpers/deviceFunctions.cuh"
 #include "setupFields.cuh"
 #include "interface.cuh"
 #include "lbm.cuh"
 #include "boundaryConditions.cuh"
 #include "../helpers/hostFunctions.cuh"
 
-int main(int argc, char* argv[]) {
-    if (argc < 4) {
+int main(int argc, char *argv[])
+{
+    if (argc < 4)
+    {
         std::cerr << "Error: Usage: " << argv[0] << " <flow case> <velocity set> <ID>\n";
         return 1;
     }
-    const std::string FLOW_CASE    = argv[1];
+    const std::string FLOW_CASE = argv[1];
     const std::string VELOCITY_SET = argv[2];
-    const std::string SIM_ID       = argv[3];
+    const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-    if (setDeviceFromEnv() < 0) return 1;
-    //#define BENCHMARK
+    if (setDeviceFromEnv() < 0)
+        return 1;
+    // #define BENCHMARK
 
     setDeviceFields();
 
     const dim3 block3D(block::nx, block::ny, block::nz);
 
-    const dim3 grid3D(divUp(mesh::nx, block3D.x), 
-                      divUp(mesh::ny, block3D.y), 
+    const dim3 grid3D(divUp(mesh::nx, block3D.x),
+                      divUp(mesh::ny, block3D.y),
                       divUp(mesh::nz, block3D.z));
 
     const dim3 blockX(block::nx, block::ny, 1u);
     const dim3 blockY(block::nx, block::ny, 1u);
     const dim3 blockZ(block::nx, block::ny, 1u);
-    
+
     const dim3 gridX(divUp(mesh::ny, blockX.x), divUp(mesh::nz, blockX.y), 1u);
     const dim3 gridY(divUp(mesh::nx, blockY.x), divUp(mesh::nz, blockY.y), 1u);
     const dim3 gridZ(divUp(mesh::nx, blockZ.x), divUp(mesh::ny, blockZ.y), 1u);
@@ -41,78 +44,79 @@ int main(int argc, char* argv[]) {
 
     // =========================== INITIALIZATION =========================== //
 
-        setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
+    setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-        #if defined(JET)
+#if defined(JET)
 
-            setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-        #elif defined(DROPLET)
+#elif defined(DROPLET)
 
-            setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-        #endif
+#endif
 
-        setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
+    setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // ===================================================================== //
 
     checkCudaErrors(cudaDeviceSynchronize());
     const auto START_TIME = std::chrono::high_resolution_clock::now();
-    for (idx_t STEP = 0; STEP <= NSTEPS; ++STEP) {
+    for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
+    {
 
-        #if !defined(BENCHMARK)
+#if !defined(BENCHMARK)
 
-            // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
+        // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
 
-        #endif
+#endif
 
         // ======================== LATTICE BOLTZMANN RELATED ======================== //
 
-            computePhase  <<<grid3D, block3D, dynamic, queue>>>(fields);
-            computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
-            computeForces <<<grid3D, block3D, dynamic, queue>>>(fields);
-            streamCollide <<<grid3D, block3D, dynamic, queue>>>(fields);
-            
+        computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
+        computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
+        computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
+        streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
+
         // ========================================================================== //
 
         // ============================== BOUNDARY CONDITIONS ============================== //
 
-            #if defined(JET)
+#if defined(JET)
 
-                applyInflow <<<gridZ, blockZ, dynamic, queue>>>(fields);
-                applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-                periodicX   <<<gridX, blockX, dynamic, queue>>>(fields);
-                periodicY   <<<gridY, blockY, dynamic, queue>>>(fields);
+        applyInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
+        periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
 
-            #elif defined(DROPLET)
+#elif defined(DROPLET)
 
-                // undefined
+        // undefined
 
-            #endif
+#endif
 
         // ================================================================================= //
 
-        #if !defined(BENCHMARK)
+#if !defined(BENCHMARK)
 
-            checkCudaErrors(cudaDeviceSynchronize());
+        checkCudaErrors(cudaDeviceSynchronize());
 
-            if (STEP % MACRO_SAVE == 0) {
+        if (STEP % MACRO_SAVE == 0)
+        {
 
-                copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
-                copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
+            copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
+            copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
 
-                #if defined(JET)
+#if defined(JET)
 
-                    copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
+            copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
 
-                #endif
-                
-                std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
+#endif
 
-            }
+            std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
+        }
 
-        #endif
+#endif
     }
 
     const auto END_TIME = std::chrono::high_resolution_clock::now();

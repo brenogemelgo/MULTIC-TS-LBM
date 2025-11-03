@@ -1,6 +1,7 @@
 #pragma once
 
-struct LBMFields {
+struct LBMFields
+{
     float *rho;
     float *phi;
     float *ux;
@@ -25,19 +26,20 @@ struct LBMFields {
 
 LBMFields fields{};
 
-template<typename T, T v>
-struct integralConstant {
+template <typename T, T v>
+struct integralConstant
+{
     static constexpr const T value = v;
     using value_type = T;
     using type = integralConstant;
 
-    [[nodiscard]] __device__ __forceinline__ consteval 
-    operator value_type() const noexcept {
+    __device__ [[nodiscard]] inline consteval operator value_type() const noexcept
+    {
         return value;
     }
 
-    [[nodiscard]] __device__ __forceinline__ consteval 
-    value_type operator()() const noexcept {
+    __device__ [[nodiscard]] inline consteval value_type operator()() const noexcept
+    {
         return value;
     }
 };

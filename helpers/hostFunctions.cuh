@@ -1,12 +1,11 @@
 #pragma once
 #include "constants.cuh"
 
-[[nodiscard]] static __host__ __forceinline__ 
-std::string createSimulationDirectory(
+__host__ [[nodiscard]] static inline std::string createSimulationDirectory(
     const std::string &FLOW_CASE,
     const std::string &VELOCITY_SET,
-    const std::string &SIM_ID
-) noexcept(false) {
+    const std::string &SIM_ID)
+{
     std::filesystem::path BASE_DIR = std::filesystem::current_path();
 
     std::filesystem::path SIM_DIR = BASE_DIR / "bin" / FLOW_CASE / VELOCITY_SET / SIM_ID;
@@ -17,18 +16,19 @@ std::string createSimulationDirectory(
     return SIM_DIR.string() + std::string(1, std::filesystem::path::preferred_separator);
 }
 
-[[gnu::cold]] static __host__ __forceinline__
-void generateSimulationInfoFile(
+__host__ [[gnu::cold]] static inline void generateSimulationInfoFile(
     const std::string &SIM_DIR,
     const std::string &SIM_ID,
     const std::string &VELOCITY_SET,
-    const double MLUPS
-) noexcept(false) {
+    const double MLUPS)
+{
     std::filesystem::path INFO_PATH = std::filesystem::path(SIM_DIR) / (SIM_ID + "_info.txt");
 
-    try {
+    try
+    {
         std::ofstream file(INFO_PATH, std::ios::out | std::ios::trunc);
-        if (!file.is_open()) {
+        if (!file.is_open())
+        {
             std::cerr << "Error opening file: " << INFO_PATH.string() << std::endl;
             return;
         }
@@ -49,20 +49,20 @@ void generateSimulationInfoFile(
         file.close();
         std::cout << "Simulation information file created in: " << INFO_PATH.string() << std::endl;
     }
-    catch (const std::exception &e) {
+    catch (const std::exception &e)
+    {
         std::cerr << "Error generating information file: " << e.what() << std::endl;
     }
 }
 
-[[gnu::cold]] static __host__ __forceinline__ 
-void copyAndSaveToBinary(
+__host__ [[gnu::cold]] static inline void copyAndSaveToBinary(
     const float *d_data,
     const size_t SIZE,
     const std::string &SIM_DIR,
     [[maybe_unused]] const std::string &ID,
     const int STEP,
-    const std::string &VAR_NAME
-) noexcept(false) {
+    const std::string &VAR_NAME)
+{
     std::error_code EC;
     std::filesystem::create_directories(std::filesystem::path(SIM_DIR), EC);
 
@@ -76,7 +76,8 @@ void copyAndSaveToBinary(
     const std::filesystem::path OUT_PATH = std::filesystem::path(SIM_DIR) / filename;
 
     std::ofstream file(OUT_PATH, std::ios::binary);
-    if (!file) {
+    if (!file)
+    {
         std::cerr << "Error opening file " << OUT_PATH.string() << " for writing." << std::endl;
         return;
     }
@@ -84,12 +85,11 @@ void copyAndSaveToBinary(
     file.close();
 }
 
-[[nodiscard]] [[gnu::cold]] static __host__ __forceinline__ 
-int setDeviceFromEnv(
-    /* empty */
-) noexcept {
+__host__ [[nodiscard]] [[gnu::cold]] static inline int setDeviceFromEnv() noexcept
+{
     int dev = 0;
-    if (const char *env = std::getenv("GPU_INDEX")) {
+    if (const char *env = std::getenv("GPU_INDEX"))
+    {
         char *end = nullptr;
         long v = std::strtol(env, &end, 10);
         if (end != env && v >= 0)
@@ -97,34 +97,34 @@ int setDeviceFromEnv(
     }
 
     cudaError_t err = cudaSetDevice(dev);
-    if (err != cudaSuccess) {
+    if (err != cudaSuccess)
+    {
         std::fprintf(stderr, "cudaSetDevice(%d) failed: %s\n", dev, cudaGetErrorString(err));
         return -1;
     }
 
     cudaDeviceProp prop{};
-    if (cudaGetDeviceProperties(&prop, dev) == cudaSuccess) {
+    if (cudaGetDeviceProperties(&prop, dev) == cudaSuccess)
+    {
         std::printf("Using GPU %d: %s (SM %d.%d)\n", dev, prop.name, prop.major, prop.minor);
     }
-    else {
+    else
+    {
         std::printf("Using GPU %d (unknown properties)\n", dev);
     }
 
     return dev;
 }
 
-[[nodiscard]] static __host__ __forceinline__ constexpr
-unsigned divUp(
+__host__ [[nodiscard]] static inline constexpr unsigned divUp(
     const unsigned a,
-    const unsigned b
-) noexcept {
+    const unsigned b) noexcept
+{
     return (a + b - 1u) / b;
 }
 
-[[gnu::cold]] static __host__ __forceinline__ 
-void setDeviceFields(
-    /* empty */
-) noexcept(false) {
+__host__ [[gnu::cold]] static inline void setDeviceFields()
+{
     constexpr size_t NCELLS = static_cast<size_t>(mesh::nx) * static_cast<size_t>(mesh::ny) * static_cast<size_t>(mesh::nz);
     constexpr size_t SIZE = NCELLS * sizeof(float);
     constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
@@ -136,9 +136,9 @@ void setDeviceFields(
     static_assert(G_DIST_SIZE / sizeof(float) == NCELLS * size_t(FLINKS), "G_DIST_SIZE overflow");
 
     checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ux,  SIZE));
-    checkCudaErrors(cudaMalloc(&fields.uy,  SIZE));
-    checkCudaErrors(cudaMalloc(&fields.uz,  SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ux, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.uy, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.uz, SIZE));
     checkCudaErrors(cudaMalloc(&fields.pxx, SIZE));
     checkCudaErrors(cudaMalloc(&fields.pyy, SIZE));
     checkCudaErrors(cudaMalloc(&fields.pzz, SIZE));
@@ -146,14 +146,14 @@ void setDeviceFields(
     checkCudaErrors(cudaMalloc(&fields.pxz, SIZE));
     checkCudaErrors(cudaMalloc(&fields.pyz, SIZE));
 
-    checkCudaErrors(cudaMalloc(&fields.phi,   SIZE));
+    checkCudaErrors(cudaMalloc(&fields.phi, SIZE));
     checkCudaErrors(cudaMalloc(&fields.normx, SIZE));
     checkCudaErrors(cudaMalloc(&fields.normy, SIZE));
     checkCudaErrors(cudaMalloc(&fields.normz, SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ind,   SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ffx,   SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ffy,   SIZE));
-    checkCudaErrors(cudaMalloc(&fields.ffz,   SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ind, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ffx, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ffy, SIZE));
+    checkCudaErrors(cudaMalloc(&fields.ffz, SIZE));
 
     checkCudaErrors(cudaMalloc(&fields.f, F_DIST_SIZE));
     checkCudaErrors(cudaMalloc(&fields.g, G_DIST_SIZE));
