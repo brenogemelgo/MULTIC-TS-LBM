@@ -2,26 +2,26 @@
 
 struct LBMFields
 {
-    float *rho;
-    float *phi;
-    float *ux;
-    float *uy;
-    float *uz;
-    float *pxx;
-    float *pyy;
-    float *pzz;
-    float *pxy;
-    float *pxz;
-    float *pyz;
-    float *normx;
-    float *normy;
-    float *normz;
-    float *ind;
-    float *ffx;
-    float *ffy;
-    float *ffz;
+    scalar_t *rho;
+    scalar_t *phi;
+    scalar_t *ux;
+    scalar_t *uy;
+    scalar_t *uz;
+    scalar_t *pxx;
+    scalar_t *pyy;
+    scalar_t *pzz;
+    scalar_t *pxy;
+    scalar_t *pxz;
+    scalar_t *pyz;
+    scalar_t *normx;
+    scalar_t *normy;
+    scalar_t *normz;
+    scalar_t *ind;
+    scalar_t *ffx;
+    scalar_t *ffy;
+    scalar_t *ffz;
     pop_t *f;
-    float *g;
+    scalar_t *g;
 };
 
 LBMFields fields{};

@@ -33,44 +33,44 @@ namespace device
         return x;
     }
 
-    __device__ [[nodiscard]] inline float uniform01(const label_t seed) noexcept
+    __device__ [[nodiscard]] inline scalar_t uniform01(const label_t seed) noexcept
     {
-        return (static_cast<float>(seed) + 0.5f) * 2.3283064365386963e-10f;
+        return (static_cast<scalar_t>(seed) + 0.5f) * 2.3283064365386963e-10f;
     }
 
-    __device__ [[nodiscard]] inline float pseudo_box_muller(float rrx) noexcept
+    __device__ [[nodiscard]] inline scalar_t pseudo_box_muller(scalar_t rrx) noexcept
     {
-        const float r = sqrtf(-2.0f * logf(fmaxf(rrx, 1e-12f)));
-        const float theta = TWO_PI * rrx;
+        const scalar_t r = sqrtf(-2.0f * logf(fmaxf(rrx, 1e-12f)));
+        const scalar_t theta = TWO_PI * rrx;
         return r * cosf(theta);
     }
 
     __device__ inline void box_muller(
-        float rrx, float rry,
-        float &z1, float &z2) noexcept
+        scalar_t rrx, scalar_t rry,
+        scalar_t &z1, scalar_t &z2) noexcept
     {
         rrx = fmaxf(rrx, 1e-12f);
-        const float r = sqrtf(-2.0f * logf(rrx));
-        const float theta = TWO_PI * rry;
-        float s, c;
+        const scalar_t r = sqrtf(-2.0f * logf(rrx));
+        const scalar_t theta = TWO_PI * rry;
+        scalar_t s, c;
         sincosf(theta, &s, &c);
         z1 = r * c;
         z2 = r * s;
     }
 
     template <label_t NOISE_PERIOD = 10>
-    __device__ [[nodiscard]] inline float pseudo_gaussian_noise(
+    __device__ [[nodiscard]] inline scalar_t pseudo_gaussian_noise(
         const label_t x, const label_t y,
         const label_t STEP) noexcept
     {
         const label_t call_idx = STEP / NOISE_PERIOD;
         const label_t seed = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (call_idx * 0xC2B2AE35u);
-        const float u = uniform01(hash32(seed));
+        const scalar_t u = uniform01(hash32(seed));
         return pseudo_box_muller(u);
     }
 
     template <label_t NOISE_PERIOD = 10>
-    __device__ [[nodiscard]] inline float gaussian_noise(
+    __device__ [[nodiscard]] inline scalar_t gaussian_noise(
         const label_t x, const label_t y,
         const label_t STEP) noexcept
     {
@@ -78,41 +78,41 @@ namespace device
         const label_t pair_idx = call_idx >> 1;
         const bool use_second = (call_idx & 1) != 0;
         const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (pair_idx * 0xC2B2AE35u);
-        const float rrx = uniform01(hash32(base));
-        const float rry = uniform01(hash32(base ^ 0x68BC21EBu));
-        float z1, z2;
+        const scalar_t rrx = uniform01(hash32(base));
+        const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
+        scalar_t z1, z2;
         box_muller(rrx, rry, z1, z2);
         return use_second ? z2 : z1;
     }
 
-    // const float z = gaussian_noise<10>(x, y, STEP);
-    // const float uz = d.uz[idx3_in] + 0.004f * z;
+    // const scalar_t z = gaussian_noise<10>(x, y, STEP);
+    // const scalar_t uz = d.uz[idx3_in] + 0.004f * z;
 
-    // const float z = pseudo_gaussian_noise<10>(x, y, STEP);
-    // const float uz = d.uz[idx3_in] + 0.004f * z;
+    // const scalar_t z = pseudo_gaussian_noise<10>(x, y, STEP);
+    // const scalar_t uz = d.uz[idx3_in] + 0.004f * z;
 
 #if defined(JET)
 
-    __device__ [[nodiscard]] inline float cubic_sponge(const label_t z) noexcept
+    __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept
     {
-        const float zn = static_cast<float>(z) * INV_NZ_M1;
-        const float s = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
-        const float s2 = s * s;
-        const float ramp = s2 * s;
+        const scalar_t zn = static_cast<scalar_t>(z) * INV_NZ_M1;
+        const scalar_t s = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
+        const scalar_t s2 = s * s;
+        const scalar_t ramp = s2 * s;
         return fmaf(ramp, OMEGA_DELTA, OMEGA_REF);
     }
 
 #endif
 
-    __device__ [[nodiscard]] inline float smoothstep(
-        float edge0, float edge1,
-        float x) noexcept
+    __device__ [[nodiscard]] inline scalar_t smoothstep(
+        scalar_t edge0, scalar_t edge1,
+        scalar_t x) noexcept
     {
         x = __saturatef((x - edge0) / (edge1 - edge0));
         return x * x * (3.0f - 2.0f * x);
     }
 
-    __device__ [[nodiscard]] inline float interpolate_rho(float phi) noexcept
+    __device__ [[nodiscard]] inline scalar_t interpolate_rho(scalar_t phi) noexcept
     {
         return fmaf(phi, (RHO_OIL - RHO_WATER), RHO_WATER);
     }

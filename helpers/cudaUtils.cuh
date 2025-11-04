@@ -39,40 +39,40 @@ struct block
     static constexpr int tile_nz = static_cast<int>(nz) + 2 * pad;
 };
 
+using ci_t = int;
+using label_t = uint32_t;
+using scalar_t = float;
+
 #if defined(ENABLE_FP16)
 
 #include <cuda_fp16.h>
 using pop_t = __half;
 
-__device__ [[nodiscard]] inline pop_t to_pop(const float x) noexcept
+__device__ [[nodiscard]] inline pop_t to_pop(const scalar_t x) noexcept
 {
     return __float2half(x);
 }
 
-__device__ [[nodiscard]] inline float from_pop(const pop_t x) noexcept
+__device__ [[nodiscard]] inline scalar_t from_pop(const pop_t x) noexcept
 {
     return __half2float(x);
 }
 
 #else
 
-using pop_t = float;
+using pop_t = scalar_t;
 
-__device__ [[nodiscard]] inline constexpr pop_t to_pop(const float x) noexcept
+__device__ [[nodiscard]] inline constexpr pop_t to_pop(const scalar_t x) noexcept
 {
     return x;
 }
 
-__device__ [[nodiscard]] inline constexpr float from_pop(const pop_t x) noexcept
+__device__ [[nodiscard]] inline constexpr scalar_t from_pop(const pop_t x) noexcept
 {
     return x;
 }
 
 #endif
-
-using ci_t = int;
-using label_t = uint32_t;
-using label_t = uint32_t;
 
 #define checkCudaErrors(err) __checkCudaErrors((err), #err, __FILE__, __LINE__)
 #define checkCudaErrorsOutline(err) __checkCudaErrorsOutline((err), #err, __FILE__, __LINE__)

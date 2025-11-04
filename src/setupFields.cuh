@@ -42,9 +42,9 @@ __global__ void setJet(
     if (x >= mesh::nx || y >= mesh::ny)
         return;
 
-    const float dx = static_cast<float>(x) - CENTER_X;
-    const float dy = static_cast<float>(y) - CENTER_Y;
-    const float r2 = dx * dx + dy * dy;
+    const scalar_t dx = static_cast<scalar_t>(x) - CENTER_X;
+    const scalar_t dy = static_cast<scalar_t>(y) - CENTER_Y;
+    const scalar_t r2 = dx * dx + dy * dy;
     if (r2 > R2)
         return;
 
@@ -72,12 +72,12 @@ setDroplet(
 
     const label_t idx3 = device::global3(x, y, z);
 
-    const float dx = (static_cast<float>(x) - CENTER_X) / 2.0f;
-    const float dy = static_cast<float>(y) - CENTER_Y;
-    const float dz = static_cast<float>(z) - CENTER_Z;
-    const float radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
+    const scalar_t dx = (static_cast<scalar_t>(x) - CENTER_X) / 2.0f;
+    const scalar_t dy = static_cast<scalar_t>(y) - CENTER_Y;
+    const scalar_t dz = static_cast<scalar_t>(z) - CENTER_Z;
+    const scalar_t radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
 
-    const float phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<float>(mesh::radius) - radialDist) / 3.0f);
+    const scalar_t phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<scalar_t>(mesh::radius) - radialDist) / 3.0f);
     d.phi[idx3] = phi;
 }
 
@@ -95,34 +95,34 @@ __global__ void setDistros(
 
     const label_t idx3 = device::global3(x, y, z);
 
-    const float ux = d.ux[idx3];
-    const float uy = d.uy[idx3];
-    const float uz = d.uz[idx3];
+    const scalar_t ux = d.ux[idx3];
+    const scalar_t uy = d.uy[idx3];
+    const scalar_t uz = d.uz[idx3];
 
-    const float uu = 1.5f * (ux * ux + uy * uy + uz * uz);
-    device::constexpr_for<0, FLINKS>(
+    const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
+    device::constexpr_for<0, NLINKS>(
         [&](const auto Q)
         {
-            constexpr float w = VelocitySet::F<Q>::w;
-            constexpr float cx = static_cast<float>(VelocitySet::F<Q>::cx);
-            constexpr float cy = static_cast<float>(VelocitySet::F<Q>::cy);
-            constexpr float cz = static_cast<float>(VelocitySet::F<Q>::cz);
+            constexpr scalar_t w = VelocitySet::Dir<Q>::w;
+            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::Dir<Q>::cx);
+            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
+            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
 
-            const float cu = 3.0f * (cx * ux + cy * uy + cz * uz);
+            const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
 #if defined(D3Q19)
 
-            const float feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu) - w;
+            const scalar_t feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu) - w;
 
 #elif defined(D3Q27)
 
-            const float feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu + OOS * cu * cu * cu - uu * cu) - w;
+            const scalar_t feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu + OOS * cu * cu * cu - uu * cu) - w;
 
 #endif
 
-            const label_t xx = x + static_cast<label_t>(VelocitySet::F<Q>::cx);
-            const label_t yy = y + static_cast<label_t>(VelocitySet::F<Q>::cy);
-            const label_t zz = z + static_cast<label_t>(VelocitySet::F<Q>::cz);
+            const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
+            const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
+            const label_t zz = z + static_cast<label_t>(VelocitySet::Dir<Q>::cz);
 
             d.f[device::global4(x, y, z, Q)] = to_pop(feq);
             d.g[device::global4(xx, yy, zz, Q)] = w * d.phi[idx3] * (1.0f + cu);

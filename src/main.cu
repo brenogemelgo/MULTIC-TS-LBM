@@ -17,12 +17,14 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
+    // Set GPU based on pipeline argument
     if (setDeviceFromEnv() < 0)
         return 1;
-    // #define BENCHMARK
 
+    // Initialize device arrays
     setDeviceFields();
 
+    // Block-wise configuration
     const dim3 block3D(block::nx, block::ny, block::nz);
 
     const dim3 grid3D(divUp(mesh::nx, block3D.x),
@@ -37,13 +39,14 @@ int main(int argc, char *argv[])
     const dim3 gridY(divUp(mesh::nx, blockY.x), divUp(mesh::nz, blockY.y), 1u);
     const dim3 gridZ(divUp(mesh::nx, blockZ.x), divUp(mesh::ny, blockZ.y), 1u);
 
+    // Dynamic shared memory size
     constexpr size_t dynamic = 0;
 
+    // Create stream
     cudaStream_t queue{};
     checkCudaErrors(cudaStreamCreate(&queue));
 
-    // =========================== INITIALIZATION =========================== //
-
+    // Call initialization kernels
     setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #if defined(JET)
@@ -58,30 +61,26 @@ int main(int argc, char *argv[])
 
     setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-    // ===================================================================== //
-
+    // Make sure all initialization kernels have finished
     checkCudaErrors(cudaDeviceSynchronize());
+
+    // Time loop
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
-
-#if !defined(BENCHMARK)
-
-        // std::cout << "Step " << STEP << " of " << NSTEPS << " started...\n";
-
-#endif
-
-        // ======================== LATTICE BOLTZMANN RELATED ======================== //
-
+        // Calculate the phase field
         computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
+
+        // Calculate interface normals
         computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
+
+        // Calculate surface tension forces
         computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
+
+        // Main kernel
         streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-        // ========================================================================== //
-
-        // ============================== BOUNDARY CONDITIONS ============================== //
-
+        // Call boundary conditions
 #if defined(JET)
 
         applyInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
@@ -91,16 +90,14 @@ int main(int argc, char *argv[])
 
 #elif defined(DROPLET)
 
-        // undefined
-
 #endif
-
-        // ================================================================================= //
 
 #if !defined(BENCHMARK)
 
+        // Sync kernels
         checkCudaErrors(cudaDeviceSynchronize());
 
+        // Copy arrays to host
         if (STEP % MACRO_SAVE == 0)
         {
 
@@ -113,15 +110,16 @@ int main(int argc, char *argv[])
 
 #endif
 
+            // Print step
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
         }
 
 #endif
     }
-
     const auto END_TIME = std::chrono::high_resolution_clock::now();
-    checkCudaErrorsOutline(cudaStreamDestroy(queue));
 
+    // Destructors
+    checkCudaErrorsOutline(cudaStreamDestroy(queue));
     cudaFree(fields.f);
     cudaFree(fields.g);
     cudaFree(fields.phi);
@@ -143,6 +141,7 @@ int main(int argc, char *argv[])
     cudaFree(fields.ffy);
     cudaFree(fields.ffz);
 
+    // Performance log
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
     const uint64_t TOTAL_CELLS = static_cast<uint64_t>(mesh::nx) * mesh::ny * mesh::nz * static_cast<uint64_t>(NSTEPS ? NSTEPS : 1);
     const double MLUPS = static_cast<double>(TOTAL_CELLS) / (ELAPSED_TIME.count() * 1e6);
@@ -152,6 +151,7 @@ int main(int argc, char *argv[])
     std::cout << "     Performance             : " << MLUPS << " MLUPS\n";
     std::cout << "// =============================================== //\n\n";
 
+    // Generate info
     generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET, MLUPS);
     getLastCudaErrorOutline("Final sync");
 

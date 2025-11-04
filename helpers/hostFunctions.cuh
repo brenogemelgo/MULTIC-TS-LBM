@@ -56,7 +56,7 @@ __host__ [[gnu::cold]] static inline void generateSimulationInfoFile(
 }
 
 __host__ [[gnu::cold]] static inline void copyAndSaveToBinary(
-    const float *d_data,
+    const scalar_t *d_data,
     const size_t SIZE,
     const std::string &SIM_DIR,
     [[maybe_unused]] const std::string &ID,
@@ -66,8 +66,8 @@ __host__ [[gnu::cold]] static inline void copyAndSaveToBinary(
     std::error_code EC;
     std::filesystem::create_directories(std::filesystem::path(SIM_DIR), EC);
 
-    std::vector<float> host_data(SIZE);
-    checkCudaErrors(cudaMemcpy(host_data.data(), d_data, SIZE * sizeof(float), cudaMemcpyDeviceToHost));
+    std::vector<scalar_t> host_data(SIZE);
+    checkCudaErrors(cudaMemcpy(host_data.data(), d_data, SIZE * sizeof(scalar_t), cudaMemcpyDeviceToHost));
 
     std::ostringstream STEP_SAVE;
     STEP_SAVE << std::setw(6) << std::setfill('0') << STEP;
@@ -81,7 +81,7 @@ __host__ [[gnu::cold]] static inline void copyAndSaveToBinary(
         std::cerr << "Error opening file " << OUT_PATH.string() << " for writing." << std::endl;
         return;
     }
-    file.write(reinterpret_cast<const char *>(host_data.data()), static_cast<std::streamsize>(host_data.size() * sizeof(float)));
+    file.write(reinterpret_cast<const char *>(host_data.data()), static_cast<std::streamsize>(host_data.size() * sizeof(scalar_t)));
     file.close();
 }
 
@@ -126,14 +126,14 @@ __host__ [[nodiscard]] static inline constexpr unsigned divUp(
 __host__ [[gnu::cold]] static inline void setDeviceFields()
 {
     constexpr size_t NCELLS = static_cast<size_t>(mesh::nx) * static_cast<size_t>(mesh::ny) * static_cast<size_t>(mesh::nz);
-    constexpr size_t SIZE = NCELLS * sizeof(float);
-    constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
-    constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(float);
+    constexpr size_t SIZE = NCELLS * sizeof(scalar_t);
+    constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(NLINKS) * sizeof(pop_t);
+    constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(NLINKS) * sizeof(scalar_t);
 
     static_assert(NCELLS > 0, "Empty grid?");
-    static_assert(SIZE / sizeof(float) == NCELLS, "SIZE overflow");
-    static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(FLINKS), "F_DIST_SIZE overflow");
-    static_assert(G_DIST_SIZE / sizeof(float) == NCELLS * size_t(FLINKS), "G_DIST_SIZE overflow");
+    static_assert(SIZE / sizeof(scalar_t) == NCELLS, "SIZE overflow");
+    static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(NLINKS), "F_DIST_SIZE overflow");
+    static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(NLINKS), "G_DIST_SIZE overflow");
 
     checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
     checkCudaErrors(cudaMalloc(&fields.ux, SIZE));
