@@ -3,8 +3,8 @@
 #include "../helpers/commonStructs.cuh"
 #include "../helpers/velocitySets.cuh"
 
-// #define RUN_MODE
-#define SAMPLE_MODE
+#define RUN_MODE
+// #define SAMPLE_MODE
 // #define DEBUG_MODE
 
 #if defined(RUN_MODE)

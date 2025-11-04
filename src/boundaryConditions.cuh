@@ -19,9 +19,10 @@ __global__ void applyInflow(LBMFields d)
     const label_t idx3_bnd = device::global3(x, y, 0);
     const label_t idx3_zp1 = device::global3(x, y, 1);
 
-    const scalar_t phi_bnd = d.phi[idx3_bnd];
-
     // d.rho[idx3_bnd] = d.rho[idx3_zp1];
+
+    const scalar_t uz = d.uz[idx3_bnd];
+    const scalar_t P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
 
     device::constexpr_for<0, NLINKS>(
         [&](const auto Q)
@@ -38,7 +39,7 @@ __global__ void applyInflow(LBMFields d)
                 constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
                 constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
 
-                const scalar_t feq = w * d.rho[fluidNode] * P_IN - w;
+                const scalar_t feq = w * d.rho[fluidNode] * P - w;
 
 #if defined(D3Q19)
 
@@ -86,7 +87,7 @@ __global__ void applyInflow(LBMFields d)
 
                 label_t fluidNode = device::global3(xx, yy, 1);
 
-                const scalar_t geq = VelocitySet::Dir<Q>::w * phi_bnd * CONST_IN;
+                const scalar_t geq = VelocitySet::Dir<Q>::w * d.phi[idx3_bnd] * (1.0f + 3.0f * uz);
 
                 d.g[Q * PLANE + fluidNode] = geq;
             }
@@ -189,12 +190,7 @@ __global__ void applyOutflow(LBMFields d)
 
                 label_t fluidNode = device::global3(xx, yy, mesh::nz - 2);
 
-                constexpr scalar_t w = VelocitySet::Dir<Q>::w;
-                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::Dir<Q>::cx);
-                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
-                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
-
-                const scalar_t geq = w * d.phi[fluidNode] * CONST_OUT;
+                const scalar_t geq = VelocitySet::Dir<Q>::w * d.phi[fluidNode] * (1.0f - 3.0f * physics::u_ref);
 
                 d.g[Q * PLANE + fluidNode] = geq;
             }
