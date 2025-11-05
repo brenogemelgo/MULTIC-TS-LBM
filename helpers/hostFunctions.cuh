@@ -127,13 +127,13 @@ __host__ [[gnu::cold]] static inline void setDeviceFields()
 {
     constexpr size_t NCELLS = static_cast<size_t>(mesh::nx) * static_cast<size_t>(mesh::ny) * static_cast<size_t>(mesh::nz);
     constexpr size_t SIZE = NCELLS * sizeof(scalar_t);
-    constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(NLINKS) * sizeof(pop_t);
-    constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(NLINKS) * sizeof(scalar_t);
+    constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
+    constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(GLINKS) * sizeof(scalar_t);
 
     static_assert(NCELLS > 0, "Empty grid?");
     static_assert(SIZE / sizeof(scalar_t) == NCELLS, "SIZE overflow");
-    static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(NLINKS), "F_DIST_SIZE overflow");
-    static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(NLINKS), "G_DIST_SIZE overflow");
+    static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(FLINKS), "F_DIST_SIZE overflow");
+    static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(GLINKS), "G_DIST_SIZE overflow");
 
     checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
     checkCudaErrors(cudaMalloc(&fields.ux, SIZE));

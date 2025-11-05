@@ -100,13 +100,13 @@ __global__ void setDistros(
     const scalar_t uz = d.uz[idx3];
 
     const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, FLINKS>(
         [&](const auto Q)
         {
-            constexpr scalar_t w = VelocitySet::Dir<Q>::w;
-            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::Dir<Q>::cx);
-            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
-            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
+            constexpr scalar_t w = VelocitySet::F<Q>::w;
+            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
+            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
+            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
 
             const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
@@ -120,11 +120,20 @@ __global__ void setDistros(
 
 #endif
 
-            const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
-            const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
-            const label_t zz = z + static_cast<label_t>(VelocitySet::Dir<Q>::cz);
-
             d.f[device::global4(x, y, z, Q)] = to_pop(feq);
-            d.g[device::global4(xx, yy, zz, Q)] = w * d.phi[idx3] * (1.0f + cu);
+        });
+
+    device::constexpr_for<0, GLINKS>(
+        [&](const auto Q)
+        {
+            const label_t xx = x + static_cast<label_t>(VelocitySet::G<Q>::cx);
+            const label_t yy = y + static_cast<label_t>(VelocitySet::G<Q>::cy);
+            const label_t zz = z + static_cast<label_t>(VelocitySet::G<Q>::cz);
+
+            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::G<Q>::cx);
+            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::G<Q>::cy);
+            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::G<Q>::cz);
+
+            d.g[device::global4(xx, yy, zz, Q)] = VelocitySet::G<Q>::wg * d.phi[idx3] * (1.0f + AS2_P * (cx * ux + cy * uy + cz * uz));
         });
 }

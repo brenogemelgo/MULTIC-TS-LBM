@@ -13,7 +13,7 @@ __global__ void computePhase(LBMFields d)
     const label_t idx3 = device::global3(x, y, z);
 
     scalar_t phi = 0.0f;
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, GLINKS>(
         [&](const auto Q)
         {
             phi += d.g[Q * PLANE + idx3];
@@ -73,9 +73,10 @@ __global__ void computeNormals(LBMFields d)
 
 #endif
 
-    const scalar_t gx = 3.0f * sgx;
-    const scalar_t gy = 3.0f * sgy;
-    const scalar_t gz = 3.0f * sgz;
+    // Use the hydrodynamic scale factor
+    const scalar_t gx = AS2_H * sgx;
+    const scalar_t gy = AS2_H * sgy;
+    const scalar_t gz = AS2_H * sgz;
 
     const scalar_t ind = sqrtf(gx * gx + gy * gy + gz * gz);
     const scalar_t invInd = 1.0f / (ind + 1e-9f);
@@ -141,7 +142,8 @@ __global__ void computeForces(LBMFields d)
 
 #endif
 
-    const scalar_t curvature = -3.0f * (scx + scy + scz);
+    // Use the hydrodynamic scale factor
+    const scalar_t curvature = -AS2_H * (scx + scy + scz);
 
     const scalar_t stCurv = physics::sigma * curvature * d.ind[idx3];
     d.ffx[idx3] = stCurv * d.normx[idx3];

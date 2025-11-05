@@ -24,20 +24,20 @@ __global__ void applyInflow(LBMFields d)
     const scalar_t uz = d.uz[idx3_bnd];
     const scalar_t P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, FLINKS>(
         [&](const auto Q)
         {
-            if constexpr (VelocitySet::Dir<Q>::cz == 1)
+            if constexpr (VelocitySet::F<Q>::cz == 1)
             {
-                const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
-                const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
+                const label_t xx = x + static_cast<label_t>(VelocitySet::F<Q>::cx);
+                const label_t yy = y + static_cast<label_t>(VelocitySet::F<Q>::cy);
 
-                label_t fluidNode = device::global3(xx, yy, 1);
+                const label_t fluidNode = device::global3(xx, yy, 1);
 
-                constexpr scalar_t w = VelocitySet::Dir<Q>::w;
-                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::Dir<Q>::cx);
-                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
-                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
+                constexpr scalar_t w = VelocitySet::F<Q>::w;
+                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
+                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
+                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
 
                 const scalar_t feq = w * d.rho[fluidNode] * P - w;
 
@@ -77,17 +77,17 @@ __global__ void applyInflow(LBMFields d)
             }
         });
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, GLINKS>(
         [&](const auto Q)
         {
-            if constexpr (VelocitySet::Dir<Q>::cz == 1)
+            if constexpr (VelocitySet::G<Q>::cz == 1)
             {
-                const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
-                const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
+                const label_t xx = x + static_cast<label_t>(VelocitySet::G<Q>::cx);
+                const label_t yy = y + static_cast<label_t>(VelocitySet::G<Q>::cy);
 
-                label_t fluidNode = device::global3(xx, yy, 1);
+                const label_t fluidNode = device::global3(xx, yy, 1);
 
-                const scalar_t geq = VelocitySet::Dir<Q>::w * d.phi[idx3_bnd] * (1.0f + 3.0f * uz);
+                const scalar_t geq = VelocitySet::G<Q>::wg * d.phi[idx3_bnd] * (1.0f + AS2_P * uz);
 
                 d.g[Q * PLANE + fluidNode] = geq;
             }
@@ -117,20 +117,20 @@ __global__ void applyOutflow(LBMFields d)
 
     const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, FLINKS>(
         [&](const auto Q)
         {
-            if constexpr (VelocitySet::Dir<Q>::cz == -1)
+            if constexpr (VelocitySet::F<Q>::cz == -1)
             {
-                const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
-                const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
+                const label_t xx = x + static_cast<label_t>(VelocitySet::F<Q>::cx);
+                const label_t yy = y + static_cast<label_t>(VelocitySet::F<Q>::cy);
 
-                label_t fluidNode = device::global3(xx, yy, mesh::nz - 2);
+                const label_t fluidNode = device::global3(xx, yy, mesh::nz - 2);
 
-                constexpr scalar_t w = VelocitySet::Dir<Q>::w;
-                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::Dir<Q>::cx);
-                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
-                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
+                constexpr scalar_t w = VelocitySet::F<Q>::w;
+                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
+                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
+                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
 
                 const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
@@ -180,17 +180,17 @@ __global__ void applyOutflow(LBMFields d)
             }
         });
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, GLINKS>(
         [&](const auto Q)
         {
-            if constexpr (VelocitySet::Dir<Q>::cz == -1)
+            if constexpr (VelocitySet::G<Q>::cz == -1)
             {
-                const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
-                const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
+                const label_t xx = x + static_cast<label_t>(VelocitySet::G<Q>::cx);
+                const label_t yy = y + static_cast<label_t>(VelocitySet::G<Q>::cy);
 
-                label_t fluidNode = device::global3(xx, yy, mesh::nz - 2);
+                const label_t fluidNode = device::global3(xx, yy, mesh::nz - 2);
 
-                const scalar_t geq = VelocitySet::Dir<Q>::w * d.phi[fluidNode] * (1.0f - 3.0f * physics::u_ref);
+                const scalar_t geq = VelocitySet::G<Q>::wg * d.phi[fluidNode] * (1.0f - AS2_P * physics::u_ref);
 
                 d.g[Q * PLANE + fluidNode] = geq;
             }
@@ -208,23 +208,33 @@ __global__ void periodicX(LBMFields d)
     const label_t bL = device::global3(1, y, z);
     const label_t bR = device::global3(mesh::nx - 2, y, z);
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, FLINKS>(
         [&](const auto Q)
         {
-            constexpr int cx = VelocitySet::Dir<Q>::cx;
-
-            if constexpr (cx > 0)
+            if constexpr (VelocitySet::F<Q>::cx > 0)
             {
                 d.f[Q * PLANE + bL] = d.f[Q * PLANE + bR];
-                d.g[Q * PLANE + bL] = d.g[Q * PLANE + bR];
             }
-            if constexpr (cx < 0)
+            if constexpr (VelocitySet::F<Q>::cx < 0)
             {
                 d.f[Q * PLANE + bR] = d.f[Q * PLANE + bL];
+            }
+        });
+
+    device::constexpr_for<0, GLINKS>(
+        [&](const auto Q)
+        {
+            if constexpr (VelocitySet::G<Q>::cx > 0)
+            {
+                d.g[Q * PLANE + bL] = d.g[Q * PLANE + bR];
+            }
+            if constexpr (VelocitySet::G<Q>::cx < 0)
+            {
                 d.g[Q * PLANE + bR] = d.g[Q * PLANE + bL];
             }
         });
 
+    // Copy to ghost layer (periodic wrapping)
     const label_t gL = device::global3(0, y, z);
     const label_t gR = device::global3(mesh::nx - 1, y, z);
 
@@ -255,27 +265,36 @@ __global__ void periodicY(LBMFields d)
     const label_t bB = device::global3(x, 1, z);
     const label_t bT = device::global3(x, mesh::ny - 2, z);
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, FLINKS>(
         [&](const auto Q)
         {
-            constexpr int cy = VelocitySet::Dir<Q>::cy;
-
-            if constexpr (cy > 0)
+            if constexpr (VelocitySet::F<Q>::cy > 0)
             {
                 d.f[Q * PLANE + bB] = d.f[Q * PLANE + bT];
-                d.g[Q * PLANE + bB] = d.g[Q * PLANE + bT];
             }
-            if constexpr (cy < 0)
+            if constexpr (VelocitySet::F<Q>::cy < 0)
             {
                 d.f[Q * PLANE + bT] = d.f[Q * PLANE + bB];
+            }
+        });
+
+    device::constexpr_for<0, GLINKS>(
+        [&](const auto Q)
+        {
+            if constexpr (VelocitySet::F<Q>::cy > 0)
+            {
+                d.g[Q * PLANE + bB] = d.g[Q * PLANE + bT];
+            }
+            if constexpr (VelocitySet::F<Q>::cy < 0)
+            {
                 d.g[Q * PLANE + bT] = d.g[Q * PLANE + bB];
             }
         });
 
+    // Copy to ghost layer (periodic wrapping)
     const label_t gB = device::global3(x, 0, z);
     const label_t gT = device::global3(x, mesh::ny - 1, z);
 
-    // ghost cells
     d.phi[gB] = d.phi[bT];
     d.phi[gT] = d.phi[bB];
 

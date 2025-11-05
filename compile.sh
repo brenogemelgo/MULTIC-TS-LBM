@@ -56,6 +56,7 @@ nvcc -O3 --restrict \
      -gencode arch=compute_${CC},code=sm_${CC} \
      -gencode arch=compute_${CC},code=compute_${CC} \
      -rdc=true --ptxas-options=-v \
+     -extra-device-vectorization \
      --use_fast_math --fmad=true \
      -I"${SRC_DIR}" \
      -std=c++20 "${SRC_DIR}/main.cu" \

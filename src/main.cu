@@ -17,6 +17,9 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
+    // Benchmark define (suppresses step output)
+    // #define BENCHMARK
+
     // Set GPU based on pipeline argument
     if (setDeviceFromEnv() < 0)
         return 1;

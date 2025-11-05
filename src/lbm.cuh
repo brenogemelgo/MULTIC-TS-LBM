@@ -1,7 +1,6 @@
 #pragma once
 
-__global__ __launch_bounds__(block::nx *block::ny *block::nz) void streamCollide(
-    LBMFields d)
+__global__ __launch_bounds__(block::nx *block::ny *block::nz) void streamCollide(LBMFields d)
 {
     const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
     const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -15,7 +14,7 @@ __global__ __launch_bounds__(block::nx *block::ny *block::nz) void streamCollide
 
     const label_t idx3 = device::global3(x, y, z);
 
-    scalar_t pop[NLINKS];
+    scalar_t pop[FLINKS];
     pop[0] = from_pop(d.f[idx3]);
     pop[1] = from_pop(d.f[PLANE + idx3]);
     pop[2] = from_pop(d.f[2 * PLANE + idx3]);
@@ -92,13 +91,13 @@ __global__ __launch_bounds__(block::nx *block::ny *block::nz) void streamCollide
     scalar_t pxy = 0.0f, pxz = 0.0f, pyz = 0.0f;
 
     const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, FLINKS>(
         [&](const auto Q)
         {
-            constexpr scalar_t w = VelocitySet::Dir<Q>::w;
-            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::Dir<Q>::cx);
-            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
-            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
+            constexpr scalar_t w = VelocitySet::F<Q>::w;
+            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
+            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
+            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
 
             const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
@@ -179,23 +178,23 @@ __global__ __launch_bounds__(block::nx *block::ny *block::nz) void streamCollide
 
 #endif
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, FLINKS>(
         [&](const auto Q)
         {
-            constexpr scalar_t w = VelocitySet::Dir<Q>::w;
-            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::Dir<Q>::cx);
-            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::Dir<Q>::cy);
-            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::Dir<Q>::cz);
+            constexpr scalar_t w = VelocitySet::F<Q>::w;
+            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
+            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
+            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
 
             const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
 #if defined(D3Q19)
 
-            scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
+            const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
 
 #elif defined(D3Q27)
 
-            scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + OOS * cu * cu * cu - uu * cu) - w;
+            const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + OOS * cu * cu * cu - uu * cu) - w;
 
 #endif
 
@@ -247,33 +246,33 @@ __global__ __launch_bounds__(block::nx *block::ny *block::nz) void streamCollide
                                    6.0f * (cx * cy * cz) * (ux * pyz + uy * pxz + uz * pxy));
 
 #endif
-            const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
-            const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
-            const label_t zz = z + static_cast<label_t>(VelocitySet::Dir<Q>::cz);
+            const label_t xx = x + static_cast<label_t>(VelocitySet::F<Q>::cx);
+            const label_t yy = y + static_cast<label_t>(VelocitySet::F<Q>::cy);
+            const label_t zz = z + static_cast<label_t>(VelocitySet::F<Q>::cz);
 
             d.f[device::global4(xx, yy, zz, Q)] = to_pop(feq + omcoLocal * fneq + force);
         });
 
-    const float phi = d.phi[idx3];
-    const float normx = d.normx[idx3];
-    const float normy = d.normy[idx3];
-    const float normz = d.normz[idx3];
-    const float phiNorm = physics::gamma * phi * (1.0f - phi);
+    const scalar_t phi = d.phi[idx3];
+    const scalar_t normx = d.normx[idx3];
+    const scalar_t normy = d.normy[idx3];
+    const scalar_t normz = d.normz[idx3];
+    const scalar_t phiNorm = physics::gamma * phi * (1.0f - phi);
 
-    device::constexpr_for<0, NLINKS>(
+    device::constexpr_for<0, GLINKS>(
         [&](const auto Q)
         {
-            const label_t xx = x + static_cast<label_t>(VelocitySet::Dir<Q>::cx);
-            const label_t yy = y + static_cast<label_t>(VelocitySet::Dir<Q>::cy);
-            const label_t zz = z + static_cast<label_t>(VelocitySet::Dir<Q>::cz);
+            const label_t xx = x + static_cast<label_t>(VelocitySet::G<Q>::cx);
+            const label_t yy = y + static_cast<label_t>(VelocitySet::G<Q>::cy);
+            const label_t zz = z + static_cast<label_t>(VelocitySet::G<Q>::cz);
 
-            constexpr float w = VelocitySet::Dir<Q>::w;
-            constexpr float cx = static_cast<float>(VelocitySet::Dir<Q>::cx);
-            constexpr float cy = static_cast<float>(VelocitySet::Dir<Q>::cy);
-            constexpr float cz = static_cast<float>(VelocitySet::Dir<Q>::cz);
+            constexpr scalar_t wg = VelocitySet::G<Q>::wg;
+            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::G<Q>::cx);
+            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::G<Q>::cy);
+            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::G<Q>::cz);
 
-            const float geq = w * phi * (1.0f + 3.0f * (cx * ux + cy * uy + cz * uz));
-            const float hi = w * phiNorm * (cx * normx + cy * normy + cz * normz);
+            const scalar_t geq = wg * phi * (1.0f + AS2_P * (cx * ux + cy * uy + cz * uz));
+            const scalar_t hi = wg * phiNorm * (cx * normx + cy * normy + cz * normz);
 
             d.g[device::global4(xx, yy, zz, Q)] = geq + hi;
         });
