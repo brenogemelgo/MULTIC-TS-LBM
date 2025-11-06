@@ -43,7 +43,7 @@ namespace device
     __device__ [[nodiscard]] inline scalar_t pseudo_box_muller(scalar_t rrx) noexcept
     {
         const scalar_t r = sqrtf(-2.0f * logf(fmaxf(rrx, 1e-12f)));
-        const scalar_t theta = math::two_pi() * rrx;
+        const scalar_t theta = math::two_pi<scalar_t>() * rrx;
         return r * cosf(theta);
     }
 
@@ -53,7 +53,7 @@ namespace device
     {
         rrx = fmaxf(rrx, 1e-12f);
         const scalar_t r = sqrtf(-2.0f * logf(rrx));
-        const scalar_t theta = math::two_pi() * rry;
+        const scalar_t theta = math::two_pi<scalar_t>() * rry;
         scalar_t s, c;
         sincosf(theta, &s, &c);
         z1 = r * c;
@@ -97,11 +97,11 @@ namespace device
 
     __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept
     {
-        const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
-        const scalar_t s = fminf(fmaxf((zn - sponge::z_start()) * sponge::inv_sponge(), 0.0f), 1.0f);
+        const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1<scalar_t>();
+        const scalar_t s = fminf(fmaxf((zn - sponge::z_start<scalar_t>()) * sponge::inv_sponge<scalar_t>(), 0.0f), 1.0f);
         const scalar_t s2 = s * s;
         const scalar_t ramp = s2 * s;
-        return fmaf(ramp, relaxation::omega_delta(), relaxation::omega_ref());
+        return fmaf(ramp, relaxation::omega_delta<scalar_t>(), relaxation::omega_ref<scalar_t>());
     }
 
 #endif
@@ -116,7 +116,7 @@ namespace device
 
     __device__ [[nodiscard]] inline scalar_t interpolate_rho(scalar_t phi) noexcept
     {
-        return fmaf(phi, (physics::rho_oil() - physics::rho_water()), physics::rho_water());
+        return fmaf(phi, (physics::rho_oil<scalar_t>() - physics::rho_water<scalar_t>()), physics::rho_water<scalar_t>());
     }
 
     template <const label_t Start, const label_t End, typename F>

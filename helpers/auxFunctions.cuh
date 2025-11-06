@@ -44,19 +44,19 @@ namespace geometry
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T center_x() noexcept
     {
-        return static_cast<T>(mesh::nx - 1) * static_cast<T>(0.5f);
+        return (static_cast<T>(mesh::nx) - static_cast<T>(1)) * static_cast<T>(0.5f);
     }
 
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T center_y() noexcept
     {
-        return static_cast<T>(mesh::ny - 1) * static_cast<T>(0.5f);
+        return (static_cast<T>(mesh::ny) - static_cast<T>(1)) * static_cast<T>(0.5f);
     }
 
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T center_z() noexcept
     {
-        return static_cast<T>(mesh::nz - 1) * static_cast<T>(0.5f);
+        return (static_cast<T>(mesh::nz) - static_cast<T>(1)) * static_cast<T>(0.5f);
     }
 }
 
@@ -147,7 +147,7 @@ namespace lbm
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T cssq() noexcept
     {
-        return static_cast<T>(1.0f / 3.0f);
+        return static_cast<T>(1.0f) / static_cast<T>(3.0f);
     }
 
     template <typename T = scalar_t>
@@ -165,7 +165,7 @@ namespace lbm
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T oos() noexcept
     {
-        return static_cast<T>(1.0f / 6.0f);
+        return static_cast<T>(1.0f) / static_cast<T>(6.0f);
     }
 }
 
@@ -180,16 +180,14 @@ namespace math
 
 namespace size
 {
-    template <typename T = scalar_t>
     __host__ __device__ static inline consteval label_t stride() noexcept
     {
-        return static_cast<label_t>(mesh::nx) * static_cast<label_t>(mesh::ny);
+        return mesh::nx * mesh::ny;
     }
 
-    template <typename T = scalar_t>
     __host__ __device__ static inline consteval label_t plane() noexcept
     {
-        return stride<T>() * static_cast<label_t>(mesh::nz);
+        return mesh::nx * mesh::ny * mesh::nz;
     }
 }
 
@@ -208,28 +206,28 @@ namespace sponge
         return static_cast<T>(3.0f);
     }
 
-    template <typename T = scalar_t>
-    __host__ __device__ static inline consteval int sponge_cells() noexcept
+    template <typename T = int>
+    __host__ __device__ static inline consteval T sponge_cells() noexcept
     {
-        return static_cast<int>(mesh::nz / 12);
+        return static_cast<T>(mesh::nz / 12u);
     }
 
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T sponge() noexcept
     {
-        return static_cast<T>(sponge_cells<T>()) / static_cast<T>(mesh::nz - 1);
+        return sponge_cells<T>() / (static_cast<T>(mesh::nz) - static_cast<T>(1));
     }
 
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T z_start() noexcept
     {
-        return static_cast<T>(mesh::nz - 1 - sponge_cells<T>()) / static_cast<T>(mesh::nz - 1);
+        return (static_cast<T>(mesh::nz) - static_cast<T>(1) - sponge_cells<T>()) / (static_cast<T>(mesh::nz) - static_cast<T>(1));
     }
 
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T inv_nz_m1() noexcept
     {
-        return static_cast<T>(1.0f) / static_cast<T>(mesh::nz - 1);
+        return static_cast<T>(1.0f) / (static_cast<T>(mesh::nz) - static_cast<T>(1));
     }
 
     template <typename T = scalar_t>
