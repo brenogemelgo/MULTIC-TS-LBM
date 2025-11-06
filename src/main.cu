@@ -72,13 +72,13 @@ int main(int argc, char *argv[])
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
         // Calculate the phase field
-        lbm::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
+        phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Calculate interface normals
-        lbm::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
+        phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Calculate surface tension forces
-        lbm::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
+        phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Main kernel
         lbm::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
@@ -104,11 +104,11 @@ int main(int argc, char *argv[])
         if (STEP % MACRO_SAVE == 0)
         {
 
-            host::copyAndSaveToBinary(fields.rho, SIM_DIR, SIM_ID, STEP, "rho");
-            host::copyAndSaveToBinary(fields.ux, SIM_DIR, SIM_ID, STEP, "ux");
-            host::copyAndSaveToBinary(fields.uy, SIM_DIR, SIM_ID, STEP, "uy");
-            host::copyAndSaveToBinary(fields.uz, SIM_DIR, SIM_ID, STEP, "uz");
-            host::copyAndSaveToBinary(fields.phi, SIM_DIR, SIM_ID, STEP, "phi");
+            host::copyAndSaveToBinary(fields.rho, SIM_DIR, STEP, "rho");
+            host::copyAndSaveToBinary(fields.ux, SIM_DIR, STEP, "ux");
+            host::copyAndSaveToBinary(fields.uy, SIM_DIR, STEP, "uy");
+            host::copyAndSaveToBinary(fields.uz, SIM_DIR, STEP, "uz");
+            host::copyAndSaveToBinary(fields.phi, SIM_DIR, STEP, "phi");
 
             // Print step
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";

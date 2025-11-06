@@ -59,12 +59,11 @@ namespace host
         }
     }
 
-    template <size_t SIZE = size::plane()>
+    template <const size_t SIZE = size::plane()>
     __host__ [[gnu::cold]] static inline void copyAndSaveToBinary(
         const scalar_t *d_data,
         const std::string &SIM_DIR,
-        [[maybe_unused]] const std::string &ID,
-        const int STEP,
+        const label_t STEP,
         const std::string &VAR_NAME)
     {
         std::error_code EC;

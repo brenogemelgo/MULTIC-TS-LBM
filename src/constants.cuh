@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../helpers/cudaUtils.cuh"
-#include "../helpers/commonStructs.cuh"
-#include "../helpers/velocitySets.cuh"
+#include "../helpers/structs.cuh"
+#include "../helpers/velocitySet.cuh"
 
 // #define RUN_MODE
 #define SAMPLE_MODE
@@ -29,37 +29,34 @@ static constexpr int NSTEPS = 0;
 
 namespace mesh
 {
-
     static constexpr label_t res = 128;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res * 2;
     static constexpr int diam = 20;
     static constexpr int radius = diam / 2;
-};
+}
 
 namespace physics
 {
-
     static constexpr scalar_t u_ref = 0.05f;
     static constexpr int reynolds = 5000;
     static constexpr int weber = 500;
     static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;
     static constexpr scalar_t gamma = 1.0f;
-};
+}
 
 #elif defined(DROPLET)
 
 namespace mesh
 {
-
     static constexpr label_t res = 75;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res;
     static constexpr int radius = 10;
     static constexpr int diam = 2 * radius;
-};
+}
 
 namespace physics
 {
@@ -72,6 +69,6 @@ namespace physics
 
     static constexpr scalar_t tau = 0.55f;
     static constexpr scalar_t visc_ref = (tau - 0.5f) / 3.0f;
-};
+}
 
 #endif

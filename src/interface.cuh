@@ -1,6 +1,6 @@
 #pragma once
 
-namespace lbm
+namespace phase
 {
     __global__ void computePhase(LBMFields d)
     {

@@ -151,12 +151,6 @@ namespace lbm
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T csco() noexcept
-    {
-        return static_cast<T>(1.0f) - cssq<T>();
-    }
-
-    template <typename T = scalar_t>
     __host__ __device__ static inline consteval T omco() noexcept
     {
         return static_cast<T>(1.0f) - relaxation::omega_ref<T>();

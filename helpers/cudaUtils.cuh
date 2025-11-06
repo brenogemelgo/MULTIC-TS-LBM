@@ -38,7 +38,7 @@ namespace block
     static constexpr int tile_nx = static_cast<int>(nx) + 2 * pad;
     static constexpr int tile_ny = static_cast<int>(ny) + 2 * pad;
     static constexpr int tile_nz = static_cast<int>(nz) + 2 * pad;
-};
+}
 
 using ci_t = int;
 using label_t = uint64_t;
