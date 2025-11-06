@@ -42,10 +42,10 @@ __global__ void setJet(
     if (x >= mesh::nx || y >= mesh::ny)
         return;
 
-    const scalar_t dx = static_cast<scalar_t>(x) - CENTER_X;
-    const scalar_t dy = static_cast<scalar_t>(y) - CENTER_Y;
+    const scalar_t dx = static_cast<scalar_t>(x) - geometry::center_x();
+    const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
     const scalar_t r2 = dx * dx + dy * dy;
-    if (r2 > R2)
+    if (r2 > geometry::R2())
         return;
 
     const label_t idx3_in = device::global3(x, y, 0);
@@ -72,9 +72,9 @@ setDroplet(
 
     const label_t idx3 = device::global3(x, y, z);
 
-    const scalar_t dx = (static_cast<scalar_t>(x) - CENTER_X) / 2.0f;
-    const scalar_t dy = static_cast<scalar_t>(y) - CENTER_Y;
-    const scalar_t dz = static_cast<scalar_t>(z) - CENTER_Z;
+    const scalar_t dx = (static_cast<scalar_t>(x) - geometry::center_x()) / 2.0f;
+    const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
+    const scalar_t dz = static_cast<scalar_t>(z) - geometry::center_z();
     const scalar_t radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
 
     const scalar_t phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<scalar_t>(mesh::radius) - radialDist) / 3.0f);

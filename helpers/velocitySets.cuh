@@ -1,4 +1,5 @@
 #pragma once
+
 #include "cudaUtils.cuh"
 
 #define G_LOW_ORDER

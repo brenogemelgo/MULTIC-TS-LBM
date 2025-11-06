@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cuda_runtime.h>
 #include <math_constants.h>
 #include <builtin_types.h>
@@ -16,7 +17,7 @@
 #include <cstdlib>
 #include <filesystem>
 
-struct block
+namespace block
 {
 
 #if defined(JET)
@@ -40,7 +41,7 @@ struct block
 };
 
 using ci_t = int;
-using label_t = uint32_t;
+using label_t = uint64_t;
 using scalar_t = float;
 
 #if defined(ENABLE_FP16)

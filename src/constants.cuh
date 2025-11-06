@@ -1,4 +1,5 @@
 #pragma once
+
 #include "../helpers/cudaUtils.cuh"
 #include "../helpers/commonStructs.cuh"
 #include "../helpers/velocitySets.cuh"
@@ -15,7 +16,7 @@ static constexpr int NSTEPS = 100000;
 #elif defined(SAMPLE_MODE)
 
 static constexpr int MACRO_SAVE = 100;
-static constexpr int NSTEPS = 10000;
+static constexpr int NSTEPS = 1000;
 
 #elif defined(DEBUG_MODE)
 
@@ -26,7 +27,7 @@ static constexpr int NSTEPS = 0;
 
 #if defined(JET)
 
-struct mesh
+namespace mesh
 {
 
     static constexpr label_t res = 128;
@@ -37,7 +38,7 @@ struct mesh
     static constexpr int radius = diam / 2;
 };
 
-struct physics
+namespace physics
 {
 
     static constexpr scalar_t u_ref = 0.05f;
@@ -49,7 +50,7 @@ struct physics
 
 #elif defined(DROPLET)
 
-struct mesh
+namespace mesh
 {
 
     static constexpr label_t res = 75;
@@ -60,7 +61,7 @@ struct mesh
     static constexpr int diam = 2 * radius;
 };
 
-struct physics
+namespace physics
 {
 
     static constexpr scalar_t u_ref = 0.0f;
@@ -74,5 +75,3 @@ struct physics
 };
 
 #endif
-
-#include "../helpers/auxConstants.cuh"

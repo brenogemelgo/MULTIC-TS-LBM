@@ -1,26 +1,28 @@
 #pragma once
+
 #include "constants.cuh"
+#include "auxFunctions.cuh"
 
 namespace device
 {
     __device__ [[nodiscard]] inline label_t global3(
         const label_t x, const label_t y, const label_t z) noexcept
     {
-        return x + y * mesh::nx + z * STRIDE;
+        return x + y * mesh::nx + z * size::stride();
     }
 
     __device__ [[nodiscard]] inline label_t global4(
         const label_t x, const label_t y, const label_t z,
         const label_t Q) noexcept
     {
-        return Q * PLANE + global3(x, y, z);
+        return Q * size::plane() + global3(x, y, z);
     }
 
     __device__ [[nodiscard]] inline label_t globalThreadIdx(
         const label_t tx, const label_t ty, const label_t tz,
         const label_t bx, const label_t by, const label_t bz) noexcept
     {
-        return (tx + block::nx * (ty + block::ny * (tz + block::nz * (bx + NUM_BLOCK_X * (by + NUM_BLOCK_Y * bz)))));
+        return (tx + block::nx * (ty + block::ny * (tz + block::nz * (bx + block::num_block_x() * (by + block::num_block_y() * bz)))));
     }
 
     __device__ [[nodiscard]] inline label_t hash32(label_t x) noexcept
@@ -41,7 +43,7 @@ namespace device
     __device__ [[nodiscard]] inline scalar_t pseudo_box_muller(scalar_t rrx) noexcept
     {
         const scalar_t r = sqrtf(-2.0f * logf(fmaxf(rrx, 1e-12f)));
-        const scalar_t theta = TWO_PI * rrx;
+        const scalar_t theta = math::two_pi() * rrx;
         return r * cosf(theta);
     }
 
@@ -51,7 +53,7 @@ namespace device
     {
         rrx = fmaxf(rrx, 1e-12f);
         const scalar_t r = sqrtf(-2.0f * logf(rrx));
-        const scalar_t theta = TWO_PI * rry;
+        const scalar_t theta = math::two_pi() * rry;
         scalar_t s, c;
         sincosf(theta, &s, &c);
         z1 = r * c;
@@ -95,17 +97,17 @@ namespace device
 
     __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept
     {
-        const scalar_t zn = static_cast<scalar_t>(z) * INV_NZ_M1;
-        const scalar_t s = fminf(fmaxf((zn - Z_START) * INV_SPONGE, 0.0f), 1.0f);
+        const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
+        const scalar_t s = fminf(fmaxf((zn - sponge::z_start()) * sponge::inv_sponge(), 0.0f), 1.0f);
         const scalar_t s2 = s * s;
         const scalar_t ramp = s2 * s;
-        return fmaf(ramp, OMEGA_DELTA, OMEGA_REF);
+        return fmaf(ramp, relaxation::omega_delta(), relaxation::omega_ref());
     }
 
 #endif
 
     __device__ [[nodiscard]] inline scalar_t smoothstep(
-        scalar_t edge0, scalar_t edge1,
+        const scalar_t edge0, const scalar_t edge1,
         scalar_t x) noexcept
     {
         x = __saturatef((x - edge0) / (edge1 - edge0));
@@ -114,7 +116,7 @@ namespace device
 
     __device__ [[nodiscard]] inline scalar_t interpolate_rho(scalar_t phi) noexcept
     {
-        return fmaf(phi, (RHO_OIL - RHO_WATER), RHO_WATER);
+        return fmaf(phi, (physics::rho_oil() - physics::rho_water()), physics::rho_water());
     }
 
     template <const label_t Start, const label_t End, typename F>

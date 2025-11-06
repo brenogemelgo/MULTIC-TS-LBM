@@ -15,39 +15,39 @@ int main(int argc, char *argv[])
     const std::string FLOW_CASE = argv[1];
     const std::string VELOCITY_SET = argv[2];
     const std::string SIM_ID = argv[3];
-    const std::string SIM_DIR = createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
+    const std::string SIM_DIR = host::createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-    // Benchmark define (suppresses step output)
-    // #define BENCHMARK
+// Benchmark define (suppresses saves and step outputs)
+#define BENCHMARK
 
     // Set GPU based on pipeline argument
-    if (setDeviceFromEnv() < 0)
+    if (host::setDeviceFromEnv() < 0)
         return 1;
 
     // Initialize device arrays
-    setDeviceFields();
+    host::setDeviceFields();
 
     // Block-wise configuration
     const dim3 block3D(block::nx, block::ny, block::nz);
 
-    const dim3 grid3D(divUp(mesh::nx, block3D.x),
-                      divUp(mesh::ny, block3D.y),
-                      divUp(mesh::nz, block3D.z));
+    const dim3 grid3D(host::divUp(mesh::nx, block3D.x),
+                      host::divUp(mesh::ny, block3D.y),
+                      host::divUp(mesh::nz, block3D.z));
 
     const dim3 blockX(block::nx, block::ny, 1u);
     const dim3 blockY(block::nx, block::ny, 1u);
     const dim3 blockZ(block::nx, block::ny, 1u);
 
-    const dim3 gridX(divUp(mesh::ny, blockX.x), divUp(mesh::nz, blockX.y), 1u);
-    const dim3 gridY(divUp(mesh::nx, blockY.x), divUp(mesh::nz, blockY.y), 1u);
-    const dim3 gridZ(divUp(mesh::nx, blockZ.x), divUp(mesh::ny, blockZ.y), 1u);
+    const dim3 gridX(host::divUp(mesh::ny, blockX.x), host::divUp(mesh::nz, blockX.y), 1u);
+    const dim3 gridY(host::divUp(mesh::nx, blockY.x), host::divUp(mesh::nz, blockY.y), 1u);
+    const dim3 gridZ(host::divUp(mesh::nx, blockZ.x), host::divUp(mesh::ny, blockZ.y), 1u);
 
     // Dynamic shared memory size
     constexpr size_t dynamic = 0;
 
     // Create stream
     cudaStream_t queue{};
-    checkCudaErrors(cudaStreamCreate(&queue));
+    checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
     // Call initialization kernels
     setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
@@ -65,31 +65,31 @@ int main(int argc, char *argv[])
     setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // Make sure all initialization kernels have finished
-    checkCudaErrors(cudaDeviceSynchronize());
+    checkCudaErrorsOutline(cudaDeviceSynchronize());
 
     // Time loop
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
         // Calculate the phase field
-        computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
+        lbm::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Calculate interface normals
-        computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
+        lbm::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Calculate surface tension forces
-        computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
+        lbm::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Main kernel
-        streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
+        lbm::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Call boundary conditions
 #if defined(JET)
 
-        applyInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
-        periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
+        lbm::applyInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        lbm::applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        lbm::periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
+        lbm::periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 
@@ -104,14 +104,11 @@ int main(int argc, char *argv[])
         if (STEP % MACRO_SAVE == 0)
         {
 
-            copyAndSaveToBinary(fields.rho, PLANE, SIM_DIR, SIM_ID, STEP, "rho");
-            copyAndSaveToBinary(fields.phi, PLANE, SIM_DIR, SIM_ID, STEP, "phi");
-
-#if defined(JET)
-
-            copyAndSaveToBinary(fields.uz, PLANE, SIM_DIR, SIM_ID, STEP, "uz");
-
-#endif
+            host::copyAndSaveToBinary(fields.rho, SIM_DIR, SIM_ID, STEP, "rho");
+            host::copyAndSaveToBinary(fields.ux, SIM_DIR, SIM_ID, STEP, "ux");
+            host::copyAndSaveToBinary(fields.uy, SIM_DIR, SIM_ID, STEP, "uy");
+            host::copyAndSaveToBinary(fields.uz, SIM_DIR, SIM_ID, STEP, "uz");
+            host::copyAndSaveToBinary(fields.phi, SIM_DIR, SIM_ID, STEP, "phi");
 
             // Print step
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
@@ -146,7 +143,7 @@ int main(int argc, char *argv[])
 
     // Performance log
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
-    const uint64_t TOTAL_CELLS = static_cast<uint64_t>(mesh::nx) * mesh::ny * mesh::nz * static_cast<uint64_t>(NSTEPS ? NSTEPS : 1);
+    const label_t TOTAL_CELLS = static_cast<label_t>(mesh::nx) * mesh::ny * mesh::nz * static_cast<label_t>(NSTEPS ? NSTEPS : 1);
     const double MLUPS = static_cast<double>(TOTAL_CELLS) / (ELAPSED_TIME.count() * 1e6);
 
     std::cout << "\n// =============================================== //\n";
@@ -155,7 +152,7 @@ int main(int argc, char *argv[])
     std::cout << "// =============================================== //\n\n";
 
     // Generate info
-    generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET, MLUPS);
+    host::generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET, MLUPS);
     getLastCudaErrorOutline("Final sync");
 
     return 0;
