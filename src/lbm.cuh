@@ -1,6 +1,6 @@
 #pragma once
 
-namespace lbm
+namespace LBM
 {
         __global__ __launch_bounds__(block::size()) void streamCollide(LBMFields d)
         {

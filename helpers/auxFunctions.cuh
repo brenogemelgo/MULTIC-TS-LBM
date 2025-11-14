@@ -33,33 +33,6 @@ namespace physics
     }
 }
 
-namespace geometry
-{
-    template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T R2() noexcept
-    {
-        return static_cast<T>(mesh::radius) * static_cast<T>(mesh::radius);
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T center_x() noexcept
-    {
-        return (static_cast<T>(mesh::nx) - static_cast<T>(1)) * static_cast<T>(0.5f);
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T center_y() noexcept
-    {
-        return (static_cast<T>(mesh::ny) - static_cast<T>(1)) * static_cast<T>(0.5f);
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T center_z() noexcept
-    {
-        return (static_cast<T>(mesh::nz) - static_cast<T>(1)) * static_cast<T>(0.5f);
-    }
-}
-
 namespace relaxation
 {
 #if defined(JET)
@@ -142,7 +115,7 @@ namespace relaxation
 #endif
 }
 
-namespace lbm
+namespace LBM
 {
     template <typename T = scalar_t>
     __host__ __device__ static inline consteval T cssq() noexcept

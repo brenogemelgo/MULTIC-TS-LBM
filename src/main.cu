@@ -1,5 +1,5 @@
 #include "../helpers/deviceFunctions.cuh"
-#include "setupFields.cuh"
+#include "initialConditions.cuh"
 #include "interface.cuh"
 #include "lbm.cuh"
 #include "boundaryConditions.cuh"
@@ -50,19 +50,19 @@ int main(int argc, char *argv[])
     checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
     // Call initialization kernels
-    setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #if defined(JET)
 
-    setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 
-    setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #endif
 
-    setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // Make sure all initialization kernels have finished
     checkCudaErrorsOutline(cudaDeviceSynchronize());
@@ -81,15 +81,15 @@ int main(int argc, char *argv[])
         phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Main kernel
-        lbm::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
+        LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Call boundary conditions
 #if defined(JET)
 
-        lbm::applyInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        lbm::applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        lbm::periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
-        lbm::periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::applyInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 
