@@ -9,13 +9,17 @@ namespace LBM
 
 #if defined(JET)
 
-        __global__ static void applyInflow(LBMFields d)
+        template <class VelocitySet>
+        __device__ static inline constexpr void applyInflow(
+            LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
 
             if (x >= mesh::nx || y >= mesh::ny)
+            {
                 return;
+            }
 
             const scalar_t dx = static_cast<scalar_t>(x) - center_x();
             const scalar_t dy = static_cast<scalar_t>(y) - center_y();
@@ -103,7 +107,8 @@ namespace LBM
                 });
         }
 
-        __global__ static void applyOutflow(LBMFields d)
+        __device__ static inline constexpr void applyOutflow(
+            LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -208,7 +213,8 @@ namespace LBM
                 });
         }
 
-        __global__ static void periodicX(LBMFields d)
+        __device__ static inline constexpr void periodicX(
+            LBMFields d) noexcept
         {
             const label_t y = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t z = threadIdx.y + blockIdx.y * blockDim.y;
@@ -267,7 +273,8 @@ namespace LBM
             // d.uz[gR] = d.uz[bL];
         }
 
-        __global__ static void periodicY(LBMFields d)
+        __device__ static inline constexpr void periodicY(
+            LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t z = threadIdx.y + blockIdx.y * blockDim.y;

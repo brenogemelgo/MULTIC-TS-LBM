@@ -50,19 +50,19 @@ int main(int argc, char *argv[])
     checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
     // Call initialization kernels
-    LBM::initialConditions::setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::callSetFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #if defined(JET)
 
-    LBM::initialConditions::setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::callSetJet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 
-    LBM::initialConditions::setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::callSetDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #endif
 
-    LBM::initialConditions::setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::initialConditions::callSetDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // Make sure all initialization kernels have finished
     checkCudaErrorsOutline(cudaDeviceSynchronize());
@@ -86,10 +86,10 @@ int main(int argc, char *argv[])
         // Call boundary conditions
 #if defined(JET)
 
-        LBM::boundaryConditions::applyInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        LBM::boundaryConditions::applyOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        LBM::boundaryConditions::periodicX<<<gridX, blockX, dynamic, queue>>>(fields);
-        LBM::boundaryConditions::periodicY<<<gridY, blockY, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::callPeriodicX<<<gridX, blockX, dynamic, queue>>>(fields);
+        LBM::boundaryConditions::callPeriodicY<<<gridY, blockY, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 

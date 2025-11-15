@@ -7,7 +7,8 @@ namespace LBM
     public:
         __host__ __device__ [[nodiscard]] inline consteval initialConditions(){};
 
-        __global__ static void setFields(LBMFields d)
+        __device__ static inline constexpr void callSetFields(
+            LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -41,7 +42,8 @@ namespace LBM
 
 #if defined(JET)
 
-        __global__ static void setJet(LBMFields d)
+        __device__ static inline constexpr void callSetJet(
+            LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -54,6 +56,7 @@ namespace LBM
             const scalar_t dx = static_cast<scalar_t>(x) - center_x();
             const scalar_t dy = static_cast<scalar_t>(y) - center_y();
             const scalar_t r2 = dx * dx + dy * dy;
+
             if (r2 > R2())
             {
                 return;
@@ -67,7 +70,8 @@ namespace LBM
 
 #elif defined(DROPLET)
 
-        __global__ static void setDroplet(LBMFields d)
+        __device__ static inline constexpr void callSetDroplet(
+            LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -94,7 +98,8 @@ namespace LBM
 
 #endif
 
-        __global__ static void setDistros(LBMFields d)
+        __device__ static inline constexpr void callSetDistros(
+            LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
