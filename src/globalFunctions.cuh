@@ -21,15 +21,42 @@ namespace block
 namespace physics
 {
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T rho_water() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T rho_water() noexcept
     {
         return static_cast<T>(1.0f);
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T rho_oil() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T rho_oil() noexcept
     {
         return static_cast<T>(0.8f);
+    }
+}
+
+namespace geometry
+{
+    template <typename T = scalar_t>
+    __host__ __device__ [[nodiscard]] static inline consteval T R2() noexcept
+    {
+        return static_cast<T>(mesh::radius) * static_cast<T>(mesh::radius);
+    }
+
+    template <typename T = scalar_t>
+    __host__ __device__ [[nodiscard]] static inline consteval T center_x() noexcept
+    {
+        return (static_cast<T>(mesh::nx) - static_cast<T>(1)) * static_cast<T>(0.5f);
+    }
+
+    template <typename T = scalar_t>
+    __host__ __device__ [[nodiscard]] static inline consteval T center_y() noexcept
+    {
+        return (static_cast<T>(mesh::ny) - static_cast<T>(1)) * static_cast<T>(0.5f);
+    }
+
+    template <typename T = scalar_t>
+    __host__ __device__ [[nodiscard]] static inline consteval T center_z() noexcept
+    {
+        return (static_cast<T>(mesh::nz) - static_cast<T>(1)) * static_cast<T>(0.5f);
     }
 }
 
@@ -41,43 +68,43 @@ namespace relaxation
 #if defined(VISC_CONTRAST)
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T visc_water() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T visc_water() noexcept
     {
         return (static_cast<T>(physics::u_ref) * static_cast<T>(mesh::diam)) / static_cast<T>(physics::reynolds);
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T visc_oil() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T visc_oil() noexcept
     {
         return static_cast<T>(10.0f) * visc_water<T>();
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T visc_ref() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T visc_ref() noexcept
     {
         return visc_water<T>();
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omega_water() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omega_water() noexcept
     {
         return static_cast<T>(1.0f) / (static_cast<T>(0.5f) + static_cast<T>(3.0f) * visc_water<T>());
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omega_oil() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omega_oil() noexcept
     {
         return static_cast<T>(1.0f) / (static_cast<T>(0.5f) + static_cast<T>(3.0f) * visc_oil<T>());
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omega_ref() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omega_ref() noexcept
     {
         return omega_water<T>();
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omco_zmin() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omco_zmin() noexcept
     {
         return static_cast<T>(1.0f) - omega_oil<T>();
     }
@@ -85,19 +112,19 @@ namespace relaxation
 #else
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T visc_ref() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T visc_ref() noexcept
     {
         return (static_cast<T>(physics::u_ref) * static_cast<T>(mesh::diam)) / static_cast<T>(physics::reynolds);
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omega_ref() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omega_ref() noexcept
     {
         return static_cast<T>(1.0f) / (static_cast<T>(0.5f) + static_cast<T>(3.0f) * visc_ref<T>());
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omco_zmin() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omco_zmin() noexcept
     {
         return static_cast<T>(1.0f) - omega_ref<T>();
     }
@@ -107,7 +134,7 @@ namespace relaxation
 #elif defined(DROPLET)
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omega_ref() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omega_ref() noexcept
     {
         return static_cast<T>(1.0f) / (static_cast<T>(0.5f) + static_cast<T>(3.0f) * static_cast<T>(physics::visc_ref));
     }
@@ -118,19 +145,25 @@ namespace relaxation
 namespace LBM
 {
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T cssq() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T cssq() noexcept
     {
         return static_cast<T>(1.0f) / static_cast<T>(3.0f);
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omco() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T cssq_d3q7() noexcept
+    {
+        return static_cast<T>(1.0f) / static_cast<T>(4.0f);
+    }
+
+    template <typename T = scalar_t>
+    __host__ __device__ [[nodiscard]] static inline consteval T omco() noexcept
     {
         return static_cast<T>(1.0f) - relaxation::omega_ref<T>();
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T oos() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T oos() noexcept
     {
         return static_cast<T>(1.0f) / static_cast<T>(6.0f);
     }
@@ -139,7 +172,7 @@ namespace LBM
 namespace math
 {
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T two_pi() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T two_pi() noexcept
     {
         return static_cast<T>(2.0f) * static_cast<T>(CUDART_PI_F);
     }
@@ -147,12 +180,12 @@ namespace math
 
 namespace size
 {
-    __host__ __device__ static inline consteval label_t stride() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval label_t stride() noexcept
     {
         return mesh::nx * mesh::ny;
     }
 
-    __host__ __device__ static inline consteval label_t plane() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval label_t plane() noexcept
     {
         return mesh::nx * mesh::ny * mesh::nz;
     }
@@ -162,43 +195,43 @@ namespace size
 namespace sponge
 {
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T K_gain() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T K_gain() noexcept
     {
         return static_cast<T>(100.0f);
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T P_gain() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T P_gain() noexcept
     {
         return static_cast<T>(3.0f);
     }
 
     template <typename T = int>
-    __host__ __device__ static inline consteval T sponge_cells() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T sponge_cells() noexcept
     {
         return static_cast<T>(mesh::nz / 12u);
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T sponge() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T sponge() noexcept
     {
         return sponge_cells<T>() / (static_cast<T>(mesh::nz) - static_cast<T>(1));
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T z_start() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T z_start() noexcept
     {
         return (static_cast<T>(mesh::nz) - static_cast<T>(1) - sponge_cells<T>()) / (static_cast<T>(mesh::nz) - static_cast<T>(1));
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T inv_nz_m1() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T inv_nz_m1() noexcept
     {
         return static_cast<T>(1.0f) / (static_cast<T>(mesh::nz) - static_cast<T>(1));
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T inv_sponge() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T inv_sponge() noexcept
     {
         return static_cast<T>(1.0f) / sponge<T>();
     }
@@ -208,19 +241,19 @@ namespace relaxation
 {
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omega_zmax() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omega_zmax() noexcept
     {
         return static_cast<T>(1.0f) / (static_cast<T>(0.5f) + static_cast<T>(3.0f) * visc_ref<T>() * (sponge::K_gain<T>() + static_cast<T>(1.0f)));
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omco_zmax() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omco_zmax() noexcept
     {
         return static_cast<T>(1.0f) - omega_zmax<T>();
     }
 
     template <typename T = scalar_t>
-    __host__ __device__ static inline consteval T omega_delta() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval T omega_delta() noexcept
     {
         return omega_zmax<T>() - omega_ref<T>();
     }

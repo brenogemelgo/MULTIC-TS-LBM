@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants.cuh"
-#include "auxFunctions.cuh"
+#include "globalFunctions.cuh"
 
 namespace host
 {
@@ -132,12 +132,14 @@ namespace host
         constexpr size_t SIZE = NCELLS * sizeof(scalar_t);
         constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
         constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(GLINKS) * sizeof(scalar_t);
+        constexpr size_t H_DIST_SIZE = NCELLS * static_cast<size_t>(HLINKS) * sizeof(scalar_t);
 
         static_assert(NCELLS > 0, "Empty grid?");
         static_assert(SIZE / sizeof(scalar_t) == NCELLS, "SIZE overflow");
         static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(FLINKS), "F_DIST_SIZE overflow");
         static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(GLINKS), "G_DIST_SIZE overflow");
 
+        // Hydrodynamics
         checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ux, SIZE));
         checkCudaErrors(cudaMalloc(&fields.uy, SIZE));
@@ -149,6 +151,7 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.pxz, SIZE));
         checkCudaErrors(cudaMalloc(&fields.pyz, SIZE));
 
+        // Phase field
         checkCudaErrors(cudaMalloc(&fields.phi, SIZE));
         checkCudaErrors(cudaMalloc(&fields.normx, SIZE));
         checkCudaErrors(cudaMalloc(&fields.normy, SIZE));
@@ -158,8 +161,14 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.ffy, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ffz, SIZE));
 
+        // Passive scalar
+        checkCudaErrors(cudaMalloc(&fields.chi, SIZE));
+
+        // Distributions
         checkCudaErrors(cudaMalloc(&fields.f, F_DIST_SIZE));
         checkCudaErrors(cudaMalloc(&fields.g, G_DIST_SIZE));
+        checkCudaErrors(cudaMalloc(&fields.h, H_DIST_SIZE));
+        checkCudaErrors(cudaMalloc(&fields.h_post, H_DIST_SIZE));
 
         getLastCudaErrorOutline("setDeviceFields: post-initialization");
     }

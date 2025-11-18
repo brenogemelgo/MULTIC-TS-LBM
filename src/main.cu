@@ -1,9 +1,11 @@
-#include "../helpers/deviceFunctions.cuh"
+#include "deviceFunctions.cuh"
 #include "initialConditions.cuh"
+#include "boundaryConditions.cuh"
 #include "interface.cuh"
 #include "lbm.cuh"
-#include "boundaryConditions.cuh"
-#include "../helpers/hostFunctions.cuh"
+#include "hostFunctions.cuh"
+#include "main.cuh"
+#include "passiveScalar.cuh"
 
 int main(int argc, char *argv[])
 {
@@ -17,12 +19,14 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = host::createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-// Benchmark define (suppresses saves and step outputs)
-#define BENCHMARK
+    // Benchmark define (suppresses saves and step outputs)
+    // #define BENCHMARK
 
     // Set GPU based on pipeline argument
     if (host::setDeviceFromEnv() < 0)
+    {
         return 1;
+    }
 
     // Initialize device arrays
     host::setDeviceFields();
@@ -50,19 +54,19 @@ int main(int argc, char *argv[])
     checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
     // Call initialization kernels
-    LBM::initialConditions::callSetFields<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::callSetFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #if defined(JET)
 
-    LBM::initialConditions::callSetJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::callSetJet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 
-    LBM::initialConditions::callSetDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::callSetDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #endif
 
-    LBM::initialConditions::callSetDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::callSetDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // Make sure all initialization kernels have finished
     checkCudaErrorsOutline(cudaDeviceSynchronize());
@@ -74,6 +78,8 @@ int main(int argc, char *argv[])
         // Calculate the phase field
         phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
 
+        LBM::computePassiveScalar<<<grid3D, block3D, dynamic, queue>>>(fields);
+
         // Calculate interface normals
         phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
 
@@ -83,13 +89,17 @@ int main(int argc, char *argv[])
         // Main kernel
         LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
+        LBM::passiveScalar<<<grid3D, block3D, dynamic, queue>>>(fields);
+
+        LBM::passiveStream<<<grid3D, block3D, dynamic, queue>>>(fields);
+
         // Call boundary conditions
 #if defined(JET)
 
-        LBM::boundaryConditions::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        LBM::boundaryConditions::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        LBM::boundaryConditions::callPeriodicX<<<gridX, blockX, dynamic, queue>>>(fields);
-        LBM::boundaryConditions::callPeriodicY<<<gridY, blockY, dynamic, queue>>>(fields);
+        LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        LBM::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        LBM::callPeriodicX<<<gridX, blockX, dynamic, queue>>>(fields);
+        LBM::callPeriodicY<<<gridY, blockY, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 
@@ -104,11 +114,7 @@ int main(int argc, char *argv[])
         if (STEP % MACRO_SAVE == 0)
         {
 
-            host::copyAndSaveToBinary(fields.rho, SIM_DIR, STEP, "rho");
-            host::copyAndSaveToBinary(fields.ux, SIM_DIR, STEP, "ux");
-            host::copyAndSaveToBinary(fields.uy, SIM_DIR, STEP, "uy");
-            host::copyAndSaveToBinary(fields.uz, SIM_DIR, STEP, "uz");
-            host::copyAndSaveToBinary(fields.phi, SIM_DIR, STEP, "phi");
+            host::copyAndSaveToBinary(fields.chi, SIM_DIR, STEP, "chi");
 
             // Print step
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
@@ -116,12 +122,15 @@ int main(int argc, char *argv[])
 
 #endif
     }
+
     const auto END_TIME = std::chrono::high_resolution_clock::now();
 
     // Destructors
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
     cudaFree(fields.f);
     cudaFree(fields.g);
+    cudaFree(fields.h);
+    cudaFree(fields.chi);
     cudaFree(fields.phi);
     cudaFree(fields.rho);
     cudaFree(fields.normx);

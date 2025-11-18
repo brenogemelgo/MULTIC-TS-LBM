@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../helpers/cudaUtils.cuh"
-#include "../helpers/structs.cuh"
-#include "../helpers/velocitySet.cuh"
+#include "cuda/utils.cuh"
+#include "structs/structs.cuh"
+#include "velocitySet/velocitySet.cuh"
 
 // #define RUN_MODE
 #define SAMPLE_MODE

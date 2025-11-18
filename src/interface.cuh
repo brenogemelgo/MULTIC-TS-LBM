@@ -12,7 +12,9 @@ namespace phase
             x == 0 || x == mesh::nx - 1 ||
             y == 0 || y == mesh::ny - 1 ||
             z == 0 || z == mesh::nz - 1)
+        {
             return;
+        }
 
         const label_t idx3 = device::global3(x, y, z);
 
@@ -36,7 +38,9 @@ namespace phase
             x == 0 || x == mesh::nx - 1 ||
             y == 0 || y == mesh::ny - 1 ||
             z == 0 || z == mesh::nz - 1)
+        {
             return;
+        }
 
         const label_t idx3 = device::global3(x, y, z);
 
@@ -105,7 +109,9 @@ namespace phase
             x == 0 || x == mesh::nx - 1 ||
             y == 0 || y == mesh::ny - 1 ||
             z == 0 || z == mesh::nz - 1)
+        {
             return;
+        }
 
         const label_t idx3 = device::global3(x, y, z);
 

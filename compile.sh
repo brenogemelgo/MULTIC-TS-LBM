@@ -55,14 +55,16 @@ echo "Compiling to ${EXECUTABLE}..."
 nvcc -O3 --restrict \
      -gencode arch=compute_${CC},code=sm_${CC} \
      -gencode arch=compute_${CC},code=compute_${CC} \
-     -rdc=true --ptxas-options=-v \
-     -extra-device-vectorization \
-     --use_fast_math --fmad=true \
+     -rdc=true \
+     --ptxas-options=-v \
+     --extra-device-vectorization \
+     --use_fast_math \
+     --fmad=true \
+     --extended-lambda \
      -I"${SRC_DIR}" \
      -std=c++20 "${SRC_DIR}/main.cu" \
      -D${VELOCITY_SET} -D${FLOW_CASE} \
      -DENABLE_FP16=1 \
-     --extended-lambda \
      -o "${EXECUTABLE}"
 
 echo "Compilation completed successfully: ${EXECUTABLE}"

@@ -2,8 +2,8 @@
 
 struct LBMFields
 {
+    // Hydrodynamics
     scalar_t *rho;
-    scalar_t *phi;
     scalar_t *ux;
     scalar_t *uy;
     scalar_t *uz;
@@ -13,6 +13,9 @@ struct LBMFields
     scalar_t *pxy;
     scalar_t *pxz;
     scalar_t *pyz;
+
+    // Phase field
+    scalar_t *phi;
     scalar_t *normx;
     scalar_t *normy;
     scalar_t *normz;
@@ -20,8 +23,15 @@ struct LBMFields
     scalar_t *ffx;
     scalar_t *ffy;
     scalar_t *ffz;
+
+    // Passive scalar
+    scalar_t *chi;
+
+    // Distributions
     pop_t *f;
     scalar_t *g;
+    scalar_t *h;
+    scalar_t *h_post;
 };
 
 LBMFields fields{};

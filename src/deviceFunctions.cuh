@@ -1,7 +1,7 @@
 #pragma once
 
 #include "constants.cuh"
-#include "auxFunctions.cuh"
+#include "globalFunctions.cuh"
 
 namespace device
 {

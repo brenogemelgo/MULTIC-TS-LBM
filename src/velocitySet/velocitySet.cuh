@@ -1,9 +1,6 @@
 #pragma once
 
-#include "cudaUtils.cuh"
-
-#define G_LOW_ORDER
-// #define G_HIGH_ORDER
+#include "../cuda/utils.cuh"
 
 #if defined(D3Q19)
 
@@ -41,8 +38,6 @@ __constant__ scalar_t W[FLINKS] = {W_0,
 
 #endif
 
-#if defined(G_LOW_ORDER)
-
 static constexpr label_t GLINKS = 7;
 
 static constexpr scalar_t WG_0 = 1.0f / 4.0f; // 0
@@ -54,26 +49,7 @@ __constant__ scalar_t W_G[GLINKS] = {1.0f / 4.0f,
 static constexpr scalar_t AS2_H = 3.0f;
 static constexpr scalar_t AS2_P = 4.0f;
 
-#elif defined(G_HIGH_ORDER)
-
-static constexpr label_t GLINKS = FLINKS;
-
-static constexpr scalar_t WG_0 = W_0;
-static constexpr scalar_t WG_1 = W_1;
-static constexpr scalar_t WG_2 = W_2;
-
-#define W_G W
-
-#if defined(D3Q27)
-
-static constexpr scalar_t WG_3 = W_3;
-
-#endif
-
-static constexpr scalar_t AS2_H = 3.0f;
-static constexpr scalar_t AS2_P = 3.0f;
-
-#endif
+static constexpr label_t HLINKS = 7;
 
 namespace VelocitySet
 {
@@ -87,108 +63,126 @@ namespace VelocitySet
         static constexpr int cx = 0, cy = 0, cz = 0;
         static constexpr scalar_t w = W_0;
     };
+
     template <>
     struct F<1>
     {
         static constexpr int cx = 1, cy = 0, cz = 0;
         static constexpr scalar_t w = W_1;
     };
+
     template <>
     struct F<2>
     {
         static constexpr int cx = -1, cy = 0, cz = 0;
         static constexpr scalar_t w = W_1;
     };
+
     template <>
     struct F<3>
     {
         static constexpr int cx = 0, cy = 1, cz = 0;
         static constexpr scalar_t w = W_1;
     };
+
     template <>
     struct F<4>
     {
         static constexpr int cx = 0, cy = -1, cz = 0;
         static constexpr scalar_t w = W_1;
     };
+
     template <>
     struct F<5>
     {
         static constexpr int cx = 0, cy = 0, cz = 1;
         static constexpr scalar_t w = W_1;
     };
+
     template <>
     struct F<6>
     {
         static constexpr int cx = 0, cy = 0, cz = -1;
         static constexpr scalar_t w = W_1;
     };
+
     template <>
     struct F<7>
     {
         static constexpr int cx = 1, cy = 1, cz = 0;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<8>
     {
         static constexpr int cx = -1, cy = -1, cz = 0;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<9>
     {
         static constexpr int cx = 1, cy = 0, cz = 1;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<10>
     {
         static constexpr int cx = -1, cy = 0, cz = -1;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<11>
     {
         static constexpr int cx = 0, cy = 1, cz = 1;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<12>
     {
         static constexpr int cx = 0, cy = -1, cz = -1;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<13>
     {
         static constexpr int cx = 1, cy = -1, cz = 0;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<14>
     {
         static constexpr int cx = -1, cy = 1, cz = 0;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<15>
     {
         static constexpr int cx = 1, cy = 0, cz = -1;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<16>
     {
         static constexpr int cx = -1, cy = 0, cz = 1;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<17>
     {
         static constexpr int cx = 0, cy = 1, cz = -1;
         static constexpr scalar_t w = W_2;
     };
+
     template <>
     struct F<18>
     {
@@ -204,42 +198,49 @@ namespace VelocitySet
         static constexpr int cx = 1, cy = 1, cz = 1;
         static constexpr scalar_t w = W_3;
     };
+
     template <>
     struct F<20>
     {
         static constexpr int cx = -1, cy = -1, cz = -1;
         static constexpr scalar_t w = W_3;
     };
+
     template <>
     struct F<21>
     {
         static constexpr int cx = 1, cy = 1, cz = -1;
         static constexpr scalar_t w = W_3;
     };
+
     template <>
     struct F<22>
     {
         static constexpr int cx = -1, cy = -1, cz = 1;
         static constexpr scalar_t w = W_3;
     };
+
     template <>
     struct F<23>
     {
         static constexpr int cx = 1, cy = -1, cz = 1;
         static constexpr scalar_t w = W_3;
     };
+
     template <>
     struct F<24>
     {
         static constexpr int cx = -1, cy = 1, cz = -1;
         static constexpr scalar_t w = W_3;
     };
+
     template <>
     struct F<25>
     {
         static constexpr int cx = -1, cy = 1, cz = 1;
         static constexpr scalar_t w = W_3;
     };
+
     template <>
     struct F<26>
     {
@@ -258,36 +259,42 @@ namespace VelocitySet
         static constexpr int cx = 0, cy = 0, cz = 0;
         static constexpr scalar_t wg = WG_0;
     };
+
     template <>
     struct G<1>
     {
         static constexpr int cx = 1, cy = 0, cz = 0;
         static constexpr scalar_t wg = WG_1;
     };
+
     template <>
     struct G<2>
     {
         static constexpr int cx = -1, cy = 0, cz = 0;
         static constexpr scalar_t wg = WG_1;
     };
+
     template <>
     struct G<3>
     {
         static constexpr int cx = 0, cy = 1, cz = 0;
         static constexpr scalar_t wg = WG_1;
     };
+
     template <>
     struct G<4>
     {
         static constexpr int cx = 0, cy = -1, cz = 0;
         static constexpr scalar_t wg = WG_1;
     };
+
     template <>
     struct G<5>
     {
         static constexpr int cx = 0, cy = 0, cz = 1;
         static constexpr scalar_t wg = WG_1;
     };
+
     template <>
     struct G<6>
     {
@@ -295,132 +302,55 @@ namespace VelocitySet
         static constexpr scalar_t wg = WG_1;
     };
 
-#if defined(G_HIGH_ORDER)
+    template <label_t Q>
+    struct H;
 
     template <>
-    struct G<7>
+    struct H<0>
     {
-        static constexpr int cx = 1, cy = 1, cz = 0;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<8>
-    {
-        static constexpr int cx = -1, cy = -1, cz = 0;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<9>
-    {
-        static constexpr int cx = 1, cy = 0, cz = 1;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<10>
-    {
-        static constexpr int cx = -1, cy = 0, cz = -1;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<11>
-    {
-        static constexpr int cx = 0, cy = 1, cz = 1;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<12>
-    {
-        static constexpr int cx = 0, cy = -1, cz = -1;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<13>
-    {
-        static constexpr int cx = 1, cy = -1, cz = 0;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<14>
-    {
-        static constexpr int cx = -1, cy = 1, cz = 0;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<15>
-    {
-        static constexpr int cx = 1, cy = 0, cz = -1;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<16>
-    {
-        static constexpr int cx = -1, cy = 0, cz = 1;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<17>
-    {
-        static constexpr int cx = 0, cy = 1, cz = -1;
-        static constexpr scalar_t wg = WG_2;
-    };
-    template <>
-    struct G<18>
-    {
-        static constexpr int cx = 0, cy = -1, cz = 1;
-        static constexpr scalar_t wg = WG_2;
+        static constexpr int cx = 0, cy = 0, cz = 0;
+        static constexpr scalar_t wh = WG_0;
     };
 
-#if defined(D3Q27)
-
     template <>
-    struct G<19>
+    struct H<1>
     {
-        static constexpr int cx = 1, cy = 1, cz = 1;
-        static constexpr scalar_t wg = WG_3;
-    };
-    template <>
-    struct G<20>
-    {
-        static constexpr int cx = -1, cy = -1, cz = -1;
-        static constexpr scalar_t wg = WG_3;
-    };
-    template <>
-    struct G<21>
-    {
-        static constexpr int cx = 1, cy = 1, cz = -1;
-        static constexpr scalar_t wg = WG_3;
-    };
-    template <>
-    struct G<22>
-    {
-        static constexpr int cx = -1, cy = -1, cz = 1;
-        static constexpr scalar_t wg = WG_3;
-    };
-    template <>
-    struct G<23>
-    {
-        static constexpr int cx = 1, cy = -1, cz = 1;
-        static constexpr scalar_t wg = WG_3;
-    };
-    template <>
-    struct G<24>
-    {
-        static constexpr int cx = -1, cy = 1, cz = -1;
-        static constexpr scalar_t wg = WG_3;
-    };
-    template <>
-    struct G<25>
-    {
-        static constexpr int cx = -1, cy = 1, cz = 1;
-        static constexpr scalar_t wg = WG_3;
-    };
-    template <>
-    struct G<26>
-    {
-        static constexpr int cx = 1, cy = -1, cz = -1;
-        static constexpr scalar_t wg = WG_3;
+        static constexpr int cx = 1, cy = 0, cz = 0;
+        static constexpr scalar_t wh = WG_1;
     };
 
-#endif
-#endif
+    template <>
+    struct H<2>
+    {
+        static constexpr int cx = -1, cy = 0, cz = 0;
+        static constexpr scalar_t wh = WG_1;
+    };
+
+    template <>
+    struct H<3>
+    {
+        static constexpr int cx = 0, cy = 1, cz = 0;
+        static constexpr scalar_t wh = WG_1;
+    };
+
+    template <>
+    struct H<4>
+    {
+        static constexpr int cx = 0, cy = -1, cz = 0;
+        static constexpr scalar_t wh = WG_1;
+    };
+
+    template <>
+    struct H<5>
+    {
+        static constexpr int cx = 0, cy = 0, cz = 1;
+        static constexpr scalar_t wh = WG_1;
+    };
+
+    template <>
+    struct H<6>
+    {
+        static constexpr int cx = 0, cy = 0, cz = -1;
+        static constexpr scalar_t wh = WG_1;
+    };
 }

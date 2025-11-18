@@ -2,12 +2,12 @@
 
 namespace LBM
 {
-    class initialConditions
+    class InitialConditions
     {
     public:
-        __host__ __device__ [[nodiscard]] inline consteval initialConditions(){};
+        __host__ __device__ [[nodiscard]] inline consteval InitialConditions(){};
 
-        __device__ static inline constexpr void callSetFields(
+        __device__ static inline constexpr void setFields(
             LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -38,11 +38,12 @@ namespace LBM
             d.pxy[idx3] = 0.0f;
             d.pxz[idx3] = 0.0f;
             d.pyz[idx3] = 0.0f;
+            d.chi[idx3] = 0.0f;
         }
 
 #if defined(JET)
 
-        __device__ static inline constexpr void callSetJet(
+        __device__ static inline constexpr void setJet(
             LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -53,11 +54,11 @@ namespace LBM
                 return;
             }
 
-            const scalar_t dx = static_cast<scalar_t>(x) - center_x();
-            const scalar_t dy = static_cast<scalar_t>(y) - center_y();
+            const scalar_t dx = static_cast<scalar_t>(x) - geometry::center_x();
+            const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
             const scalar_t r2 = dx * dx + dy * dy;
 
-            if (r2 > R2())
+            if (r2 > geometry::R2())
             {
                 return;
             }
@@ -65,12 +66,13 @@ namespace LBM
             const label_t idx3_in = device::global3(x, y, 0);
 
             d.phi[idx3_in] = 1.0f;
+            d.chi[idx3_in] = 1.0f;
             d.uz[idx3_in] = physics::u_ref;
         }
 
 #elif defined(DROPLET)
 
-        __device__ static inline constexpr void callSetDroplet(
+        __device__ static inline constexpr void setDroplet(
             LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -87,8 +89,8 @@ namespace LBM
 
             const label_t idx3 = device::global3(x, y, z);
 
-            const scalar_t dx = (static_cast<scalar_t>(x) - center_x()) / 2.0f;
-            const scalar_t dy = static_cast<scalar_t>(y) - center_y();
+            const scalar_t dx = (static_cast<scalar_t>(x) - geometry::center_x()) / 2.0f;
+            const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
             const scalar_t dz = static_cast<scalar_t>(z) - center_z();
             const scalar_t radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
 
@@ -98,7 +100,7 @@ namespace LBM
 
 #endif
 
-        __device__ static inline constexpr void callSetDistros(
+        __device__ static inline constexpr void setDistros(
             LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -153,31 +155,19 @@ namespace LBM
 
                     d.g[device::global4(xx, yy, zz, Q)] = VelocitySet::G<Q>::wg * d.phi[idx3] * (1.0f + AS2_P * (cx * ux + cy * uy + cz * uz));
                 });
+
+            device::constexpr_for<0, HLINKS>(
+                [&](const auto Q)
+                {
+                    constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::H<Q>::cx);
+                    constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::H<Q>::cy);
+                    constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::H<Q>::cz);
+
+                    d.h[device::global4(x, y, z, Q)] = VelocitySet::H<Q>::wh * d.chi[idx3] * (1.0f + 4.0f * (cx * ux + cy * uy + cz * uz));
+                });
         }
 
     private:
-        template <typename T = scalar_t>
-        __host__ __device__ static inline consteval T R2() noexcept
-        {
-            return static_cast<T>(mesh::radius) * static_cast<T>(mesh::radius);
-        }
-
-        template <typename T = scalar_t>
-        __host__ __device__ static inline consteval T center_x() noexcept
-        {
-            return (static_cast<T>(mesh::nx) - static_cast<T>(1)) * static_cast<T>(0.5f);
-        }
-
-        template <typename T = scalar_t>
-        __host__ __device__ static inline consteval T center_y() noexcept
-        {
-            return (static_cast<T>(mesh::ny) - static_cast<T>(1)) * static_cast<T>(0.5f);
-        }
-
-        template <typename T = scalar_t>
-        __host__ __device__ static inline consteval T center_z() noexcept
-        {
-            return (static_cast<T>(mesh::nz) - static_cast<T>(1)) * static_cast<T>(0.5f);
-        }
+        // No private methods
     };
 }
