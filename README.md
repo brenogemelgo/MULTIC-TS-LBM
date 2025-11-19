@@ -1,28 +1,16 @@
 # MULTIC-TS-LBM
 
-**MULTIC-TS-LBM** is a **GPU-accelerated**, thread-safe Lattice Boltzmann simulator for multicomponent flows. Implemented in CUDA, it supports **D3Q19/D3Q27** for hydrodynamics and **D3Q7** for phase-field evolution, capturing interface dynamics, surface tension, and perturbations. Available cases: **droplet** and **jet**.
+**MULTIC-TS-LBM** is a **GPU-accelerated**, thread-safe Lattice Boltzmann simulator for multicomponent flows. Implemented in CUDA, it supports **D3Q19/D3Q27** for hydrodynamics and **D3Q7** for phase field evolution, capturing interface dynamics and surface tension. Available cases: **droplet** and **jet**.
 
 ---
 
 ## 🖥️ Requirements
 
-- **GPU**: NVIDIA (CC ≥ 6.0, ≥ 2 GB, 4+ GB recommended)  
-- **CUDA**: Toolkit ≥ 11.0  
-- **Compiler**: C++ (`g++`, `nvcc`)  
-- **Python 3.x**: `numpy`, `pyevtk`  
+- **GPU**: NVIDIA (Compute Capability ≥ 6.0, 4+ GB VRAM recommended)  
+- **CUDA**: Toolkit ≥ 12.0  
+- **Compiler**: C++20-capable (GCC ≥ 11) + `nvcc` (partial C++20 support)
+- **Python 3.x**: `numpy`, `pyevtk`  (for post-processing)
 - **ParaView**: for `.vtr` visualization  
-
----
-
-## 🗂️ Structure
-
-- `bin/` – compiled binaries & results  
-- `helpers/` – auxiliary CUDA headers/scripts  
-- `include/` – core LBM includes and functions
-- `post/` – Python post-processing to VTK  
-- `src/` – C/C++ and CUDA sources  
-- `compile.sh` – build script  
-- `pipeline.sh` – compile → run → post-process  
 
 ---
 
@@ -62,6 +50,12 @@ Each GPU entry shows the average across multiple runs.
 This code was developed as part of an undergraduate research fellowship at the Geoenergia Lab (UDESC – Balneário Camboriú Campus), under the project:
 
 **"Experiment-based physical and numerical modeling of subsea oil jet dispersion (SUBJET)"**, in partnership with **Petrobras, ANP, FITEJ and SINTEF Ocean**.
+
+---
+
+## 📄 License
+
+This project is licensed under the terms of the LICENSE file.
 
 ---
 

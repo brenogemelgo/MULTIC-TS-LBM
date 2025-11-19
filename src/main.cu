@@ -1,11 +1,50 @@
-#include "deviceFunctions.cuh"
-#include "initialConditions.cuh"
-#include "boundaryConditions.cuh"
-#include "interface.cuh"
+/*---------------------------------------------------------------------------*\
+|                                                                             |
+| MULTIC-TS-LBM: CUDA-based multicomponent Lattice Boltzmann Method           |
+| Developed at UDESC - State University of Santa Catarina                     |
+| Website: https://www.udesc.br                                               |
+| Github: https://github.com/brenogemelgo/MULTIC-TS-LBM                       |
+|                                                                             |
+\*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*\
+
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
+License
+    This file is part of MULTIC-TS-LBM.
+
+    MULTIC-TS-LBM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Description
+    Main program file
+
+SourceFiles
+    main.cu
+
+\*---------------------------------------------------------------------------*/
+
+#include "functions/deviceFunctions.cuh"
+#include "functions/hostFunctions.cuh"
+#include "class/initialConditions.cuh"
+#include "class/boundaryConditions.cuh"
+#include "phaseField/phaseField.cuh"
+#include "passiveScalar/passiveScalar.cuh"
+#include "caller/caller.cuh"
+
 #include "lbm.cuh"
-#include "hostFunctions.cuh"
-#include "main.cuh"
-#include "passiveScalar.cuh"
 
 int main(int argc, char *argv[])
 {
@@ -19,8 +58,8 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = host::createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-// Benchmark define (suppresses saves and step outputs)
-#define BENCHMARK
+    // Benchmark define (suppresses saves and step outputs)
+    // #define BENCHMARK
 
     // Set GPU based on pipeline argument
     if (host::setDeviceFromEnv() < 0)

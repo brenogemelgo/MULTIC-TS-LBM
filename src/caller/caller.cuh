@@ -29,77 +29,76 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Structs used in the code
+    Caller CUDA kernels for initial and boundary conditions
+
+Namespace
+    LBM
 
 SourceFiles
-    structs.cuh
+    caller.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef STRUCTS_CUH
-#define STRUCTS_CUH
+#ifndef MAIN_CUH
+#define MAIN_CUH
 
-struct LBMFields
+namespace LBM
 {
-    // Hydrodynamics
-    scalar_t *rho;
-    scalar_t *ux;
-    scalar_t *uy;
-    scalar_t *uz;
-    scalar_t *pxx;
-    scalar_t *pyy;
-    scalar_t *pzz;
-    scalar_t *pxy;
-    scalar_t *pxz;
-    scalar_t *pyz;
+    // Initial conditions
+    __global__ void callSetFields(
+        LBMFields d)
+    {
+        InitialConditions::setFields(d);
+    }
 
-    // Phase field
-    scalar_t *phi;
-    scalar_t *normx;
-    scalar_t *normy;
-    scalar_t *normz;
-    scalar_t *ind;
-    scalar_t *ffx;
-    scalar_t *ffy;
-    scalar_t *ffz;
+#if defined(JET)
 
-    // Passive scalar
-#if PASSIVE_SCALAR
+    __global__ void callSetJet(
+        LBMFields d)
+    {
+        InitialConditions::setJet(d);
+    }
 
-    scalar_t *chi;
+#elif defined(DROPLET)
+
+    __global__ void callSetDroplet(
+        LBMFields d)
+    {
+        InitialConditions::setDroplet(d);
+    }
 
 #endif
 
-    // Distributions
-    pop_t *f;
-    scalar_t *g;
-
-#if PASSIVE_SCALAR
-
-    scalar_t *h;
-    scalar_t *h_post;
-
-#endif
-};
-
-LBMFields fields{};
-
-template <typename T, T v>
-struct integralConstant
-{
-    static constexpr const T value = v;
-    using value_type = T;
-    using type = integralConstant;
-
-    __device__ [[nodiscard]] inline consteval operator value_type() const noexcept
+    __global__ void callSetDistros(
+        LBMFields d)
     {
-        return value;
+        InitialConditions::setDistros(d);
     }
 
-    __device__ [[nodiscard]] inline consteval value_type operator()() const noexcept
+    // Boundary conditions
+    __global__ void callInflow(
+        LBMFields d)
     {
-        return value;
+        BoundaryConditions::applyInflow(d);
     }
-};
+
+    __global__ void callOutflow(
+        LBMFields d)
+    {
+        BoundaryConditions::applyOutflow(d);
+    }
+
+    __global__ void callPeriodicX(
+        LBMFields d)
+    {
+        BoundaryConditions::periodicX(d);
+    }
+
+    __global__ void callPeriodicY(
+        LBMFields d)
+    {
+        BoundaryConditions::periodicY(d);
+    }
+}
 
 #endif
