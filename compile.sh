@@ -64,7 +64,8 @@ nvcc -O3 --restrict \
      -I"${SRC_DIR}" \
      -std=c++20 "${SRC_DIR}/main.cu" \
      -D${VELOCITY_SET} -D${FLOW_CASE} \
-     -DENABLE_FP16=1 \
+     -DENABLE_FP16=0 \
+     -DPASSIVE_SCALAR=0 \
      -o "${EXECUTABLE}"
 
 echo "Compilation completed successfully: ${EXECUTABLE}"

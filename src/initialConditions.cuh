@@ -38,7 +38,12 @@ namespace LBM
             d.pxy[idx3] = 0.0f;
             d.pxz[idx3] = 0.0f;
             d.pyz[idx3] = 0.0f;
+
+#if PASSIVE_SCALAR
+
             d.chi[idx3] = 0.0f;
+
+#endif
         }
 
 #if defined(JET)
@@ -66,8 +71,13 @@ namespace LBM
             const label_t idx3_in = device::global3(x, y, 0);
 
             d.phi[idx3_in] = 1.0f;
-            d.chi[idx3_in] = 1.0f;
             d.uz[idx3_in] = physics::u_ref;
+
+#if PASSIVE_SCALAR
+
+            d.chi[idx3_in] = 1.0f;
+
+#endif
         }
 
 #elif defined(DROPLET)
@@ -153,8 +163,10 @@ namespace LBM
                     constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::G<Q>::cy);
                     constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::G<Q>::cz);
 
-                    d.g[device::global4(xx, yy, zz, Q)] = VelocitySet::G<Q>::wg * d.phi[idx3] * (1.0f + AS2_P * (cx * ux + cy * uy + cz * uz));
+                    d.g[device::global4(xx, yy, zz, Q)] = VelocitySet::G<Q>::wg * d.phi[idx3] * (1.0f + 4.0f * (cx * ux + cy * uy + cz * uz));
                 });
+
+#if PASSIVE_SCALAR
 
             device::constexpr_for<0, HLINKS>(
                 [&](const auto Q)
@@ -165,6 +177,8 @@ namespace LBM
 
                     d.h[device::global4(x, y, z, Q)] = VelocitySet::H<Q>::wh * d.chi[idx3] * (1.0f + 4.0f * (cx * ux + cy * uy + cz * uz));
                 });
+
+#endif
         }
 
     private:

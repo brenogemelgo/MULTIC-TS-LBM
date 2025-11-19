@@ -275,7 +275,7 @@ namespace LBM
                    constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::G<Q>::cy);
                    constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::G<Q>::cz);
 
-                   const scalar_t geq = wg * phi * (1.0f + AS2_P * (cx * ux + cy * uy + cz * uz));
+                   const scalar_t geq = wg * phi * (1.0f + 4.0f * (cx * ux + cy * uy + cz * uz));
                    const scalar_t hi = wg * phiNorm * (cx * normx + cy * normy + cz * normz);
 
                    d.g[device::global4(xx, yy, zz, Q)] = geq + hi;

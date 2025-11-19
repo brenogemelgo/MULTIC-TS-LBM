@@ -1,8 +1,10 @@
 #pragma once
 
+#if PASSIVE_SCALAR
+
 namespace LBM
 {
-    __global__ void computePassiveScalar(LBMFields d)
+    __global__ void passiveScalar(LBMFields d)
     {
         const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -26,25 +28,7 @@ namespace LBM
             });
 
         d.chi[idx3] = chi;
-    }
 
-    __global__ void passiveScalar(LBMFields d)
-    {
-        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
-        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
-        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
-
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
-        {
-            return;
-        }
-
-        const label_t idx3 = device::global3(x, y, z);
-
-        const scalar_t chi = d.chi[idx3];
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
@@ -63,23 +47,6 @@ namespace LBM
 
                 d.h_post[device::global4(x, y, z, Q)] = heq + (1.0f - (1.0f / 0.55f)) * (d.h[device::global4(x, y, z, Q)] - heq);
             });
-    }
-
-    __global__ void passiveStream(LBMFields d)
-    {
-        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
-        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
-        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
-
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
-        {
-            return;
-        }
-
-        const label_t idx3 = device::global3(x, y, z);
 
         device::constexpr_for<0, HLINKS>(
             [&](const auto Q)
@@ -92,3 +59,5 @@ namespace LBM
             });
     }
 }
+
+#endif

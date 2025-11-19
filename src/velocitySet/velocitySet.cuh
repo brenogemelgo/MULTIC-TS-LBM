@@ -46,10 +46,11 @@ static constexpr scalar_t WG_1 = 1.0f / 8.0f; // 1 to 6
 __constant__ scalar_t W_G[GLINKS] = {1.0f / 4.0f,
                                      1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f};
 
-static constexpr scalar_t AS2_H = 3.0f;
-static constexpr scalar_t AS2_P = 4.0f;
+#if PASSIVE_SCALAR
 
 static constexpr label_t HLINKS = 7;
+
+#endif
 
 namespace VelocitySet
 {
@@ -302,6 +303,8 @@ namespace VelocitySet
         static constexpr scalar_t wg = WG_1;
     };
 
+#if PASSIVE_SCALAR
+
     template <label_t Q>
     struct H;
 
@@ -353,4 +356,6 @@ namespace VelocitySet
         static constexpr int cx = 0, cy = 0, cz = -1;
         static constexpr scalar_t wh = WG_1;
     };
+
+#endif
 }

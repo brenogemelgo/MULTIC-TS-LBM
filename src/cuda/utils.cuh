@@ -44,7 +44,7 @@ using ci_t = int;
 using label_t = uint64_t;
 using scalar_t = float;
 
-#if defined(ENABLE_FP16)
+#if ENABLE_FP16
 
 #include <cuda_fp16.h>
 using pop_t = __half;

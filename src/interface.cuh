@@ -82,9 +82,9 @@ namespace phase
 #endif
 
         // Use the hydrodynamic scale factor
-        const scalar_t gx = AS2_H * sgx;
-        const scalar_t gy = AS2_H * sgy;
-        const scalar_t gz = AS2_H * sgz;
+        const scalar_t gx = 3.0f * sgx;
+        const scalar_t gy = 3.0f * sgy;
+        const scalar_t gz = 3.0f * sgz;
 
         const scalar_t ind = sqrtf(gx * gx + gy * gy + gz * gz);
         const scalar_t invInd = 1.0f / (ind + 1e-9f);
@@ -153,7 +153,7 @@ namespace phase
 #endif
 
         // Use the hydrodynamic scale factor
-        const scalar_t curvature = -AS2_H * (scx + scy + scz);
+        const scalar_t curvature = -3.0f * (scx + scy + scz);
 
         const scalar_t stCurv = physics::sigma * curvature * d.ind[idx3];
         d.ffx[idx3] = stCurv * d.normx[idx3];

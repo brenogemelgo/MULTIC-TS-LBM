@@ -3,7 +3,7 @@ import glob
 import re
 import numpy as np
 
-__macroNames__ = ['chi']
+__macroNames__ = ['rho','uz','phi','chi']
 __info__ = dict()
 
 def getFilenamesMacro(macr_name, path):

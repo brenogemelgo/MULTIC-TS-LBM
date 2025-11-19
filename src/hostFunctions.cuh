@@ -132,12 +132,23 @@ namespace host
         constexpr size_t SIZE = NCELLS * sizeof(scalar_t);
         constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(FLINKS) * sizeof(pop_t);
         constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(GLINKS) * sizeof(scalar_t);
+
+#if PASSIVE_SCALAR
+
         constexpr size_t H_DIST_SIZE = NCELLS * static_cast<size_t>(HLINKS) * sizeof(scalar_t);
+
+#endif
 
         static_assert(NCELLS > 0, "Empty grid?");
         static_assert(SIZE / sizeof(scalar_t) == NCELLS, "SIZE overflow");
         static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(FLINKS), "F_DIST_SIZE overflow");
         static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(GLINKS), "G_DIST_SIZE overflow");
+
+#if PASSIVE_SCALAR
+
+        static_assert(H_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(HLINKS), "H_DIST_SIZE overflow");
+
+#endif
 
         // Hydrodynamics
         checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
@@ -161,14 +172,23 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.ffy, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ffz, SIZE));
 
-        // Passive scalar
+// Passive scalar
+#if PASSIVE_SCALAR
+
         checkCudaErrors(cudaMalloc(&fields.chi, SIZE));
+
+#endif
 
         // Distributions
         checkCudaErrors(cudaMalloc(&fields.f, F_DIST_SIZE));
         checkCudaErrors(cudaMalloc(&fields.g, G_DIST_SIZE));
+
+#if PASSIVE_SCALAR
+
         checkCudaErrors(cudaMalloc(&fields.h, H_DIST_SIZE));
         checkCudaErrors(cudaMalloc(&fields.h_post, H_DIST_SIZE));
+
+#endif
 
         getLastCudaErrorOutline("setDeviceFields: post-initialization");
     }

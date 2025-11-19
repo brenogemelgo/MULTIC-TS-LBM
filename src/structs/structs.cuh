@@ -25,13 +25,22 @@ struct LBMFields
     scalar_t *ffz;
 
     // Passive scalar
+#if PASSIVE_SCALAR
+
     scalar_t *chi;
+
+#endif
 
     // Distributions
     pop_t *f;
     scalar_t *g;
+
+#if PASSIVE_SCALAR
+
     scalar_t *h;
     scalar_t *h_post;
+
+#endif
 };
 
 LBMFields fields{};
