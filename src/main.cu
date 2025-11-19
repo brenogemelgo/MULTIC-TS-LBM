@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = host::createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-    // Benchmark define (suppresses saves and step outputs)
-    // #define BENCHMARK
+// Benchmark define (suppresses saves and step outputs)
+#define BENCHMARK
 
     // Set GPU based on pipeline argument
     if (host::setDeviceFromEnv() < 0)
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 
     // Time loop
     const auto START_TIME = std::chrono::high_resolution_clock::now();
-    for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
+    for (label_t STEP = 0; STEP < NSTEPS; ++STEP)
     {
         // Calculate the phase field
         phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
@@ -170,6 +170,7 @@ int main(int argc, char *argv[])
 #endif
     }
 
+    checkCudaErrorsOutline(cudaStreamSynchronize(queue));
     const auto END_TIME = std::chrono::high_resolution_clock::now();
 
     // Destructors
@@ -205,8 +206,10 @@ int main(int argc, char *argv[])
 
     // Performance log
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
-    const label_t TOTAL_CELLS = static_cast<label_t>(mesh::nx) * mesh::ny * mesh::nz * static_cast<label_t>(NSTEPS ? NSTEPS : 1);
-    const double MLUPS = static_cast<double>(TOTAL_CELLS) / (ELAPSED_TIME.count() * 1e6);
+
+    const double steps = static_cast<double>(NSTEPS);
+    const double total_lattice_updates = static_cast<double>(mesh::nx) * mesh::ny * mesh::nz * steps;
+    const double MLUPS = total_lattice_updates / (ELAPSED_TIME.count() * 1e6);
 
     std::cout << "\n// =============================================== //\n";
     std::cout << "     Total execution time    : " << ELAPSED_TIME.count() << " s\n";
