@@ -113,53 +113,6 @@ namespace relaxation
 {
 #if defined(JET)
 
-// #define VISC_CONTRAST
-#if defined(VISC_CONTRAST)
-
-    template <typename T = scalar_t>
-    __host__ __device__ [[nodiscard]] static inline consteval T visc_water() noexcept
-    {
-        return (static_cast<T>(physics::u_ref) * static_cast<T>(mesh::diam)) / static_cast<T>(physics::reynolds);
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ [[nodiscard]] static inline consteval T visc_oil() noexcept
-    {
-        return static_cast<T>(10.0f) * visc_water<T>();
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ [[nodiscard]] static inline consteval T visc_ref() noexcept
-    {
-        return visc_water<T>();
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ [[nodiscard]] static inline consteval T omega_water() noexcept
-    {
-        return static_cast<T>(1.0f) / (static_cast<T>(0.5f) + static_cast<T>(3.0f) * visc_water<T>());
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ [[nodiscard]] static inline consteval T omega_oil() noexcept
-    {
-        return static_cast<T>(1.0f) / (static_cast<T>(0.5f) + static_cast<T>(3.0f) * visc_oil<T>());
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ [[nodiscard]] static inline consteval T omega_ref() noexcept
-    {
-        return omega_water<T>();
-    }
-
-    template <typename T = scalar_t>
-    __host__ __device__ [[nodiscard]] static inline consteval T omco_zmin() noexcept
-    {
-        return static_cast<T>(1.0f) - omega_oil<T>();
-    }
-
-#else
-
     template <typename T = scalar_t>
     __host__ __device__ [[nodiscard]] static inline consteval T visc_ref() noexcept
     {
@@ -177,8 +130,6 @@ namespace relaxation
     {
         return static_cast<T>(1.0f) - omega_ref<T>();
     }
-
-#endif
 
 #elif defined(DROPLET)
 

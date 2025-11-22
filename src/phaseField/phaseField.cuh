@@ -123,7 +123,6 @@ namespace phase
 
 #endif
 
-        // Use the hydrodynamic scale factor
         const scalar_t gx = 3.0f * sgx;
         const scalar_t gy = 3.0f * sgy;
         const scalar_t gz = 3.0f * sgz;
@@ -194,7 +193,6 @@ namespace phase
 
 #endif
 
-        // Use the hydrodynamic scale factor
         const scalar_t curvature = -3.0f * (scx + scy + scz);
 
         const scalar_t stCurv = physics::sigma * curvature * d.ind[idx3];

@@ -74,7 +74,7 @@ namespace LBM
             const label_t idx3_bnd = device::global3(x, y, 0);
             const label_t idx3_zp1 = device::global3(x, y, 1);
 
-            // d.rho[idx3_bnd] = d.rho[idx3_zp1];
+            d.rho[idx3_bnd] = d.rho[idx3_zp1];
 
             const scalar_t uz = d.uz[idx3_bnd];
             const scalar_t P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
@@ -156,10 +156,10 @@ namespace LBM
             const label_t idx3_zm1 = device::global3(x, y, mesh::nz - 2);
 
             d.phi[idx3_bnd] = d.phi[idx3_zm1];
-            // d.rho[idx3_bnd] = d.rho[idx3_zm1];
-            // d.ux[idx3_bnd] = d.ux[idx3_zm1];
-            // d.uy[idx3_bnd] = d.uy[idx3_zm1];
-            // d.uz[idx3_bnd] = d.uz[idx3_zm1];
+            d.rho[idx3_bnd] = d.rho[idx3_zm1];
+            d.ux[idx3_bnd] = d.ux[idx3_zm1];
+            d.uy[idx3_bnd] = d.uy[idx3_zm1];
+            d.uz[idx3_bnd] = d.uz[idx3_zm1];
 
             const scalar_t ux = d.ux[idx3_zm1];
             const scalar_t uy = d.uy[idx3_zm1];
@@ -286,17 +286,17 @@ namespace LBM
             d.phi[gL] = d.phi[bR];
             d.phi[gR] = d.phi[bL];
 
-            // d.rho[gL] = d.rho[bR];
-            // d.rho[gR] = d.rho[bL];
+            d.rho[gL] = d.rho[bR];
+            d.rho[gR] = d.rho[bL];
 
-            // d.ux[gL] = d.ux[bR];
-            // d.ux[gR] = d.ux[bL];
+            d.ux[gL] = d.ux[bR];
+            d.ux[gR] = d.ux[bL];
 
-            // d.uy[gL] = d.uy[bR];
-            // d.uy[gR] = d.uy[bL];
+            d.uy[gL] = d.uy[bR];
+            d.uy[gR] = d.uy[bL];
 
-            // d.uz[gL] = d.uz[bR];
-            // d.uz[gR] = d.uz[bL];
+            d.uz[gL] = d.uz[bR];
+            d.uz[gR] = d.uz[bL];
         }
 
         __device__ static inline constexpr void periodicY(
@@ -346,17 +346,17 @@ namespace LBM
             d.phi[gB] = d.phi[bT];
             d.phi[gT] = d.phi[bB];
 
-            // d.rho[gB] = d.rho[bT];
-            // d.rho[gT] = d.rho[bB];
+            d.rho[gB] = d.rho[bT];
+            d.rho[gT] = d.rho[bB];
 
-            // d.ux[gB] = d.ux[bT];
-            // d.ux[gT] = d.ux[bB];
+            d.ux[gB] = d.ux[bT];
+            d.ux[gT] = d.ux[bB];
 
-            // d.uy[gB] = d.uy[bT];
-            // d.uy[gT] = d.uy[bB];
+            d.uy[gB] = d.uy[bT];
+            d.uy[gT] = d.uy[bB];
 
-            // d.uz[gB] = d.uz[bT];
-            // d.uz[gT] = d.uz[bB];
+            d.uz[gB] = d.uz[bT];
+            d.uz[gT] = d.uz[bB];
         }
 
 #elif defined(DROPLET)

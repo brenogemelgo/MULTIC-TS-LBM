@@ -191,27 +191,6 @@ namespace LBM
           d.pxz[idx3] = pxz;
           d.pyz[idx3] = pyz;
 
-#if defined(VISC_CONTRAST)
-
-          scalar_t omcoLocal;
-          {
-               const scalar_t phi = d.phi[idx3];
-               const scalar_t nuLocal = fmaf(phi, (VISC_OIL - VISC_WATER), VISC_WATER);
-               const scalar_t omegaPhys = 1.0f / (0.5f + 3.0f * nuLocal);
-
-#if defined(JET)
-
-               omcoLocal = 1.0f - fminf(omegaPhys, device::cubic_sponge(z));
-
-#elif defined(DROPLET)
-
-               omcoLocal = 1.0f - omegaPhys;
-
-#endif
-          }
-
-#else
-
 #if defined(JET)
 
           const scalar_t omcoLocal = 1.0f - device::cubic_sponge(z);
@@ -219,8 +198,6 @@ namespace LBM
 #elif defined(DROPLET)
 
           const scalar_t omcoLocal = 1.0f - OMEGA_REF;
-
-#endif
 
 #endif
 

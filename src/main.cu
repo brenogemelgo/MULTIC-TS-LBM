@@ -58,9 +58,6 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = host::createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-// Benchmark define (suppresses saves and step outputs)
-#define BENCHMARK
-
     // Set GPU based on pipeline argument
     if (host::setDeviceFromEnv() < 0)
     {
@@ -144,7 +141,7 @@ int main(int argc, char *argv[])
 
 #endif
 
-#if !defined(BENCHMARK)
+#if !BENCHMARK
 
         // Sync kernels
         checkCudaErrors(cudaDeviceSynchronize());
