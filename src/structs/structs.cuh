@@ -41,7 +41,6 @@ SourceFiles
 
 struct LBMFields
 {
-    // Hydrodynamics
     scalar_t *rho;
     scalar_t *ux;
     scalar_t *uy;
@@ -53,7 +52,6 @@ struct LBMFields
     scalar_t *pxz;
     scalar_t *pyz;
 
-    // Phase field
     scalar_t *phi;
     scalar_t *normx;
     scalar_t *normy;
@@ -63,21 +61,12 @@ struct LBMFields
     scalar_t *ffy;
     scalar_t *ffz;
 
-    // Passive scalar
-#if PASSIVE_SCALAR
-
-    scalar_t *chi;
-
-#endif
-
-    // Distributions
     pop_t *f;
     scalar_t *g;
 
-#if PASSIVE_SCALAR
+#if AVERAGE_UZ
 
-    scalar_t *h;
-    scalar_t *h_post;
+    scalar_t *avg;
 
 #endif
 };

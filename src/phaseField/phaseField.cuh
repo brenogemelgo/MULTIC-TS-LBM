@@ -105,7 +105,6 @@ namespace phase
                               d.phi[device::global3(x, y - 1, z + 1)] - d.phi[device::global3(x, y + 1, z - 1)]);
 
 #if defined(D3Q27)
-
         sgx += W_3 * (d.phi[device::global3(x + 1, y + 1, z + 1)] - d.phi[device::global3(x - 1, y - 1, z - 1)] +
                       d.phi[device::global3(x + 1, y + 1, z - 1)] - d.phi[device::global3(x - 1, y - 1, z + 1)] +
                       d.phi[device::global3(x + 1, y - 1, z + 1)] - d.phi[device::global3(x - 1, y + 1, z - 1)] +
@@ -120,7 +119,6 @@ namespace phase
                       d.phi[device::global3(x - 1, y - 1, z + 1)] - d.phi[device::global3(x + 1, y + 1, z - 1)] +
                       d.phi[device::global3(x + 1, y - 1, z + 1)] - d.phi[device::global3(x - 1, y + 1, z - 1)] +
                       d.phi[device::global3(x - 1, y + 1, z + 1)] - d.phi[device::global3(x + 1, y - 1, z - 1)]);
-
 #endif
 
         const scalar_t gx = 3.0f * sgx;
@@ -175,7 +173,6 @@ namespace phase
                               d.normz[device::global3(x, y - 1, z + 1)] - d.normz[device::global3(x, y + 1, z - 1)]);
 
 #if defined(D3Q27)
-
         scx += W_3 * (d.normx[device::global3(x + 1, y + 1, z + 1)] - d.normx[device::global3(x - 1, y - 1, z - 1)] +
                       d.normx[device::global3(x + 1, y + 1, z - 1)] - d.normx[device::global3(x - 1, y - 1, z + 1)] +
                       d.normx[device::global3(x + 1, y - 1, z + 1)] - d.normx[device::global3(x - 1, y + 1, z - 1)] +
@@ -190,7 +187,6 @@ namespace phase
                       d.normz[device::global3(x - 1, y - 1, z + 1)] - d.normz[device::global3(x + 1, y + 1, z - 1)] +
                       d.normz[device::global3(x + 1, y - 1, z + 1)] - d.normz[device::global3(x - 1, y + 1, z - 1)] +
                       d.normz[device::global3(x - 1, y + 1, z + 1)] - d.normz[device::global3(x + 1, y - 1, z - 1)]);
-
 #endif
 
         const scalar_t curvature = -3.0f * (scx + scy + scz);

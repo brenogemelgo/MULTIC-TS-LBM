@@ -44,7 +44,6 @@ SourceFiles
 
 namespace LBM
 {
-    // Initial conditions
     __global__ void callSetFields(
         LBMFields d)
     {
@@ -75,7 +74,6 @@ namespace LBM
         InitialConditions::setDistros(d);
     }
 
-    // Boundary conditions
     __global__ void callInflow(
         LBMFields d)
     {

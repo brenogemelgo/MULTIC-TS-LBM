@@ -111,6 +111,7 @@ namespace geometry
 
 namespace relaxation
 {
+
 #if defined(JET)
 
     template <typename T = scalar_t>
@@ -140,6 +141,7 @@ namespace relaxation
     }
 
 #endif
+
 }
 
 namespace LBM

@@ -88,15 +88,8 @@ static constexpr scalar_t WG_1 = 1.0f / 8.0f; // 1 to 6
 __constant__ scalar_t W_G[GLINKS] = {1.0f / 4.0f,
                                      1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f};
 
-#if PASSIVE_SCALAR
-
-static constexpr label_t HLINKS = 7;
-
-#endif
-
 namespace VelocitySet
 {
-
     template <label_t Q>
     struct F;
 
@@ -344,62 +337,6 @@ namespace VelocitySet
         static constexpr int cx = 0, cy = 0, cz = -1;
         static constexpr scalar_t wg = WG_1;
     };
-
-#if PASSIVE_SCALAR
-
-    template <label_t Q>
-    struct H;
-
-    template <>
-    struct H<0>
-    {
-        static constexpr int cx = 0, cy = 0, cz = 0;
-        static constexpr scalar_t wh = WG_0;
-    };
-
-    template <>
-    struct H<1>
-    {
-        static constexpr int cx = 1, cy = 0, cz = 0;
-        static constexpr scalar_t wh = WG_1;
-    };
-
-    template <>
-    struct H<2>
-    {
-        static constexpr int cx = -1, cy = 0, cz = 0;
-        static constexpr scalar_t wh = WG_1;
-    };
-
-    template <>
-    struct H<3>
-    {
-        static constexpr int cx = 0, cy = 1, cz = 0;
-        static constexpr scalar_t wh = WG_1;
-    };
-
-    template <>
-    struct H<4>
-    {
-        static constexpr int cx = 0, cy = -1, cz = 0;
-        static constexpr scalar_t wh = WG_1;
-    };
-
-    template <>
-    struct H<5>
-    {
-        static constexpr int cx = 0, cy = 0, cz = 1;
-        static constexpr scalar_t wh = WG_1;
-    };
-
-    template <>
-    struct H<6>
-    {
-        static constexpr int cx = 0, cy = 0, cz = -1;
-        static constexpr scalar_t wh = WG_1;
-    };
-
-#endif
 }
 
 #endif

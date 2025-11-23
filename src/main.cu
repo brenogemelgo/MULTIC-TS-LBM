@@ -41,8 +41,8 @@ SourceFiles
 #include "class/initialConditions.cuh"
 #include "class/boundaryConditions.cuh"
 #include "phaseField/phaseField.cuh"
-#include "passiveScalar/passiveScalar.cuh"
 #include "caller/caller.cuh"
+#include "derivedFields/timeAverage.cuh"
 
 #include "lbm.cuh"
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 
     // Time loop
     const auto START_TIME = std::chrono::high_resolution_clock::now();
-    for (label_t STEP = 0; STEP < NSTEPS; ++STEP)
+    for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
         // Calculate the phase field
         phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
@@ -123,12 +123,6 @@ int main(int argc, char *argv[])
         // Main kernel
         LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-#if PASSIVE_SCALAR
-
-        LBM::passiveScalar<<<grid3D, block3D, dynamic, queue>>>(fields);
-
-#endif
-
         // Call boundary conditions
 #if defined(JET)
 
@@ -141,6 +135,12 @@ int main(int argc, char *argv[])
 
 #endif
 
+#if AVERAGE_UZ
+
+        LBM::timeAverageUz<<<grid3D, block3D, dynamic, queue>>>(fields, STEP + 1);
+
+#endif
+
 #if !BENCHMARK
 
         // Sync kernels
@@ -150,13 +150,13 @@ int main(int argc, char *argv[])
         if (STEP % MACRO_SAVE == 0)
         {
 
-            host::copyAndSaveToBinary(fields.rho, SIM_DIR, STEP, "rho");
-            host::copyAndSaveToBinary(fields.uz, SIM_DIR, STEP, "uz");
-            host::copyAndSaveToBinary(fields.phi, SIM_DIR, STEP, "phi");
+            // host::copyAndSaveToBinary(fields.rho, SIM_DIR, STEP, "rho");
+            // host::copyAndSaveToBinary(fields.phi, SIM_DIR, STEP, "phi");
+            // host::copyAndSaveToBinary(fields.uz, SIM_DIR, STEP, "uz");
 
-#if PASSIVE_SCALAR
+#if AVERAGE_UZ
 
-            host::copyAndSaveToBinary(fields.chi, SIM_DIR, STEP, "chi");
+            host::copyAndSaveToBinary(fields.avg, SIM_DIR, STEP, "avg");
 
 #endif
 
@@ -193,18 +193,16 @@ int main(int argc, char *argv[])
     cudaFree(fields.ffy);
     cudaFree(fields.ffz);
 
-#if PASSIVE_SCALAR
+#if AVERAGE_UZ
 
-    cudaFree(fields.chi);
-    cudaFree(fields.h);
-    cudaFree(fields.h_post);
+    cudaFree(fields.avg);
 
 #endif
 
     // Performance log
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
 
-    const double steps = static_cast<double>(NSTEPS);
+    const double steps = static_cast<double>(NSTEPS + 1);
     const double total_lattice_updates = static_cast<double>(mesh::nx) * mesh::ny * mesh::nz * steps;
     const double MLUPS = total_lattice_updates / (ELAPSED_TIME.count() * 1e6);
 
