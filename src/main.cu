@@ -68,19 +68,19 @@ int main(int argc, char *argv[])
     host::setDeviceFields();
 
     // Block-wise configuration
-    const dim3 block3D(block::nx, block::ny, block::nz);
+    constexpr dim3 block3D(block::nx, block::ny, block::nz);
 
-    const dim3 grid3D(host::divUp(mesh::nx, block3D.x),
-                      host::divUp(mesh::ny, block3D.y),
-                      host::divUp(mesh::nz, block3D.z));
+    constexpr dim3 grid3D(host::divUp(mesh::nx, block3D.x),
+                          host::divUp(mesh::ny, block3D.y),
+                          host::divUp(mesh::nz, block3D.z));
 
-    const dim3 blockX(block::nx, block::ny, 1u);
-    const dim3 blockY(block::nx, block::ny, 1u);
-    const dim3 blockZ(block::nx, block::ny, 1u);
+    constexpr dim3 blockX(block::nx, block::ny, 1u);
+    constexpr dim3 blockY(block::nx, block::ny, 1u);
+    constexpr dim3 blockZ(block::nx, block::ny, 1u);
 
-    const dim3 gridX(host::divUp(mesh::ny, blockX.x), host::divUp(mesh::nz, blockX.y), 1u);
-    const dim3 gridY(host::divUp(mesh::nx, blockY.x), host::divUp(mesh::nz, blockY.y), 1u);
-    const dim3 gridZ(host::divUp(mesh::nx, blockZ.x), host::divUp(mesh::ny, blockZ.y), 1u);
+    constexpr dim3 gridX(host::divUp(mesh::ny, blockX.x), host::divUp(mesh::nz, blockX.y), 1u);
+    constexpr dim3 gridY(host::divUp(mesh::nx, blockY.x), host::divUp(mesh::nz, blockY.y), 1u);
+    constexpr dim3 gridZ(host::divUp(mesh::nx, blockZ.x), host::divUp(mesh::ny, blockZ.y), 1u);
 
     // Dynamic shared memory size
     constexpr size_t dynamic = 0;
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 
 #if AVERAGE_UZ
 
-        LBM::timeAverageUz<<<grid3D, block3D, dynamic, queue>>>(fields, STEP + 1);
+        LBM::timeAverage<<<grid3D, block3D, dynamic, queue>>>(fields, STEP + 1);
 
 #endif
 
@@ -172,13 +172,13 @@ int main(int argc, char *argv[])
 
     // Destructors
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
+
+    // Distributions
     cudaFree(fields.f);
     cudaFree(fields.g);
-    cudaFree(fields.phi);
+
+    // Hydrodynamic fields
     cudaFree(fields.rho);
-    cudaFree(fields.normx);
-    cudaFree(fields.normy);
-    cudaFree(fields.normz);
     cudaFree(fields.ux);
     cudaFree(fields.uy);
     cudaFree(fields.uz);
@@ -188,11 +188,18 @@ int main(int argc, char *argv[])
     cudaFree(fields.pxy);
     cudaFree(fields.pxz);
     cudaFree(fields.pyz);
+
+    // Interface fields
+    cudaFree(fields.phi);
+    cudaFree(fields.normx);
+    cudaFree(fields.normy);
+    cudaFree(fields.normz);
     cudaFree(fields.ind);
     cudaFree(fields.ffx);
     cudaFree(fields.ffy);
     cudaFree(fields.ffz);
 
+    // Derived fields
 #if AVERAGE_UZ
 
     cudaFree(fields.avg);

@@ -29,42 +29,47 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Time averaging kernel for uz field
+    Header file for the velocity set classes
 
 SourceFiles
-    timeAverage.cuh
+    velocitySet.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TIMEAVERAGE_CUH
-#define TIMEAVERAGE_CUH
+#ifndef VELOCITYSET_CUH
+#define VELOCITYSET_CUH
 
-#if AVERAGE_UZ
+#include "../cuda/utils.cuh"
 
 namespace LBM
 {
-    __global__ void timeAverage(LBMFields d, const int t)
+    namespace Phase
     {
-        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
-        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
-        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
-
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
+        class VelocitySet
         {
-            return;
-        }
+        public:
+            __host__ __device__ [[nodiscard]] inline consteval VelocitySet() noexcept {};
 
-        const label_t idx3 = device::global3(x, y, z);
+        private:
+            // No private methods
+        };
+    }
 
-        const scalar_t uz = d.uz[idx3];
+    namespace Hydro
+    {
+        class VelocitySet
+        {
+        public:
+            __host__ __device__ [[nodiscard]] inline consteval VelocitySet() noexcept {};
 
-        scalar_t avg_old = d.avg[idx3];
-        scalar_t avg_new = avg_old + (uz - avg_old) / static_cast<scalar_t>(t);
-
-        d.avg[idx3] = avg_new;
+        private:
+            // No private methods
+        };
     }
 }
 
-#endif
+#include "D3Q7.cuh"
+#include "D3Q19.cuh"
+#include "D3Q27.cuh"
 
 #endif

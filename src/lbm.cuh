@@ -115,7 +115,7 @@ namespace LBM
 #if defined(D3Q19)
                 const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
 #elif defined(D3Q27)
-                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + oos() * cu * cu * cu - uu * cu) - w;
+                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
 #endif
 
                 const scalar_t force = 0.5f * w *
@@ -141,9 +141,9 @@ namespace LBM
         d.pyz[idx3] = pyz;
 
 #if defined(JET)
-        const scalar_t omcoLocal = 1.0f - device::cubic_sponge(z);
+        const scalar_t omco = 1.0f - device::cubic_sponge(z);
 #elif defined(DROPLET)
-        const scalar_t omcoLocal = 1.0f - OMEGA_REF;
+        constexpr scalar_t omco = relaxation::omco_ref();
 #endif
 
         device::constexpr_for<0, FLINKS>(
@@ -159,7 +159,7 @@ namespace LBM
 #if defined(D3Q19)
                 const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
 #elif defined(D3Q27)
-                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + oos() * cu * cu * cu - uu * cu) - w;
+                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
 #endif
 
                 const scalar_t force = 0.5f * w *
@@ -169,29 +169,29 @@ namespace LBM
 
 #if defined(D3Q19)
                 const scalar_t fneq = (w * 4.5f) *
-                                      ((cx * cx - cssq()) * pxx +
-                                       (cy * cy - cssq()) * pyy +
-                                       (cz * cz - cssq()) * pzz +
+                                      ((cx * cx - cs2()) * pxx +
+                                       (cy * cy - cs2()) * pyy +
+                                       (cz * cz - cs2()) * pzz +
                                        2.0f * (cx * cy * pxy +
                                                cx * cz * pxz +
                                                cy * cz * pyz));
 #elif defined(D3Q27)
                 const scalar_t fneq = (w * 4.5f) *
-                                      ((cx * cx - cssq()) * pxx +
-                                       (cy * cy - cssq()) * pyy +
-                                       (cz * cz - cssq()) * pzz +
+                                      ((cx * cx - cs2()) * pxx +
+                                       (cy * cy - cs2()) * pyy +
+                                       (cz * cz - cs2()) * pzz +
                                        2.0f * (cx * cy * pxy +
                                                cx * cz * pxz +
                                                cy * cz * pyz) +
-                                       (cx * cx * cx - 3.0f * cssq() * cx) * (3.0f * ux * pxx) +
-                                       (cy * cy * cy - 3.0f * cssq() * cy) * (3.0f * uy * pyy) +
-                                       (cz * cz * cz - 3.0f * cssq() * cz) * (3.0f * uz * pzz) +
-                                       3.0f * ((cx * cx * cy - cssq() * cy) * (pxx * uy + 2.0f * ux * pxy) +
-                                               (cx * cx * cz - cssq() * cz) * (pxx * uz + 2.0f * ux * pxz) +
-                                               (cx * cy * cy - cssq() * cx) * (pxy * uy + 2.0f * ux * pyy) +
-                                               (cy * cy * cz - cssq() * cz) * (pyy * uz + 2.0f * uy * pyz) +
-                                               (cx * cz * cz - cssq() * cx) * (pxz * uz + 2.0f * ux * pzz) +
-                                               (cy * cz * cz - cssq() * cy) * (pyz * uz + 2.0f * uy * pzz)) +
+                                       (cx * cx * cx - 3.0f * cs2() * cx) * (3.0f * ux * pxx) +
+                                       (cy * cy * cy - 3.0f * cs2() * cy) * (3.0f * uy * pyy) +
+                                       (cz * cz * cz - 3.0f * cs2() * cz) * (3.0f * uz * pzz) +
+                                       3.0f * ((cx * cx * cy - cs2() * cy) * (pxx * uy + 2.0f * ux * pxy) +
+                                               (cx * cx * cz - cs2() * cz) * (pxx * uz + 2.0f * ux * pxz) +
+                                               (cx * cy * cy - cs2() * cx) * (pxy * uy + 2.0f * ux * pyy) +
+                                               (cy * cy * cz - cs2() * cz) * (pyy * uz + 2.0f * uy * pyz) +
+                                               (cx * cz * cz - cs2() * cx) * (pxz * uz + 2.0f * ux * pzz) +
+                                               (cy * cz * cz - cs2() * cy) * (pyz * uz + 2.0f * uy * pzz)) +
                                        6.0f * (cx * cy * cz) * (ux * pyz + uy * pxz + uz * pxy));
 #endif
 
@@ -199,7 +199,7 @@ namespace LBM
                 const label_t yy = y + static_cast<label_t>(VelocitySet::F<Q>::cy);
                 const label_t zz = z + static_cast<label_t>(VelocitySet::F<Q>::cz);
 
-                d.f[device::global4(xx, yy, zz, Q)] = to_pop(feq + omcoLocal * fneq + force);
+                d.f[device::global4(xx, yy, zz, Q)] = to_pop(feq + omco * fneq + force);
             });
 
         const scalar_t phi = d.phi[idx3];

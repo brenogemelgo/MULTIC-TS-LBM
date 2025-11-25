@@ -49,8 +49,7 @@ namespace LBM
     public:
         __host__ __device__ [[nodiscard]] inline consteval InitialConditions(){};
 
-        __device__ static inline constexpr void setFields(
-            LBMFields d) noexcept
+        __device__ static inline constexpr void setFields(LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -88,8 +87,7 @@ namespace LBM
 
 #if defined(JET)
 
-        __device__ static inline constexpr void setJet(
-            LBMFields d) noexcept
+        __device__ static inline constexpr void setJet(LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -116,8 +114,7 @@ namespace LBM
 
 #elif defined(DROPLET)
 
-        __device__ static inline constexpr void setDroplet(
-            LBMFields d) noexcept
+        __device__ static inline constexpr void setDroplet(LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -144,8 +141,7 @@ namespace LBM
 
 #endif
 
-        __device__ static inline constexpr void setDistros(
-            LBMFields d) noexcept
+        __device__ static inline constexpr void setDistros(LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -166,17 +162,17 @@ namespace LBM
             device::constexpr_for<0, FLINKS>(
                 [&](const auto Q)
                 {
-                    constexpr scalar_t w = VelocitySet::F<Q>::w;
-                    constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
-                    constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
-                    constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
+                    constexpr scalar_t w = Hydro::VelocitySet::w<Q>();
+                    constexpr scalar_t cx = static_cast<scalar_t>(Hydro::VelocitySet::cx<Q>());
+                    constexpr scalar_t cy = static_cast<scalar_t>(Hydro::VelocitySet::cy<Q>());
+                    constexpr scalar_t cz = static_cast<scalar_t>(Hydro::VelocitySet::cz<Q>());
 
                     const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
 #if defined(D3Q19)
                     const scalar_t feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu) - w;
 #elif defined(D3Q27)
-                    const scalar_t feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu + oos() * cu * cu * cu - uu * cu) - w;
+                    const scalar_t feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
 #endif
 
                     d.f[device::global4(x, y, z, Q)] = to_pop(feq);
@@ -185,13 +181,13 @@ namespace LBM
             device::constexpr_for<0, GLINKS>(
                 [&](const auto Q)
                 {
-                    const label_t xx = x + static_cast<label_t>(VelocitySet::G<Q>::cx);
-                    const label_t yy = y + static_cast<label_t>(VelocitySet::G<Q>::cy);
-                    const label_t zz = z + static_cast<label_t>(VelocitySet::G<Q>::cz);
+                    const label_t xx = safeStream<Phase::VelocitySet::cx<Q>()>(x);
+                    const label_t yy = safeStream<Phase::VelocitySet::cy<Q>()>(y);
+                    const label_t zz = safeStream<Phase::VelocitySet::cz<Q>()>(z);
 
-                    constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::G<Q>::cx);
-                    constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::G<Q>::cy);
-                    constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::G<Q>::cz);
+                    constexpr scalar_t cx = static_cast<scalar_t>(Phase::VelocitySet::cx<Q>());
+                    constexpr scalar_t cy = static_cast<scalar_t>(Phase::VelocitySet::cy<Q>());
+                    constexpr scalar_t cz = static_cast<scalar_t>(Phase::VelocitySet::cz<Q>());
 
                     d.g[device::global4(xx, yy, zz, Q)] = VelocitySet::G<Q>::wg * d.phi[idx3] * (1.0f + 4.0f * (cx * ux + cy * uy + cz * uz));
                 });
