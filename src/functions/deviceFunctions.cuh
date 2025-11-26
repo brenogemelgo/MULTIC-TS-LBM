@@ -75,23 +75,6 @@ namespace device
         return tx + block::nx * (ty + block::ny * (tz + block::nz * (bx + block::num_block_x() * (by + block::num_block_y() * bz))));
     }
 
-    template <const int Dir>
-    __device__ [[nodiscard]] static inline constexpr label_t safeStream(const label_t x) noexcept
-    {
-        if constexpr (Dir == -1)
-        {
-            return x - 1;
-        }
-        else if constexpr (Dir == 1)
-        {
-            return x + 1;
-        }
-        else
-        {
-            return x;
-        }
-    }
-
 #if defined(JET)
 
     __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept

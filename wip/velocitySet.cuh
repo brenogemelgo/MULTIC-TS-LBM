@@ -43,32 +43,13 @@ SourceFiles
 
 namespace LBM
 {
-    namespace Phase
+    class VelocitySet
     {
-        class VelocitySet
-        {
-        public:
-            __host__ __device__ [[nodiscard]] inline consteval VelocitySet() noexcept {};
-
-        private:
-            // No private methods
-        };
-    }
-
-    namespace Hydro
-    {
-        class VelocitySet
-        {
-        public:
-            __host__ __device__ [[nodiscard]] inline consteval VelocitySet() noexcept {};
-
-        private:
-            // No private methods
-        };
-    }
+    public:
+        __host__ __device__ [[nodiscard]] inline consteval VelocitySet() noexcept {};
+    };
 }
 
-#include "D3Q7.cuh"
 #include "D3Q19.cuh"
 #include "D3Q27.cuh"
 

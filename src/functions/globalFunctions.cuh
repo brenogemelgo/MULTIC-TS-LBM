@@ -229,4 +229,22 @@ namespace relaxation
 #endif
 }
 
+namespace LBM
+{
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t cs() noexcept
+    {
+        return static_cast<scalar_t>(0.57735026918962576451);
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t cs2() noexcept
+    {
+        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(3));
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t cs2_d3q7() noexcept
+    {
+        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(4));
+    }
+}
+
 #endif

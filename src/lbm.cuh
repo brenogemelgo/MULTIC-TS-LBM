@@ -183,9 +183,9 @@ namespace LBM
                                        2.0f * (cx * cy * pxy +
                                                cx * cz * pxz +
                                                cy * cz * pyz) +
-                                       (cx * cx * cx - 3.0f * cs2() * cx) * (3.0f * ux * pxx) +
-                                       (cy * cy * cy - 3.0f * cs2() * cy) * (3.0f * uy * pyy) +
-                                       (cz * cz * cz - 3.0f * cs2() * cz) * (3.0f * uz * pzz) +
+                                       (cx * cx * cx - cx) * (3.0f * ux * pxx) +
+                                       (cy * cy * cy - cy) * (3.0f * uy * pyy) +
+                                       (cz * cz * cz - cz) * (3.0f * uz * pzz) +
                                        3.0f * ((cx * cx * cy - cs2() * cy) * (pxx * uy + 2.0f * ux * pxy) +
                                                (cx * cx * cz - cs2() * cz) * (pxx * uz + 2.0f * ux * pxz) +
                                                (cx * cy * cy - cs2() * cx) * (pxy * uy + 2.0f * ux * pyy) +

@@ -43,8 +43,8 @@ SourceFiles
 #include "structs/structs.cuh"
 #include "velocitySet/velocitySet.cuh"
 
-#define RUN_MODE
-// #define SAMPLE_MODE
+// #define RUN_MODE
+#define SAMPLE_MODE
 // #define PROFILE_MODE
 
 #if defined(RUN_MODE)
@@ -55,7 +55,7 @@ static constexpr int NSTEPS = 100000;
 #elif defined(SAMPLE_MODE)
 
 static constexpr int MACRO_SAVE = 100;
-static constexpr int NSTEPS = 10000;
+static constexpr int NSTEPS = 1000;
 
 #elif defined(PROFILE_MODE)
 
@@ -68,7 +68,7 @@ static constexpr int NSTEPS = 0;
 
 namespace mesh
 {
-    static constexpr label_t res = 200;
+    static constexpr label_t res = 128;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res * 2;
@@ -80,7 +80,7 @@ namespace physics
 {
     static constexpr scalar_t u_ref = 0.05f;
     static constexpr int reynolds = 5000;
-    static constexpr int weber = 100;
+    static constexpr int weber = 500;
     static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;
     static constexpr scalar_t gamma = 1.0f;
 }

@@ -95,12 +95,12 @@ namespace LBM
                 {
                     if constexpr (VelocitySet::F<Q>::cz == 1)
                     {
-                        const label_t xx = safeStream<Hydro::VelocitySet::cx<Q>()>(x);
-                        const label_t yy = safeStream<Hydro::VelocitySet::cy<Q>()>(y);
+                        const label_t xx = x + static_cast<label_t>(VelocitySet::F<Q>::cx);
+                        const label_t yy = y + static_cast<label_t>(VelocitySet::F<Q>::cy);
 
                         const label_t fluidNode = device::global3(xx, yy, 1);
 
-                        constexpr scalar_t w = Hydro::VelocitySet::w<Q>();
+                        constexpr scalar_t w = VelocitySet::F<Q>::w;
 
                         // Assuming rho = 1
                         const scalar_t feq = w * P - w;
@@ -303,10 +303,10 @@ namespace LBM
             const LBMFields &d,
             const label_t fluidNode) noexcept
         {
-            constexpr scalar_t w = Hydro::VelocitySet::w<Q>();
-            constexpr scalar_t cx = static_cast<scalar_t>(Hydro::VelocitySet::cx<Q>());
-            constexpr scalar_t cy = static_cast<scalar_t>(Hydro::VelocitySet::cy<Q>());
-            constexpr scalar_t cz = static_cast<scalar_t>(Hydro::VelocitySet::cz<Q>());
+            constexpr scalar_t w = VelocitySet::F<Q>::w;
+            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
+            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
+            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
 
 #if defined(D3Q19)
             return (w * 4.5f) *
@@ -324,9 +324,9 @@ namespace LBM
                     2.0f * (cx * cy * d.pxy[fluidNode] +
                             cx * cz * d.pxz[fluidNode] +
                             cy * cz * d.pyz[fluidNode]) +
-                    (cx * cx * cx - 3.0f * cs2() * cx) * (3.0f * d.ux[fluidNode] * d.pxx[fluidNode]) +
-                    (cy * cy * cy - 3.0f * cs2() * cy) * (3.0f * d.uy[fluidNode] * d.pyy[fluidNode]) +
-                    (cz * cz * cz - 3.0f * cs2() * cz) * (3.0f * d.uz[fluidNode] * d.pzz[fluidNode]) +
+                    (cx * cx * cx - cx) * (3.0f * d.ux[fluidNode] * d.pxx[fluidNode]) +
+                    (cy * cy * cy - cy) * (3.0f * d.uy[fluidNode] * d.pyy[fluidNode]) +
+                    (cz * cz * cz - cz) * (3.0f * d.uz[fluidNode] * d.pzz[fluidNode]) +
                     3.0f * ((cx * cx * cy - cs2() * cy) * (d.pxx[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxy[fluidNode]) +
                             (cx * cx * cz - cs2() * cz) * (d.pxx[fluidNode] * d.uz[fluidNode] + 2.0f * d.ux[fluidNode] * d.pxz[fluidNode]) +
                             (cx * cy * cy - cs2() * cx) * (d.pxy[fluidNode] * d.uy[fluidNode] + 2.0f * d.ux[fluidNode] * d.pyy[fluidNode]) +

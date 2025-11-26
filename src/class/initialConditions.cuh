@@ -132,7 +132,7 @@ namespace LBM
 
             const scalar_t dx = (static_cast<scalar_t>(x) - geometry::center_x()) / 2.0f;
             const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
-            const scalar_t dz = static_cast<scalar_t>(z) - center_z();
+            const scalar_t dz = static_cast<scalar_t>(z) - geometry::center_z();
             const scalar_t radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
 
             const scalar_t phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<scalar_t>(mesh::radius) - radialDist) / 3.0f);
@@ -162,10 +162,10 @@ namespace LBM
             device::constexpr_for<0, FLINKS>(
                 [&](const auto Q)
                 {
-                    constexpr scalar_t w = Hydro::VelocitySet::w<Q>();
-                    constexpr scalar_t cx = static_cast<scalar_t>(Hydro::VelocitySet::cx<Q>());
-                    constexpr scalar_t cy = static_cast<scalar_t>(Hydro::VelocitySet::cy<Q>());
-                    constexpr scalar_t cz = static_cast<scalar_t>(Hydro::VelocitySet::cz<Q>());
+                    constexpr scalar_t w = VelocitySet::F<Q>::w;
+                    constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::F<Q>::cx);
+                    constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::F<Q>::cy);
+                    constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::F<Q>::cz);
 
                     const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
@@ -181,20 +181,17 @@ namespace LBM
             device::constexpr_for<0, GLINKS>(
                 [&](const auto Q)
                 {
-                    const label_t xx = safeStream<Phase::VelocitySet::cx<Q>()>(x);
-                    const label_t yy = safeStream<Phase::VelocitySet::cy<Q>()>(y);
-                    const label_t zz = safeStream<Phase::VelocitySet::cz<Q>()>(z);
+                    const label_t xx = x + static_cast<label_t>(VelocitySet::G<Q>::cx);
+                    const label_t yy = y + static_cast<label_t>(VelocitySet::G<Q>::cy);
+                    const label_t zz = z + static_cast<label_t>(VelocitySet::G<Q>::cz);
 
-                    constexpr scalar_t cx = static_cast<scalar_t>(Phase::VelocitySet::cx<Q>());
-                    constexpr scalar_t cy = static_cast<scalar_t>(Phase::VelocitySet::cy<Q>());
-                    constexpr scalar_t cz = static_cast<scalar_t>(Phase::VelocitySet::cz<Q>());
+                    constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::G<Q>::cx);
+                    constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::G<Q>::cy);
+                    constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::G<Q>::cz);
 
                     d.g[device::global4(xx, yy, zz, Q)] = VelocitySet::G<Q>::wg * d.phi[idx3] * (1.0f + 4.0f * (cx * ux + cy * uy + cz * uz));
                 });
         }
-
-    private:
-        // No private methods
     };
 }
 

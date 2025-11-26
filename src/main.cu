@@ -150,9 +150,9 @@ int main(int argc, char *argv[])
         if (STEP % MACRO_SAVE == 0)
         {
 
-            // host::copyAndSaveToBinary(fields.rho, SIM_DIR, STEP, "rho");
-            // host::copyAndSaveToBinary(fields.phi, SIM_DIR, STEP, "phi");
-            // host::copyAndSaveToBinary(fields.uz, SIM_DIR, STEP, "uz");
+            host::copyAndSaveToBinary(fields.rho, SIM_DIR, STEP, "rho");
+            host::copyAndSaveToBinary(fields.phi, SIM_DIR, STEP, "phi");
+            host::copyAndSaveToBinary(fields.uz, SIM_DIR, STEP, "uz");
 
 #if AVERAGE_UZ
 

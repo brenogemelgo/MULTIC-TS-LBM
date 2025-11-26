@@ -52,9 +52,9 @@ __constant__ ci_t CIX[FLINKS] = {0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 0, 0, 1, -1
 __constant__ ci_t CIY[FLINKS] = {0, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 1, -1};
 __constant__ ci_t CIZ[FLINKS] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, 0, 0, -1, 1, -1, 1};
 
-static constexpr scalar_t W_0 = 1.0f / 3.0f;
-static constexpr scalar_t W_1 = 1.0f / 18.0f;
-static constexpr scalar_t W_2 = 1.0f / 36.0f;
+static constexpr scalar_t W_0 = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(3));  // 0
+static constexpr scalar_t W_1 = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(18)); // 1 to 6
+static constexpr scalar_t W_2 = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(36)); // 7 to 18
 
 __constant__ scalar_t W[FLINKS] = {W_0,
                                    W_1, W_1, W_1, W_1, W_1, W_1,
@@ -68,10 +68,10 @@ __constant__ ci_t CIX[FLINKS] = {0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 0, 0, 1, -1
 __constant__ ci_t CIY[FLINKS] = {0, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, 1, -1, -1, 1, 0, 0, 1, -1, 1, -1, 1, -1, -1, 1, 1, -1};
 __constant__ ci_t CIZ[FLINKS] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, 0, 0, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1};
 
-static constexpr scalar_t W_0 = 8.0f / 27.0f;  // 0
-static constexpr scalar_t W_1 = 2.0f / 27.0f;  // 1 to 6
-static constexpr scalar_t W_2 = 1.0f / 54.0f;  // 7 to 18
-static constexpr scalar_t W_3 = 1.0f / 216.0f; // 19 to 26
+static constexpr scalar_t W_0 = static_cast<scalar_t>(static_cast<double>(8) / static_cast<double>(27));  // 0
+static constexpr scalar_t W_1 = static_cast<scalar_t>(static_cast<double>(2) / static_cast<double>(27));  // 1 to 6
+static constexpr scalar_t W_2 = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(54));  // 7 to 18
+static constexpr scalar_t W_3 = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(216)); // 19 to 26
 
 __constant__ scalar_t W[FLINKS] = {W_0,
                                    W_1, W_1, W_1, W_1, W_1, W_1,
@@ -82,11 +82,11 @@ __constant__ scalar_t W[FLINKS] = {W_0,
 
 static constexpr label_t GLINKS = 7;
 
-static constexpr scalar_t WG_0 = 1.0f / 4.0f; // 0
-static constexpr scalar_t WG_1 = 1.0f / 8.0f; // 1 to 6
+static constexpr scalar_t WG_0 = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(4)); // 0
+static constexpr scalar_t WG_1 = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(8)); // 1 to 6
 
-__constant__ scalar_t W_G[GLINKS] = {1.0f / 4.0f,
-                                     1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f, 1.0f / 8.0f};
+__constant__ scalar_t W_G[GLINKS] = {WG_0,
+                                     WG_1, WG_1, WG_1, WG_1, WG_1, WG_1};
 
 namespace VelocitySet
 {
