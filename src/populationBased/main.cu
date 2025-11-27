@@ -36,13 +36,13 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#include "functions/deviceFunctions.cuh"
-#include "functions/hostFunctions.cuh"
-#include "initialConditions/initialConditions.cuh"
-#include "boundaryConditions/boundaryConditions.cuh"
-#include "phaseField/phaseField.cuh"
-#include "caller/caller.cuh"
-#include "derivedFields/timeAverage.cuh"
+#include "../deviceFunctions.cuh"
+#include "../hostFunctions.cuh"
+#include "initialConditions.cuh"
+#include "boundaryConditions.cuh"
+#include "phaseField.cuh"
+#include "aux/caller.cuh"
+#include "../derivedFields/timeAverage.cuh"
 
 #include "lbm.cuh"
 

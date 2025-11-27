@@ -31,6 +31,8 @@ License
 Description
     A header defining the constants used in the simulation
 
+    Namespace
+
 SourceFiles
     constants.cuh
 
@@ -40,17 +42,25 @@ SourceFiles
 #define CONSTANTS_CUH
 
 #include "cuda/utils.cuh"
-#include "structs/structs.cuh"
+#include "structs.cuh"
 #include "velocitySet/velocitySet.cuh"
 
 namespace LBM
 {
+    // Velocity set selector
 #if defined(D3Q19)
     using VelocitySet = d3q19;
 #elif defined(D3Q27)
     using VelocitySet = d3q27;
 #endif
     using PhaseVelocitySet = d3q7;
+
+    // Flow case selector
+#if defined(JET)
+    using FlowCase = jet;
+#elif defined(DROPLET)
+    using FlowCase = droplet;
+#endif
 }
 
 #define RUN_MODE
