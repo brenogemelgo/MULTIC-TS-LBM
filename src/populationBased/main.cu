@@ -38,8 +38,8 @@ SourceFiles
 
 #include "functions/deviceFunctions.cuh"
 #include "functions/hostFunctions.cuh"
-#include "class/initialConditions.cuh"
-#include "class/boundaryConditions.cuh"
+#include "initialConditions/initialConditions.cuh"
+#include "boundaryConditions/boundaryConditions.cuh"
 #include "phaseField/phaseField.cuh"
 #include "caller/caller.cuh"
 #include "derivedFields/timeAverage.cuh"

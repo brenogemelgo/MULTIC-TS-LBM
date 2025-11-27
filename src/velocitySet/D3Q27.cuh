@@ -44,58 +44,58 @@ SourceFiles
 
 namespace LBM
 {
-    class D3Q27 : private VelocitySet
+    class d3q27 : private velocitySet
     {
     public:
-        __host__ __device__ [[nodiscard]] inline consteval D3Q27(){};
+        __host__ __device__ [[nodiscard]] inline consteval d3q27(){};
 
-        __device__ [[nodiscard]] static inline constexpr label_t Q() noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval label_t Q() noexcept
         {
             return static_cast<label_t>(Q_);
         }
 
-        __device__ [[nodiscard]] static inline constexpr scalar_t as2() noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t as2() noexcept
         {
             return static_cast<scalar_t>(3);
         }
 
-        __device__ [[nodiscard]] static inline constexpr scalar_t cs2() noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t cs2() noexcept
         {
             return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(3));
         }
 
-        __device__ [[nodiscard]] static inline constexpr scalar_t w_0() noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t w_0() noexcept
         {
             return static_cast<scalar_t>(static_cast<double>(8) / static_cast<double>(27));
         }
 
-        __device__ [[nodiscard]] static inline constexpr scalar_t w_1() noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t w_1() noexcept
         {
             return static_cast<scalar_t>(static_cast<double>(2) / static_cast<double>(27));
         }
 
-        __device__ [[nodiscard]] static inline constexpr scalar_t w_2() noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t w_2() noexcept
         {
             return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(54));
         }
 
-        __device__ [[nodiscard]] static inline constexpr scalar_t w_3() noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t w_3() noexcept
         {
             return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(216));
         }
 
-        template <label_t Q>
-        __device__ [[nodiscard]] static inline constexpr scalar_t w() noexcept
+        template <label_t Dir>
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t w() noexcept
         {
-            if constexpr (Q == 0)
+            if constexpr (Dir == 0)
             {
                 return w_0();
             }
-            else if constexpr (Q >= 1 && Q <= 6)
+            else if constexpr (Dir >= 1 && Dir <= 6)
             {
                 return w_1();
             }
-            else if constexpr (Q >= 7 && Q <= 18)
+            else if constexpr (Dir >= 7 && Dir <= 18)
             {
                 return w_2();
             }
@@ -105,14 +105,14 @@ namespace LBM
             }
         }
 
-        template <label_t Q>
-        __device__ [[nodiscard]] static inline constexpr int cx() noexcept
+        template <label_t Dir>
+        __host__ __device__ [[nodiscard]] static inline consteval int cx() noexcept
         {
-            if constexpr (Q == 1 || Q == 7 || Q == 9 || Q == 13 || Q == 15 || Q == 19 || Q == 21 || Q == 23 || Q == 26)
+            if constexpr (Dir == 1 || Dir == 7 || Dir == 9 || Dir == 13 || Dir == 15 || Dir == 19 || Dir == 21 || Dir == 23 || Dir == 26)
             {
                 return 1;
             }
-            else if constexpr (Q == 2 || Q == 8 || Q == 10 || Q == 14 || Q == 16 || Q == 20 || Q == 22 || Q == 24 || Q == 25)
+            else if constexpr (Dir == 2 || Dir == 8 || Dir == 10 || Dir == 14 || Dir == 16 || Dir == 20 || Dir == 22 || Dir == 24 || Dir == 25)
             {
                 return -1;
             }
@@ -122,14 +122,14 @@ namespace LBM
             }
         }
 
-        template <label_t Q>
-        __device__ [[nodiscard]] static inline constexpr int cy() noexcept
+        template <label_t Dir>
+        __host__ __device__ [[nodiscard]] static inline consteval int cy() noexcept
         {
-            if constexpr (Q == 3 || Q == 7 || Q == 11 || Q == 14 || Q == 17 || Q == 19 || Q == 21 || Q == 24 || Q == 25)
+            if constexpr (Dir == 3 || Dir == 7 || Dir == 11 || Dir == 14 || Dir == 17 || Dir == 19 || Dir == 21 || Dir == 24 || Dir == 25)
             {
                 return 1;
             }
-            else if constexpr (Q == 4 || Q == 8 || Q == 12 || Q == 13 || Q == 18 || Q == 20 || Q == 22 || Q == 23 || Q == 26)
+            else if constexpr (Dir == 4 || Dir == 8 || Dir == 12 || Dir == 13 || Dir == 18 || Dir == 20 || Dir == 22 || Dir == 23 || Dir == 26)
             {
                 return -1;
             }
@@ -139,14 +139,14 @@ namespace LBM
             }
         }
 
-        template <label_t Q>
-        __device__ [[nodiscard]] static inline constexpr int cz() noexcept
+        template <label_t Dir>
+        __host__ __device__ [[nodiscard]] static inline consteval int cz() noexcept
         {
-            if constexpr (Q == 5 || Q == 9 || Q == 11 || Q == 16 || Q == 18 || Q == 19 || Q == 22 || Q == 23 || Q == 25)
+            if constexpr (Dir == 5 || Dir == 9 || Dir == 11 || Dir == 16 || Dir == 18 || Dir == 19 || Dir == 22 || Dir == 23 || Dir == 25)
             {
                 return 1;
             }
-            else if constexpr (Q == 6 || Q == 10 || Q == 12 || Q == 15 || Q == 17 || Q == 20 || Q == 21 || Q == 24 || Q == 26)
+            else if constexpr (Dir == 6 || Dir == 10 || Dir == 12 || Dir == 15 || Dir == 17 || Dir == 20 || Dir == 21 || Dir == 24 || Dir == 26)
             {
                 return -1;
             }

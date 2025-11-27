@@ -43,8 +43,18 @@ SourceFiles
 #include "structs/structs.cuh"
 #include "velocitySet/velocitySet.cuh"
 
-// #define RUN_MODE
-#define SAMPLE_MODE
+namespace LBM
+{
+#if defined(D3Q19)
+    using VelocitySet = d3q19;
+#elif defined(D3Q27)
+    using VelocitySet = d3q27;
+#endif
+    using PhaseVelocitySet = d3q7;
+}
+
+#define RUN_MODE
+// #define SAMPLE_MODE
 // #define PROFILE_MODE
 
 #if defined(RUN_MODE)
@@ -55,7 +65,7 @@ static constexpr int NSTEPS = 100000;
 #elif defined(SAMPLE_MODE)
 
 static constexpr int MACRO_SAVE = 100;
-static constexpr int NSTEPS = 1000;
+static constexpr int NSTEPS = 10000;
 
 #elif defined(PROFILE_MODE)
 
@@ -72,7 +82,7 @@ namespace mesh
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res * 2;
-    static constexpr int diam = 20;
+    static constexpr int diam = 13;
     static constexpr int radius = diam / 2;
 }
 
