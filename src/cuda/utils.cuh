@@ -58,15 +58,16 @@ SourceFiles
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <cooperative_groups.h>
 
 namespace block
 {
 
 #if defined(JET)
 
-    static constexpr unsigned nx = 32u;
-    static constexpr unsigned ny = 2u;
-    static constexpr unsigned nz = 2u;
+    static constexpr unsigned nx = 8u;
+    static constexpr unsigned ny = 8u;
+    static constexpr unsigned nz = 8u;
 
 #elif defined(DROPLET)
 
@@ -82,7 +83,6 @@ namespace block
     static constexpr int tile_nz = static_cast<int>(nz) + 2 * pad;
 }
 
-using ci_t = int;
 using label_t = uint64_t;
 using scalar_t = float;
 

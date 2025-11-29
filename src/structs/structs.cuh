@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Structs used in the entire codebase
+    Structs used in the code
 
 SourceFiles
     structs.cuh
@@ -38,6 +38,40 @@ SourceFiles
 
 #ifndef STRUCTS_CUH
 #define STRUCTS_CUH
+
+struct LBMFields
+{
+    scalar_t *rho;
+    scalar_t *ux;
+    scalar_t *uy;
+    scalar_t *uz;
+    scalar_t *pxx;
+    scalar_t *pyy;
+    scalar_t *pzz;
+    scalar_t *pxy;
+    scalar_t *pxz;
+    scalar_t *pyz;
+
+    scalar_t *phi;
+    scalar_t *normx;
+    scalar_t *normy;
+    scalar_t *normz;
+    scalar_t *ind;
+    scalar_t *ffx;
+    scalar_t *ffy;
+    scalar_t *ffz;
+
+    pop_t *f;
+    scalar_t *g;
+
+#if AVERAGE_UZ
+
+    scalar_t *avg;
+
+#endif
+};
+
+LBMFields fields{};
 
 template <typename T, T v>
 struct integralConstant

@@ -36,13 +36,13 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#include "../deviceFunctions.cuh"
-#include "../hostFunctions.cuh"
-#include "initialConditions.cuh"
-#include "boundaryConditions.cuh"
-#include "phaseField.cuh"
-#include "aux/caller.cuh"
-#include "../derivedFields/timeAverage.cuh"
+#include "functions/deviceFunctions.cuh"
+#include "functions/hostFunctions.cuh"
+#include "class/initialConditions.cuh"
+#include "class/boundaryConditions.cuh"
+#include "phaseField/phaseField.cuh"
+#include "caller/caller.cuh"
+#include "derivedFields/timeAverage.cuh"
 
 #include "lbm.cuh"
 
@@ -93,13 +93,9 @@ int main(int argc, char *argv[])
     LBM::callSetFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #if defined(JET)
-
     LBM::callSetJet<<<grid3D, block3D, dynamic, queue>>>(fields);
-
 #elif defined(DROPLET)
-
     LBM::callSetDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
-
 #endif
 
     LBM::callSetDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
@@ -111,19 +107,13 @@ int main(int argc, char *argv[])
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
-        // Calculate the phase field
         phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
-
-        // Calculate interface normals
         phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
-
-        // Calculate surface tension forces
         phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-        // Main kernel
+        LBM::computeMoments<<<grid3D, block3D, dynamic, queue>>>(fields);
         LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-        // Call boundary conditions
 #if defined(JET)
 
         LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
@@ -163,7 +153,6 @@ int main(int argc, char *argv[])
             // Print step
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
         }
-
 #endif
     }
 

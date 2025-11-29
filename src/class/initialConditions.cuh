@@ -81,7 +81,9 @@ namespace LBM
             d.pyz[idx3] = 0.0f;
 
 #if AVERAGE_UZ
+
             d.avg[idx3] = 0.0f;
+
 #endif
         }
 

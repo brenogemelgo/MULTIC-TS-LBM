@@ -130,6 +130,7 @@ namespace math
 }
 
 #if defined(JET)
+
 namespace sponge
 {
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t K_gain() noexcept
@@ -167,6 +168,7 @@ namespace sponge
         return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(sponge()));
     }
 }
+
 #endif
 
 namespace relaxation
@@ -227,6 +229,7 @@ namespace relaxation
     }
 
 #endif
+
 }
 
 namespace LBM

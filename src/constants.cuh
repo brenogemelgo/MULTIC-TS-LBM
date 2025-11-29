@@ -42,25 +42,17 @@ SourceFiles
 #define CONSTANTS_CUH
 
 #include "cuda/utils.cuh"
-#include "structs.cuh"
+#include "structs/structs.cuh"
 #include "velocitySet/velocitySet.cuh"
 
 namespace LBM
 {
-    // Velocity set selector
 #if defined(D3Q19)
     using VelocitySet = d3q19;
 #elif defined(D3Q27)
     using VelocitySet = d3q27;
 #endif
     using PhaseVelocitySet = d3q7;
-
-    // Flow case selector
-#if defined(JET)
-    using FlowCase = jet;
-#elif defined(DROPLET)
-    using FlowCase = droplet;
-#endif
 }
 
 #define RUN_MODE
@@ -88,11 +80,11 @@ static constexpr int NSTEPS = 0;
 
 namespace mesh
 {
-    static constexpr label_t res = 128;
+    static constexpr label_t res = 200;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res * 2;
-    static constexpr int diam = 13;
+    static constexpr int diam = 20;
     static constexpr int radius = diam / 2;
 }
 
