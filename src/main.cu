@@ -58,16 +58,13 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = host::createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
-    // Set GPU based on pipeline argument
     if (host::setDeviceFromEnv() < 0)
     {
         return 1;
     }
 
-    // Initialize device arrays
     host::setDeviceFields();
 
-    // Block-wise configuration
     constexpr dim3 block3D(block::nx, block::ny, block::nz);
 
     constexpr dim3 grid3D(host::divUp(mesh::nx, block3D.x),
@@ -82,14 +79,11 @@ int main(int argc, char *argv[])
     constexpr dim3 gridY(host::divUp(mesh::nx, blockY.x), host::divUp(mesh::nz, blockY.y), 1u);
     constexpr dim3 gridZ(host::divUp(mesh::nx, blockZ.x), host::divUp(mesh::ny, blockZ.y), 1u);
 
-    // Dynamic shared memory size
     constexpr size_t dynamic = 0;
 
-    // Create stream
     cudaStream_t queue{};
     checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
-    // Call initialization kernels
     LBM::setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #if defined(JET)
@@ -100,18 +94,18 @@ int main(int argc, char *argv[])
 
     LBM::setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-    // Make sure all initialization kernels have finished
     checkCudaErrorsOutline(cudaDeviceSynchronize());
 
-    // Generate info
     host::generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET);
+
+    std::vector<std::thread> vtk_threads;
+    vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
     constexpr std::array<host::FieldConfig, 3> OUTPUT_FIELDS{
         {{host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
          {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
          {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true}}};
 
-    // Time loop
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
@@ -141,33 +135,45 @@ int main(int argc, char *argv[])
 
 #if !BENCHMARK
 
-        // Sync kernels
-        checkCudaErrors(cudaDeviceSynchronize());
+        const bool isOutputStep = (STEP % MACRO_SAVE == 0) || (STEP == NSTEPS);
 
-        // Copy arrays to host
-        if (STEP % MACRO_SAVE == 0)
+        if (isOutputStep)
         {
+            checkCudaErrors(cudaStreamSynchronize(queue));
 
-            host::saveConfiguredFields(OUTPUT_FIELDS, SIM_DIR, STEP);
-            host::writeVTSStructuredGrid(OUTPUT_FIELDS, SIM_DIR, SIM_ID, STEP);
+            const auto step_copy = STEP;
 
-            // Print step
+            host::saveConfiguredFields(OUTPUT_FIELDS, SIM_DIR, step_copy);
+
+            vtk_threads.emplace_back(
+                [step_copy,
+                 fieldsCfg = OUTPUT_FIELDS,
+                 sim_dir = SIM_DIR,
+                 sim_id = SIM_ID]
+                {
+                    host::writeStructuredGrid(fieldsCfg, sim_dir, sim_id, step_copy);
+                });
+
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
         }
+
 #endif
+    }
+
+    for (auto &t : vtk_threads)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
     }
 
     checkCudaErrorsOutline(cudaStreamSynchronize(queue));
     const auto END_TIME = std::chrono::high_resolution_clock::now();
-
-    // Destructors
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
 
-    // Distributions
     cudaFree(fields.f);
     cudaFree(fields.g);
-
-    // Hydrodynamic fields
     cudaFree(fields.rho);
     cudaFree(fields.ux);
     cudaFree(fields.uy);
@@ -178,8 +184,6 @@ int main(int argc, char *argv[])
     cudaFree(fields.pxy);
     cudaFree(fields.pxz);
     cudaFree(fields.pyz);
-
-    // Interface fields
     cudaFree(fields.phi);
     cudaFree(fields.normx);
     cudaFree(fields.normy);
@@ -189,14 +193,12 @@ int main(int argc, char *argv[])
     cudaFree(fields.ffy);
     cudaFree(fields.ffz);
 
-    // Derived fields
 #if AVERAGE_UZ
 
     cudaFree(fields.avg);
 
 #endif
 
-    // Performance log
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
 
     const double steps = static_cast<double>(NSTEPS + 1);

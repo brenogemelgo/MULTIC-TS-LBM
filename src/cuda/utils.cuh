@@ -60,6 +60,7 @@ SourceFiles
 #include <filesystem>
 #include <unordered_map>
 #include <array>
+#include <thread>
 
 namespace block
 {

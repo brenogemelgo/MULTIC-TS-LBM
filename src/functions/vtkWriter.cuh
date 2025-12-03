@@ -81,7 +81,7 @@ namespace host
     }
 
     template <std::size_t N>
-    __host__ [[gnu::cold]] static inline void writeVTSStructuredGrid(
+    __host__ static inline void writeStructuredGrid(
         const std::array<FieldConfig, N> &fieldsCfg,
         const std::string &SIM_DIR,
         const std::string &SIM_ID,
@@ -97,7 +97,7 @@ namespace host
         stepStr << std::setw(6) << std::setfill('0') << STEP;
         const std::string stepSuffix = stepStr.str();
 
-        const std::string vtsFileName = SIM_ID + "_" + stepSuffix + ".vts";
+        const std::string vtsFileName = "step_" + stepSuffix + ".vts";
         const std::filesystem::path vtsPath = std::filesystem::path(SIM_DIR) / vtsFileName;
 
         std::vector<detail::AppendedArray> arrays;

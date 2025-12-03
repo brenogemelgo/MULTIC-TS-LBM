@@ -125,18 +125,20 @@ namespace host
         case FieldID::Ffz:
             return fields.ffz;
         case FieldID::Avg:
+
 #if AVERAGE_UZ
             return fields.avg;
 #else
             return nullptr;
 #endif
+
         default:
             return nullptr;
         }
     }
 
     template <std::size_t N>
-    __host__ [[gnu::cold]] static inline void saveConfiguredFields(
+    __host__ static inline void saveConfiguredFields(
         const std::array<FieldConfig, N> &fieldsCfg,
         const std::string &SIM_DIR,
         const label_t STEP)

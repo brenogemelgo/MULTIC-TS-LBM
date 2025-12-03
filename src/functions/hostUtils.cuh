@@ -189,7 +189,6 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.pxy, SIZE));
         checkCudaErrors(cudaMalloc(&fields.pxz, SIZE));
         checkCudaErrors(cudaMalloc(&fields.pyz, SIZE));
-
         checkCudaErrors(cudaMalloc(&fields.phi, SIZE));
         checkCudaErrors(cudaMalloc(&fields.normx, SIZE));
         checkCudaErrors(cudaMalloc(&fields.normy, SIZE));
@@ -198,7 +197,6 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.ffx, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ffy, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ffz, SIZE));
-
         checkCudaErrors(cudaMalloc(&fields.f, F_DIST_SIZE));
         checkCudaErrors(cudaMalloc(&fields.g, G_DIST_SIZE));
 
@@ -217,7 +215,6 @@ namespace host
         checkCudaErrors(cudaMemset(fields.pxy, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.pxz, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.pyz, 0, SIZE));
-
         checkCudaErrors(cudaMemset(fields.phi, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.normx, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.normy, 0, SIZE));
@@ -226,7 +223,6 @@ namespace host
         checkCudaErrors(cudaMemset(fields.ffx, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.ffy, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.ffz, 0, SIZE));
-
         checkCudaErrors(cudaMemset(fields.f, 0, F_DIST_SIZE));
         checkCudaErrors(cudaMemset(fields.g, 0, G_DIST_SIZE));
 
