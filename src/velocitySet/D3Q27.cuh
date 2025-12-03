@@ -156,6 +156,18 @@ namespace LBM
             }
         }
 
+        template <label_t Dir>
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t f_eq() noexcept
+        {
+            foo;
+        }
+
+        template <label_t Dir>
+        __host__ __device__ [[nodiscard]] static inline consteval scalar_t f_neq() noexcept
+        {
+            foo;
+        }
+
     private:
         static constexpr label_t Q_ = 27;
     };

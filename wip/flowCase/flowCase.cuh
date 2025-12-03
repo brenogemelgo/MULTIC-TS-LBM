@@ -29,40 +29,28 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Caller CUDA kernels for boundary conditions
-
-Namespace
-    LBM
+    Header file for the flow case classes
 
 SourceFiles
-    caller.cuh
+    flowCase.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef CALLER_CUH
-#define CALLER_CUH
+#ifndef FLOWCASE_CUH
+#define FLOWCASE_CUH
+
+#include "../cuda/utils.cuh"
 
 namespace LBM
 {
-    __global__ void callInflow(LBMFields d, const label_t t)
+    class flowCase
     {
-        BoundaryConditions::applyInflow(d, t);
-    }
-
-    __global__ void callOutflow(LBMFields d)
-    {
-        BoundaryConditions::applyOutflow(d);
-    }
-
-    __global__ void callPeriodicX(LBMFields d)
-    {
-        BoundaryConditions::periodicX(d);
-    }
-
-    __global__ void callPeriodicY(LBMFields d)
-    {
-        BoundaryConditions::periodicY(d);
-    }
+    public:
+        __host__ __device__ [[nodiscard]] inline consteval flowCase() noexcept {};
+    };
 }
+
+#include "droplet.cuh"
+#include "jet.cuh"
 
 #endif

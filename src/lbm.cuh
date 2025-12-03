@@ -280,6 +280,26 @@ namespace LBM
                 d.g[device::global4(xx, yy, zz, Q)] = geq + hi;
             });
     }
+
+    __global__ void callInflow(LBMFields d, const label_t t)
+    {
+        BoundaryConditions::applyInflow(d, t);
+    }
+
+    __global__ void callOutflow(LBMFields d)
+    {
+        BoundaryConditions::applyOutflow(d);
+    }
+
+    __global__ void callPeriodicX(LBMFields d)
+    {
+        BoundaryConditions::periodicX(d);
+    }
+
+    __global__ void callPeriodicY(LBMFields d)
+    {
+        BoundaryConditions::periodicY(d);
+    }
 }
 
 #endif

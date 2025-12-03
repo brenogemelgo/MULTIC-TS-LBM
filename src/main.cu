@@ -41,9 +41,7 @@ SourceFiles
 #include "initialConditions.cuh"
 #include "boundaryConditions.cuh"
 #include "phaseField.cuh"
-#include "caller/caller.cuh"
 #include "derivedFields/timeAverage.cuh"
-
 #include "lbm.cuh"
 
 int main(int argc, char *argv[])
