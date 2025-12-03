@@ -209,6 +209,34 @@ namespace host
 
 #endif
 
+        checkCudaErrors(cudaMemset(fields.ux, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.uy, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.uz, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.pxx, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.pyy, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.pzz, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.pxy, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.pxz, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.pyz, 0, SIZE));
+
+        checkCudaErrors(cudaMemset(fields.phi, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.normx, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.normy, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.normz, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.ind, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.ffx, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.ffy, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.ffz, 0, SIZE));
+
+        checkCudaErrors(cudaMemset(fields.f, 0, F_DIST_SIZE));
+        checkCudaErrors(cudaMemset(fields.g, 0, G_DIST_SIZE));
+
+#if AVERAGE_UZ
+
+        checkCudaErrors(cudaMemset(fields.avg, 0, SIZE));
+
+#endif
+
         getLastCudaErrorOutline("setDeviceFields: post-initialization");
     }
 }

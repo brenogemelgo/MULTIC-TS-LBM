@@ -165,16 +165,7 @@ namespace LBM
 
                         const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
-                        scalar_t feq = 0.0f;
-                        if constexpr (VelocitySet::Q() == 19)
-                        {
-                            feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
-                        }
-                        else if constexpr (VelocitySet::Q() == 27)
-                        {
-                            feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
-                        }
-
+                        const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                         const scalar_t fneq = computeFneq<Q>(d, fluidNode);
 
                         d.f[Q * size::plane() + fluidNode] = to_pop(feq + relaxation::omco_zmax() * fneq);

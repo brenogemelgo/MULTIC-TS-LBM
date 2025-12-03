@@ -55,8 +55,8 @@ namespace LBM
     using PhaseVelocitySet = d3q7;
 }
 
-#define RUN_MODE
-// #define SAMPLE_MODE
+// #define RUN_MODE
+#define SAMPLE_MODE
 // #define PROFILE_MODE
 
 #if defined(RUN_MODE)
@@ -80,11 +80,11 @@ static constexpr int NSTEPS = 0;
 
 namespace mesh
 {
-    static constexpr label_t res = 200;
+    static constexpr label_t res = 128;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res * 2;
-    static constexpr int diam = 20;
+    static constexpr int diam = 12;
     static constexpr int radius = diam / 2;
 }
 

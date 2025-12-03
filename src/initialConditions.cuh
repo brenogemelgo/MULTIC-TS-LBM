@@ -57,30 +57,8 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        d.ux[idx3] = 0.0f;
-        d.uy[idx3] = 0.0f;
-        d.uz[idx3] = 0.0f;
-        d.phi[idx3] = 0.0f;
-        d.ffx[idx3] = 0.0f;
-        d.ffy[idx3] = 0.0f;
-        d.ffz[idx3] = 0.0f;
-        d.ind[idx3] = 0.0f;
-        d.normx[idx3] = 0.0f;
-        d.normy[idx3] = 0.0f;
-        d.normz[idx3] = 0.0f;
+        // Non-zero fields
         d.rho[idx3] = 1.0f;
-        d.pxx[idx3] = 0.0f;
-        d.pyy[idx3] = 0.0f;
-        d.pzz[idx3] = 0.0f;
-        d.pxy[idx3] = 0.0f;
-        d.pxz[idx3] = 0.0f;
-        d.pyz[idx3] = 0.0f;
-
-#if AVERAGE_UZ
-
-        d.avg[idx3] = 0.0f;
-
-#endif
     }
 
 #if defined(JET)
@@ -160,22 +138,13 @@ namespace LBM
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
-                constexpr scalar_t w = VelocitySet::w<Q>();
                 constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::cx<Q>());
                 constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::cy<Q>());
                 constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::cz<Q>());
 
                 const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
-                scalar_t feq = 0.0f;
-                if constexpr (VelocitySet::Q() == 19)
-                {
-                    feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu) - w;
-                }
-                else if constexpr (VelocitySet::Q() == 27)
-                {
-                    feq = w * d.rho[idx3] * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu) - w;
-                }
+                const scalar_t feq = VelocitySet::f_eq<Q>(d.rho[idx3], uu, cu);
 
                 d.f[device::global4(x, y, z, Q)] = to_pop(feq);
             });
@@ -183,11 +152,7 @@ namespace LBM
         device::constexpr_for<0, PhaseVelocitySet::Q()>(
             [&](const auto Q)
             {
-                constexpr scalar_t cx = static_cast<scalar_t>(PhaseVelocitySet::cx<Q>());
-                constexpr scalar_t cy = static_cast<scalar_t>(PhaseVelocitySet::cy<Q>());
-                constexpr scalar_t cz = static_cast<scalar_t>(PhaseVelocitySet::cz<Q>());
-
-                d.g[device::global4(x, y, z, Q)] = PhaseVelocitySet::w<Q>() * d.phi[idx3] * (1.0f + 4.0f * (cx * ux + cy * uy + cz * uz));
+                d.g[device::global4(x, y, z, Q)] = PhaseVelocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
             });
     }
 }

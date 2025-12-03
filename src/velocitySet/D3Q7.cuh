@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    D3Q7 velocity set class declaration
+    D3Q7 velocity set class declaration (focused on phase field)
 
 SourceFiles
     D3Q7.cuh
@@ -39,7 +39,6 @@ SourceFiles
 #ifndef D3Q7_CUH
 #define D3Q7_CUH
 
-#include "../cuda/utils.cuh"
 #include "velocitySet.cuh"
 
 namespace LBM
@@ -74,10 +73,10 @@ namespace LBM
             return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(8));
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval scalar_t w() noexcept
         {
-            if constexpr (Dir == 0)
+            if constexpr (Q == 0)
             {
                 return w_0();
             }
@@ -87,14 +86,14 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval int cx() noexcept
         {
-            if constexpr (Dir == 1)
+            if constexpr (Q == 1)
             {
                 return 1;
             }
-            else if constexpr (Dir == 2)
+            else if constexpr (Q == 2)
             {
                 return -1;
             }
@@ -104,14 +103,14 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval int cy() noexcept
         {
-            if constexpr (Dir == 3)
+            if constexpr (Q == 3)
             {
                 return 1;
             }
-            else if constexpr (Dir == 4)
+            else if constexpr (Q == 4)
             {
                 return -1;
             }
@@ -121,14 +120,14 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval int cz() noexcept
         {
-            if constexpr (Dir == 5)
+            if constexpr (Q == 5)
             {
                 return 1;
             }
-            else if constexpr (Dir == 6)
+            else if constexpr (Q == 6)
             {
                 return -1;
             }
@@ -138,16 +137,30 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
-        __host__ __device__ [[nodiscard]] static inline consteval scalar_t f_eq() noexcept
+        template <label_t Q>
+        __host__ __device__ [[nodiscard]] static inline constexpr scalar_t g_eq(
+            const scalar_t phi,
+            const scalar_t ux,
+            const scalar_t uy,
+            const scalar_t uz) noexcept
         {
-            foo;
+            return w<Q>() * phi * (1.0f + 4.0f * (cx<Q>() * ux + cy<Q>() * uy + cz<Q>() * uz));
         }
 
-        template <label_t Dir>
-        __host__ __device__ [[nodiscard]] static inline consteval scalar_t f_neq() noexcept
+        template <label_t Q>
+        __host__ __device__ [[nodiscard]] static inline constexpr scalar_t g_neq() noexcept
         {
-            foo;
+            return 0;
+        }
+
+        template <label_t Q>
+        __host__ __device__ [[nodiscard]] static inline constexpr scalar_t anti_diffusion(
+            const scalar_t sharp,
+            const scalar_t normx,
+            const scalar_t normy,
+            const scalar_t normz) noexcept
+        {
+            return w<Q>() * sharp * (cx<Q>() * normx + cy<Q>() * normy + cz<Q>() * normz);
         }
 
     private:

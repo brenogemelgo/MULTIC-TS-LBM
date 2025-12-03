@@ -39,7 +39,6 @@ SourceFiles
 #ifndef D3Q19_CUH
 #define D3Q19_CUH
 
-#include "../cuda/utils.cuh"
 #include "velocitySet.cuh"
 
 namespace LBM
@@ -79,14 +78,14 @@ namespace LBM
             return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(36));
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval scalar_t w() noexcept
         {
-            if constexpr (Dir == 0)
+            if constexpr (Q == 0)
             {
                 return w_0();
             }
-            else if constexpr (Dir >= 1 && Dir <= 6)
+            else if constexpr (Q >= 1 && Q <= 6)
             {
                 return w_1();
             }
@@ -96,14 +95,14 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval int cx() noexcept
         {
-            if constexpr (Dir == 1 || Dir == 7 || Dir == 9 || Dir == 13 || Dir == 15)
+            if constexpr (Q == 1 || Q == 7 || Q == 9 || Q == 13 || Q == 15)
             {
                 return 1;
             }
-            else if constexpr (Dir == 2 || Dir == 8 || Dir == 10 || Dir == 14 || Dir == 16)
+            else if constexpr (Q == 2 || Q == 8 || Q == 10 || Q == 14 || Q == 16)
             {
                 return -1;
             }
@@ -113,14 +112,14 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval int cy() noexcept
         {
-            if constexpr (Dir == 3 || Dir == 7 || Dir == 11 || Dir == 14 || Dir == 17)
+            if constexpr (Q == 3 || Q == 7 || Q == 11 || Q == 14 || Q == 17)
             {
                 return 1;
             }
-            else if constexpr (Dir == 4 || Dir == 8 || Dir == 12 || Dir == 13 || Dir == 18)
+            else if constexpr (Q == 4 || Q == 8 || Q == 12 || Q == 13 || Q == 18)
             {
                 return -1;
             }
@@ -130,14 +129,14 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
+        template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline consteval int cz() noexcept
         {
-            if constexpr (Dir == 5 || Dir == 9 || Dir == 11 || Dir == 16 || Dir == 18)
+            if constexpr (Q == 5 || Q == 9 || Q == 11 || Q == 16 || Q == 18)
             {
                 return 1;
             }
-            else if constexpr (Dir == 6 || Dir == 10 || Dir == 12 || Dir == 15 || Dir == 17)
+            else if constexpr (Q == 6 || Q == 10 || Q == 12 || Q == 15 || Q == 17)
             {
                 return -1;
             }
@@ -147,16 +146,50 @@ namespace LBM
             }
         }
 
-        template <label_t Dir>
-        __host__ __device__ [[nodiscard]] static inline consteval scalar_t f_eq() noexcept
+        template <label_t Q>
+        __host__ __device__ [[nodiscard]] static inline constexpr scalar_t f_eq(
+            const scalar_t rho,
+            const scalar_t uu,
+            const scalar_t cu) noexcept
         {
-            foo;
+            return w<Q>() * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w<Q>();
         }
 
-        template <label_t Dir>
-        __host__ __device__ [[nodiscard]] static inline consteval scalar_t f_neq() noexcept
+        template <label_t Q>
+        __host__ __device__ [[nodiscard]] static inline constexpr scalar_t f_neq(
+            const scalar_t pxx,
+            const scalar_t pyy,
+            const scalar_t pzz,
+            const scalar_t pxy,
+            const scalar_t pxz,
+            const scalar_t pyz,
+            const scalar_t /*ux*/,
+            const scalar_t /*uy*/,
+            const scalar_t /*uz*/) noexcept
         {
-            foo;
+            return (w<Q>() * 4.5f) *
+                   ((cx<Q>() * cx<Q>() - cs2()) * pxx +
+                    (cy<Q>() * cy<Q>() - cs2()) * pyy +
+                    (cz<Q>() * cz<Q>() - cs2()) * pzz +
+                    2.0f * (cx<Q>() * cy<Q>() * pxy +
+                            cx<Q>() * cz<Q>() * pxz +
+                            cy<Q>() * cz<Q>() * pyz));
+        }
+
+        template <label_t Q>
+        __host__ __device__ [[nodiscard]] static inline constexpr scalar_t force(
+            const scalar_t cu,
+            const scalar_t ux,
+            const scalar_t uy,
+            const scalar_t uz,
+            const scalar_t ffx,
+            const scalar_t ffy,
+            const scalar_t ffz) noexcept
+        {
+            return 0.5f * w<Q>() *
+                   ((3.0f * (cx<Q>() - ux) + 3.0f * cu * cx<Q>()) * ffx +
+                    (3.0f * (cy<Q>() - uy) + 3.0f * cu * cy<Q>()) * ffy +
+                    (3.0f * (cz<Q>() - uz) + 3.0f * cu * cz<Q>()) * ffz);
         }
 
     private:
