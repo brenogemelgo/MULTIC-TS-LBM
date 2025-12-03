@@ -63,36 +63,29 @@ namespace LBM
                 return;
             }
 
-            // Calculate distance from the jet center
             const scalar_t dx = static_cast<scalar_t>(x) - geometry::center_x();
             const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
             const scalar_t r2 = dx * dx + dy * dy;
 
-            // Check if inside the jet radius
             if (r2 > geometry::R2())
             {
                 return;
             }
 
-            // Indices at the boundary and one node into the domain
             const label_t idx3_bnd = device::global3(x, y, 0);
             const label_t idx3_zp1 = device::global3(x, y, 1);
 
-            // Inlet velocity with white noise (Box-Muller)
             const scalar_t z = gaussian_noise<10>(x, y, t);
             const scalar_t uz = physics::u_ref + 0.004f * z;
 
-            // Macroscopic variables at the boundary
             d.rho[idx3_bnd] = 1.0f;
             d.phi[idx3_bnd] = 1.0f;
             d.ux[idx3_bnd] = 0.0f;
             d.uy[idx3_bnd] = 0.0f;
             d.uz[idx3_bnd] = uz;
 
-            // Equilibrium polynomial (simplified for ux = uy = 0)
             const scalar_t P = 1.0f + 3.0f * uz + 3.0f * uz * uz;
 
-            // Set incoming hydrodynamic populations
             device::constexpr_for<0, VelocitySet::Q()>(
                 [&](const auto Q)
                 {
@@ -105,7 +98,6 @@ namespace LBM
 
                         constexpr scalar_t w = VelocitySet::w<Q>();
 
-                        // Assuming rho = 1
                         const scalar_t feq = w * P - w;
 
                         const scalar_t fneq = computeFneq<Q>(d, fluidNode);
@@ -114,7 +106,6 @@ namespace LBM
                     }
                 });
 
-            // Set incoming phase field populations (assuming phi = 1)
             d.g[5 * size::plane() + idx3_zp1] = PhaseVelocitySet::w<5>() * (1.0f + 4.0f * uz);
         }
 
@@ -128,7 +119,6 @@ namespace LBM
                 return;
             }
 
-            // Indices at the boundary and one node into the domain
             const label_t idx3_bnd = device::global3(x, y, mesh::nz - 1);
             const label_t idx3_zm1 = device::global3(x, y, mesh::nz - 2);
 
@@ -138,7 +128,6 @@ namespace LBM
             d.uy[idx3_bnd] = d.uy[idx3_zm1];
             d.uz[idx3_bnd] = d.uz[idx3_zm1];
 
-            // Registers for macroscopic velocities
             const scalar_t rho = d.rho[idx3_bnd];
             const scalar_t phi = d.phi[idx3_bnd];
             const scalar_t ux = d.ux[idx3_bnd];
@@ -147,7 +136,6 @@ namespace LBM
 
             const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
 
-            // Set incoming hydrodynamic populations
             device::constexpr_for<0, VelocitySet::Q()>(
                 [&](const auto Q)
                 {
