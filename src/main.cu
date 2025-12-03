@@ -38,9 +38,9 @@ SourceFiles
 
 #include "functions/deviceFunctions.cuh"
 #include "functions/hostFunctions.cuh"
-#include "class/initialConditions.cuh"
-#include "class/boundaryConditions.cuh"
-#include "phaseField/phaseField.cuh"
+#include "initialConditions.cuh"
+#include "boundaryConditions.cuh"
+#include "phaseField.cuh"
 #include "caller/caller.cuh"
 #include "derivedFields/timeAverage.cuh"
 
@@ -90,15 +90,15 @@ int main(int argc, char *argv[])
     checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
     // Call initialization kernels
-    LBM::callSetFields<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #if defined(JET)
-    LBM::callSetJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
 #elif defined(DROPLET)
-    LBM::callSetDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
 #endif
 
-    LBM::callSetDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // Make sure all initialization kernels have finished
     checkCudaErrorsOutline(cudaDeviceSynchronize());
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 
 #if defined(JET)
 
-        LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
         LBM::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
         LBM::callPeriodicX<<<gridX, blockX, dynamic, queue>>>(fields);
         LBM::callPeriodicY<<<gridY, blockY, dynamic, queue>>>(fields);

@@ -80,15 +80,22 @@ namespace LBM
 
         const scalar_t invRho = 1.0f / rho;
 
-#if defined(D3Q19)
-        scalar_t ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
-        scalar_t uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
-        scalar_t uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
-#elif defined(D3Q27)
-        scalar_t ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
-        scalar_t uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
-        scalar_t uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
-#endif
+        scalar_t ux = 0.0f;
+        scalar_t uy = 0.0f;
+        scalar_t uz = 0.0f;
+
+        if constexpr (VelocitySet::Q() == 19)
+        {
+            ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
+            uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
+            uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
+        }
+        else if constexpr (VelocitySet::Q() == 27)
+        {
+            ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
+            uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
+            uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
+        }
 
         ux += ffx * 0.5f * invRho;
         uy += ffy * 0.5f * invRho;
@@ -112,11 +119,16 @@ namespace LBM
 
                 const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
-#if defined(D3Q19)
-                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
-#elif defined(D3Q27)
-                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
-#endif
+                scalar_t feq = 0.0f;
+
+                if constexpr (VelocitySet::Q() == 19)
+                {
+                    feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
+                }
+                else if constexpr (VelocitySet::Q() == 27)
+                {
+                    feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
+                }
 
                 const scalar_t force = 0.5f * w *
                                        ((3.0f * (cx - ux) + 3.0f * cu * cx) * ffx +
@@ -188,44 +200,54 @@ namespace LBM
 
                 const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
 
-#if defined(D3Q19)
-                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
-#elif defined(D3Q27)
-                const scalar_t feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
-#endif
+                scalar_t feq = 0.0f;
+
+                if constexpr (VelocitySet::Q() == 19)
+                {
+                    feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w;
+                }
+                else if constexpr (VelocitySet::Q() == 27)
+                {
+                    feq = w * rho * (1.0f - uu + cu + 0.5f * cu * cu + math::oos() * cu * cu * cu - uu * cu) - w;
+                }
 
                 const scalar_t force = 0.5f * w *
                                        ((3.0f * (cx - ux) + 3.0f * cu * cx) * ffx +
                                         (3.0f * (cy - uy) + 3.0f * cu * cy) * ffy +
                                         (3.0f * (cz - uz) + 3.0f * cu * cz) * ffz);
 
-#if defined(D3Q19)
-                const scalar_t fneq = (w * 4.5f) *
-                                      ((cx * cx - cs2()) * pxx +
-                                       (cy * cy - cs2()) * pyy +
-                                       (cz * cz - cs2()) * pzz +
-                                       2.0f * (cx * cy * pxy +
-                                               cx * cz * pxz +
-                                               cy * cz * pyz));
-#elif defined(D3Q27)
-                const scalar_t fneq = (w * 4.5f) *
-                                      ((cx * cx - cs2()) * pxx +
-                                       (cy * cy - cs2()) * pyy +
-                                       (cz * cz - cs2()) * pzz +
-                                       2.0f * (cx * cy * pxy +
-                                               cx * cz * pxz +
-                                               cy * cz * pyz) +
-                                       (cx * cx * cx - cx) * (3.0f * ux * pxx) +
-                                       (cy * cy * cy - cy) * (3.0f * uy * pyy) +
-                                       (cz * cz * cz - cz) * (3.0f * uz * pzz) +
-                                       3.0f * ((cx * cx * cy - cs2() * cy) * (pxx * uy + 2.0f * ux * pxy) +
-                                               (cx * cx * cz - cs2() * cz) * (pxx * uz + 2.0f * ux * pxz) +
-                                               (cx * cy * cy - cs2() * cx) * (pxy * uy + 2.0f * ux * pyy) +
-                                               (cy * cy * cz - cs2() * cz) * (pyy * uz + 2.0f * uy * pyz) +
-                                               (cx * cz * cz - cs2() * cx) * (pxz * uz + 2.0f * ux * pzz) +
-                                               (cy * cz * cz - cs2() * cy) * (pyz * uz + 2.0f * uy * pzz)) +
-                                       6.0f * (cx * cy * cz) * (ux * pyz + uy * pxz + uz * pxy));
-#endif
+                scalar_t fneq = 0.0f;
+
+                if constexpr (VelocitySet::Q() == 19)
+                {
+                    fneq = (w * 4.5f) *
+                           ((cx * cx - cs2()) * pxx +
+                            (cy * cy - cs2()) * pyy +
+                            (cz * cz - cs2()) * pzz +
+                            2.0f * (cx * cy * pxy +
+                                    cx * cz * pxz +
+                                    cy * cz * pyz));
+                }
+                else if constexpr (VelocitySet::Q() == 27)
+                {
+                    fneq = (w * 4.5f) *
+                           ((cx * cx - cs2()) * pxx +
+                            (cy * cy - cs2()) * pyy +
+                            (cz * cz - cs2()) * pzz +
+                            2.0f * (cx * cy * pxy +
+                                    cx * cz * pxz +
+                                    cy * cz * pyz) +
+                            (cx * cx * cx - cx) * (3.0f * ux * pxx) +
+                            (cy * cy * cy - cy) * (3.0f * uy * pyy) +
+                            (cz * cz * cz - cz) * (3.0f * uz * pzz) +
+                            3.0f * ((cx * cx * cy - cs2() * cy) * (pxx * uy + 2.0f * ux * pxy) +
+                                    (cx * cx * cz - cs2() * cz) * (pxx * uz + 2.0f * ux * pxz) +
+                                    (cx * cy * cy - cs2() * cx) * (pxy * uy + 2.0f * ux * pyy) +
+                                    (cy * cy * cz - cs2() * cz) * (pyy * uz + 2.0f * uy * pyz) +
+                                    (cx * cz * cz - cs2() * cx) * (pxz * uz + 2.0f * ux * pzz) +
+                                    (cy * cz * cz - cs2() * cy) * (pyz * uz + 2.0f * uy * pzz)) +
+                            6.0f * (cx * cy * cz) * (ux * pyz + uy * pxz + uz * pxy));
+                }
 
                 const label_t xx = x + static_cast<label_t>(VelocitySet::cx<Q>());
                 const label_t yy = y + static_cast<label_t>(VelocitySet::cy<Q>());

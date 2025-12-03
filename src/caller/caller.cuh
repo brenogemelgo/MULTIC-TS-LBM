@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Caller CUDA kernels for initial and boundary conditions
+    Caller CUDA kernels for boundary conditions
 
 Namespace
     LBM
@@ -39,40 +39,14 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MAIN_CUH
-#define MAIN_CUH
+#ifndef CALLER_CUH
+#define CALLER_CUH
 
 namespace LBM
 {
-    __global__ void callSetFields(LBMFields d)
+    __global__ void callInflow(LBMFields d, const label_t t)
     {
-        InitialConditions::setFields(d);
-    }
-
-#if defined(JET)
-
-    __global__ void callSetJet(LBMFields d)
-    {
-        InitialConditions::setJet(d);
-    }
-
-#elif defined(DROPLET)
-
-    __global__ void callSetDroplet(LBMFields d)
-    {
-        InitialConditions::setDroplet(d);
-    }
-
-#endif
-
-    __global__ void callSetDistros(LBMFields d)
-    {
-        InitialConditions::setDistros(d);
-    }
-
-    __global__ void callInflow(LBMFields d)
-    {
-        BoundaryConditions::applyInflow(d);
+        BoundaryConditions::applyInflow(d, t);
     }
 
     __global__ void callOutflow(LBMFields d)

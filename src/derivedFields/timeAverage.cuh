@@ -45,7 +45,7 @@ namespace LBM
 {
     __global__ void timeAverage(
         LBMFields d,
-        const int t)
+        const label_t t)
     {
         const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;

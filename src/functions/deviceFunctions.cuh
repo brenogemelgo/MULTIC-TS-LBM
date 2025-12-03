@@ -88,20 +88,6 @@ namespace device
 
 #endif
 
-    __device__ [[nodiscard]] inline scalar_t smoothstep(
-        const scalar_t edge0,
-        const scalar_t edge1,
-        scalar_t x) noexcept
-    {
-        x = __saturatef((x - edge0) / (edge1 - edge0));
-        return x * x * (3.0f - 2.0f * x);
-    }
-
-    __device__ [[nodiscard]] inline scalar_t interpolate_rho(scalar_t phi) noexcept
-    {
-        return fmaf(phi, (physics::rho_oil() - physics::rho_water()), physics::rho_water());
-    }
-
     template <const label_t Start, const label_t End, typename F>
     __device__ inline constexpr void constexpr_for(F &&f) noexcept
     {

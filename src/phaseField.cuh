@@ -133,7 +133,7 @@ namespace phase
         const scalar_t normY = gy * invInd;
         const scalar_t normZ = gz * invInd;
 
-        // d.ind[idx3] = ind;
+        d.ind[idx3] = ind;
         d.normx[idx3] = normX;
         d.normy[idx3] = normY;
         d.normz[idx3] = normZ;
@@ -155,56 +155,45 @@ namespace phase
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t phi = d.phi[idx3];
-        const scalar_t normx = d.normx[idx3];
-        const scalar_t normy = d.normy[idx3];
-        const scalar_t normz = d.normz[idx3];
+        scalar_t scx = LBM::VelocitySet::w_1() * (d.normx[device::global3(x + 1, y, z)] - d.normx[device::global3(x - 1, y, z)]) +
+                       LBM::VelocitySet::w_2() * (d.normx[device::global3(x + 1, y + 1, z)] - d.normx[device::global3(x - 1, y - 1, z)] +
+                                                  d.normx[device::global3(x + 1, y, z + 1)] - d.normx[device::global3(x - 1, y, z - 1)] +
+                                                  d.normx[device::global3(x + 1, y - 1, z)] - d.normx[device::global3(x - 1, y + 1, z)] +
+                                                  d.normx[device::global3(x + 1, y, z - 1)] - d.normx[device::global3(x - 1, y, z + 1)]);
 
-        const scalar_t indicator = phi * (1.0f - phi) * (normx * normx + normy * normy + normz * normz);
+        scalar_t scy = LBM::VelocitySet::w_1() * (d.normy[device::global3(x, y + 1, z)] - d.normy[device::global3(x, y - 1, z)]) +
+                       LBM::VelocitySet::w_2() * (d.normy[device::global3(x + 1, y + 1, z)] - d.normy[device::global3(x - 1, y - 1, z)] +
+                                                  d.normy[device::global3(x, y + 1, z + 1)] - d.normy[device::global3(x, y - 1, z - 1)] +
+                                                  d.normy[device::global3(x - 1, y + 1, z)] - d.normy[device::global3(x + 1, y - 1, z)] +
+                                                  d.normy[device::global3(x, y + 1, z - 1)] - d.normy[device::global3(x, y - 1, z + 1)]);
 
-        scalar_t curvature = 0.0f;
-        if (indicator > 0.2)
+        scalar_t scz = LBM::VelocitySet::w_1() * (d.normz[device::global3(x, y, z + 1)] - d.normz[device::global3(x, y, z - 1)]) +
+                       LBM::VelocitySet::w_2() * (d.normz[device::global3(x + 1, y, z + 1)] - d.normz[device::global3(x - 1, y, z - 1)] +
+                                                  d.normz[device::global3(x, y + 1, z + 1)] - d.normz[device::global3(x, y - 1, z - 1)] +
+                                                  d.normz[device::global3(x - 1, y, z + 1)] - d.normz[device::global3(x + 1, y, z - 1)] +
+                                                  d.normz[device::global3(x, y - 1, z + 1)] - d.normz[device::global3(x, y + 1, z - 1)]);
+
+        if constexpr (LBM::VelocitySet::Q() == 27)
         {
-            scalar_t scx = LBM::VelocitySet::w_1() * (d.normx[device::global3(x + 1, y, z)] - d.normx[device::global3(x - 1, y, z)]) +
-                           LBM::VelocitySet::w_2() * (d.normx[device::global3(x + 1, y + 1, z)] - d.normx[device::global3(x - 1, y - 1, z)] +
-                                                      d.normx[device::global3(x + 1, y, z + 1)] - d.normx[device::global3(x - 1, y, z - 1)] +
-                                                      d.normx[device::global3(x + 1, y - 1, z)] - d.normx[device::global3(x - 1, y + 1, z)] +
-                                                      d.normx[device::global3(x + 1, y, z - 1)] - d.normx[device::global3(x - 1, y, z + 1)]);
+            scx += LBM::d3q27::w_3() * (d.normx[device::global3(x + 1, y + 1, z + 1)] - d.normx[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.normx[device::global3(x + 1, y + 1, z - 1)] - d.normx[device::global3(x - 1, y - 1, z + 1)] +
+                                        d.normx[device::global3(x + 1, y - 1, z + 1)] - d.normx[device::global3(x - 1, y + 1, z - 1)] +
+                                        d.normx[device::global3(x + 1, y - 1, z - 1)] - d.normx[device::global3(x - 1, y + 1, z + 1)]);
 
-            scalar_t scy = LBM::VelocitySet::w_1() * (d.normy[device::global3(x, y + 1, z)] - d.normy[device::global3(x, y - 1, z)]) +
-                           LBM::VelocitySet::w_2() * (d.normy[device::global3(x + 1, y + 1, z)] - d.normy[device::global3(x - 1, y - 1, z)] +
-                                                      d.normy[device::global3(x, y + 1, z + 1)] - d.normy[device::global3(x, y - 1, z - 1)] +
-                                                      d.normy[device::global3(x - 1, y + 1, z)] - d.normy[device::global3(x + 1, y - 1, z)] +
-                                                      d.normy[device::global3(x, y + 1, z - 1)] - d.normy[device::global3(x, y - 1, z + 1)]);
+            scy += LBM::d3q27::w_3() * (d.normy[device::global3(x + 1, y + 1, z + 1)] - d.normy[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.normy[device::global3(x + 1, y + 1, z - 1)] - d.normy[device::global3(x - 1, y - 1, z + 1)] +
+                                        d.normy[device::global3(x - 1, y + 1, z - 1)] - d.normy[device::global3(x + 1, y - 1, z + 1)] +
+                                        d.normy[device::global3(x - 1, y + 1, z + 1)] - d.normy[device::global3(x + 1, y - 1, z - 1)]);
 
-            scalar_t scz = LBM::VelocitySet::w_1() * (d.normz[device::global3(x, y, z + 1)] - d.normz[device::global3(x, y, z - 1)]) +
-                           LBM::VelocitySet::w_2() * (d.normz[device::global3(x + 1, y, z + 1)] - d.normz[device::global3(x - 1, y, z - 1)] +
-                                                      d.normz[device::global3(x, y + 1, z + 1)] - d.normz[device::global3(x, y - 1, z - 1)] +
-                                                      d.normz[device::global3(x - 1, y, z + 1)] - d.normz[device::global3(x + 1, y, z - 1)] +
-                                                      d.normz[device::global3(x, y - 1, z + 1)] - d.normz[device::global3(x, y + 1, z - 1)]);
-
-            if constexpr (LBM::VelocitySet::Q() == 27)
-            {
-                scx += LBM::d3q27::w_3() * (d.normx[device::global3(x + 1, y + 1, z + 1)] - d.normx[device::global3(x - 1, y - 1, z - 1)] +
-                                            d.normx[device::global3(x + 1, y + 1, z - 1)] - d.normx[device::global3(x - 1, y - 1, z + 1)] +
-                                            d.normx[device::global3(x + 1, y - 1, z + 1)] - d.normx[device::global3(x - 1, y + 1, z - 1)] +
-                                            d.normx[device::global3(x + 1, y - 1, z - 1)] - d.normx[device::global3(x - 1, y + 1, z + 1)]);
-
-                scy += LBM::d3q27::w_3() * (d.normy[device::global3(x + 1, y + 1, z + 1)] - d.normy[device::global3(x - 1, y - 1, z - 1)] +
-                                            d.normy[device::global3(x + 1, y + 1, z - 1)] - d.normy[device::global3(x - 1, y - 1, z + 1)] +
-                                            d.normy[device::global3(x - 1, y + 1, z - 1)] - d.normy[device::global3(x + 1, y - 1, z + 1)] +
-                                            d.normy[device::global3(x - 1, y + 1, z + 1)] - d.normy[device::global3(x + 1, y - 1, z - 1)]);
-
-                scz += LBM::d3q27::w_3() * (d.normz[device::global3(x + 1, y + 1, z + 1)] - d.normz[device::global3(x - 1, y - 1, z - 1)] +
-                                            d.normz[device::global3(x - 1, y - 1, z + 1)] - d.normz[device::global3(x + 1, y + 1, z - 1)] +
-                                            d.normz[device::global3(x + 1, y - 1, z + 1)] - d.normz[device::global3(x - 1, y + 1, z - 1)] +
-                                            d.normz[device::global3(x - 1, y + 1, z + 1)] - d.normz[device::global3(x + 1, y - 1, z - 1)]);
-            }
-
-            curvature = 3.0f * (scx + scy + scz);
+            scz += LBM::d3q27::w_3() * (d.normz[device::global3(x + 1, y + 1, z + 1)] - d.normz[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.normz[device::global3(x - 1, y - 1, z + 1)] - d.normz[device::global3(x + 1, y + 1, z - 1)] +
+                                        d.normz[device::global3(x + 1, y - 1, z + 1)] - d.normz[device::global3(x - 1, y + 1, z - 1)] +
+                                        d.normz[device::global3(x - 1, y + 1, z + 1)] - d.normz[device::global3(x + 1, y - 1, z - 1)]);
         }
 
-        const scalar_t stCurv = -physics::sigma * curvature;
+        const scalar_t curvature = 3.0f * (scx + scy + scz);
+
+        const scalar_t stCurv = -physics::sigma * curvature * d.ind[idx3];
         d.ffx[idx3] = stCurv * d.normx[idx3];
         d.ffy[idx3] = stCurv * d.normy[idx3];
         d.ffz[idx3] = stCurv * d.normz[idx3];
