@@ -58,7 +58,8 @@ SourceFiles
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
-#include <cooperative_groups.h>
+#include <unordered_map>
+#include <array>
 
 namespace block
 {

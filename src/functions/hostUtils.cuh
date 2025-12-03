@@ -43,7 +43,7 @@ SourceFiles
 #define HOSTFUNCTIONS_CUH
 
 #include "constants.cuh"
-#include "globalFunctions.cuh"
+#include "globalUtils.cuh"
 
 namespace host
 {
@@ -65,8 +65,7 @@ namespace host
     __host__ [[gnu::cold]] static inline void generateSimulationInfoFile(
         const std::string &SIM_DIR,
         const std::string &SIM_ID,
-        const std::string &VELOCITY_SET,
-        const double MLUPS)
+        const std::string &VELOCITY_SET)
     {
         std::filesystem::path INFO_PATH = std::filesystem::path(SIM_DIR) / (SIM_ID + "_info.txt");
 
@@ -89,7 +88,6 @@ namespace host
                  << "Diameter:           D=" << mesh::diam << '\n'
                  << "Timesteps:          " << NSTEPS << '\n'
                  << "Output interval:    " << MACRO_SAVE << "\n\n"
-                 << "Performance:        " << MLUPS << " MLUPS\n"
                  << "-----------------------------------------------------------------------------\n";
 
             file.close();
@@ -126,6 +124,7 @@ namespace host
             std::cerr << "Error opening file " << OUT_PATH.string() << " for writing." << std::endl;
             return;
         }
+
         file.write(reinterpret_cast<const char *>(host_data.data()), static_cast<std::streamsize>(host_data.size() * sizeof(scalar_t)));
         file.close();
     }

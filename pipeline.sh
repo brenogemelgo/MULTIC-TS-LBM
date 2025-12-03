@@ -84,13 +84,6 @@ runPipeline() {
         exit 1
     }
 
-    echo -e "${YELLOW}Entering ${CYAN}${BASE_DIR}/post${RESET}"
-    cd "${BASE_DIR}/post" || { echo -e "${RED}Error: Directory ${CYAN}${BASE_DIR}/post${RED} not found!${RESET}"; exit 1; }
-
-    echo -e "${BLUE}Executing: ${CYAN}./post.sh ${FLOW_CASE} ${VELOCITY_SET} ${ID}${RESET}"
-    ./post.sh "${FLOW_CASE}" "${VELOCITY_SET}" "${ID}" \
-        || { echo -e "${RED}Error executing post.sh${RESET}"; exit 1; }
-
     echo -e "${GREEN}Process completed successfully!${RESET}"
 }
 

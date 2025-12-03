@@ -43,7 +43,7 @@ SourceFiles
 #define DEVICEFUNCTIONS_CUH
 
 #include "constants.cuh"
-#include "globalFunctions.cuh"
+#include "globalUtils.cuh"
 
 namespace device
 {

@@ -9,7 +9,6 @@
 - **GPU**: NVIDIA (Compute Capability ≥ 6.0, 4+ GB VRAM recommended)  
 - **CUDA**: Toolkit ≥ 12.0  
 - **Compiler**: C++20-capable (GCC ≥ 11) + `nvcc` (partial C++20 support)
-- **Python 3.x**: `numpy`, `pyevtk`  (for post-processing)
 - **ParaView**: for `.vtr` visualization  
 
 ---
@@ -34,13 +33,13 @@ Each GPU entry shows the average across multiple runs.
 
 | GPU            | D3Q19 (MLUPS) | D3Q27 (MLUPS) |
 |----------------|---------------|---------------|
-| RTX 3050 (4GB) | **760**       | –             |
+| RTX 3050 (4GB) | --       | –             |
 | RTX 4090 (24GB)| –             | –             |
 | A100 (40GB)    | –             | –             |
 
 *Important considerations:*  
-- **D3Q19** uses **He forcing (1st order)** and 2nd-order equilibrium/non-equilibrium expansion.  
-- **D3Q27** uses **Guo forcing (2nd order)** and 3rd-order equilibrium/non-equilibrium expansion.  
+- **D3Q19** uses 2nd-order equilibrium/non-equilibrium expansion.  
+- **D3Q27** uses 3rd-order equilibrium/non-equilibrium expansion.  
 - These methodological differences contribute to the observed performance gap, beyond the natural cost of upgrading from **19** to **27** velocity directions.
 
 ---
@@ -61,7 +60,6 @@ This project is licensed under the terms of the LICENSE file.
 
 ## 📊 Credits
 
-The post-processing workflow is mostly shared with the project [MR-LBM](https://github.com/CERNN/MR-LBM).
 The implementation is strongly based on the article *[A high-performance lattice Boltzmann model for multicomponent turbulent jet simulations](https://arxiv.org/abs/2403.15773)*.
 
 ---

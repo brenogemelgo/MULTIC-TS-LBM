@@ -1,0 +1,170 @@
+/*---------------------------------------------------------------------------*\
+|                                                                             |
+| MULTIC-TS-LBM: CUDA-based multicomponent Lattice Boltzmann Method           |
+| Developed at UDESC - State University of Santa Catarina                     |
+| Website: https://www.udesc.br                                               |
+| Github: https://github.com/brenogemelgo/MULTIC-TS-LBM                       |
+|                                                                             |
+\*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*\
+
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
+License
+    This file is part of MULTIC-TS-LBM.
+
+    MULTIC-TS-LBM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Description
+    Field configuration and save helpers (binary output)
+
+Namespace
+    host
+
+SourceFiles
+    ioFields.cuh
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef IOFIELDS_CUH
+#define IOFIELDS_CUH
+
+#include "constants.cuh"
+#include "globalUtils.cuh"
+
+namespace host
+{
+    enum class FieldID : std::uint8_t
+    {
+        Rho,
+        Ux,
+        Uy,
+        Uz,
+        Pxx,
+        Pyy,
+        Pzz,
+        Pxy,
+        Pxz,
+        Pyz,
+        Phi,
+        NormX,
+        NormY,
+        NormZ,
+        Ind,
+        Ffx,
+        Ffy,
+        Ffz,
+        Avg
+    };
+
+    enum class FieldDumpShape : std::uint8_t
+    {
+        Grid3D,
+        Plane2D
+    };
+
+    struct FieldConfig
+    {
+        FieldID id;
+        const char *name;
+        FieldDumpShape shape;
+        bool includeInVTS;
+    };
+
+    __host__ [[nodiscard]] static inline scalar_t *getDeviceFieldPointer(const FieldID id) noexcept
+    {
+        switch (id)
+        {
+        case FieldID::Rho:
+            return fields.rho;
+        case FieldID::Ux:
+            return fields.ux;
+        case FieldID::Uy:
+            return fields.uy;
+        case FieldID::Uz:
+            return fields.uz;
+        case FieldID::Pxx:
+            return fields.pxx;
+        case FieldID::Pyy:
+            return fields.pyy;
+        case FieldID::Pzz:
+            return fields.pzz;
+        case FieldID::Pxy:
+            return fields.pxy;
+        case FieldID::Pxz:
+            return fields.pxz;
+        case FieldID::Pyz:
+            return fields.pyz;
+        case FieldID::Phi:
+            return fields.phi;
+        case FieldID::NormX:
+            return fields.normx;
+        case FieldID::NormY:
+            return fields.normy;
+        case FieldID::NormZ:
+            return fields.normz;
+        case FieldID::Ind:
+            return fields.ind;
+        case FieldID::Ffx:
+            return fields.ffx;
+        case FieldID::Ffy:
+            return fields.ffy;
+        case FieldID::Ffz:
+            return fields.ffz;
+        case FieldID::Avg:
+#if AVERAGE_UZ
+            return fields.avg;
+#else
+            return nullptr;
+#endif
+        default:
+            return nullptr;
+        }
+    }
+
+    template <std::size_t N>
+    __host__ [[gnu::cold]] static inline void saveConfiguredFields(
+        const std::array<FieldConfig, N> &fieldsCfg,
+        const std::string &SIM_DIR,
+        const label_t STEP)
+    {
+        for (const auto &cfg : fieldsCfg)
+        {
+            scalar_t *d_ptr = getDeviceFieldPointer(cfg.id);
+            if (d_ptr == nullptr)
+            {
+                std::cerr << "saveConfiguredFields: null pointer for field " << cfg.name << ", skipping.\n";
+
+                continue;
+            }
+
+            switch (cfg.shape)
+            {
+            case FieldDumpShape::Grid3D:
+                host::copyAndSaveToBinary<size::plane()>(d_ptr, SIM_DIR, STEP, cfg.name);
+
+                break;
+
+            case FieldDumpShape::Plane2D:
+                host::copyAndSaveToBinary<size::stride()>(d_ptr, SIM_DIR, STEP, cfg.name);
+
+                break;
+            }
+        }
+    }
+}
+
+#endif

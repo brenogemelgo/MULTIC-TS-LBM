@@ -36,8 +36,10 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#include "functions/deviceFunctions.cuh"
-#include "functions/hostFunctions.cuh"
+#include "functions/deviceUtils.cuh"
+#include "functions/hostUtils.cuh"
+#include "functions/ioFields.cuh"
+#include "functions/vtkWriter.cuh"
 #include "initialConditions.cuh"
 #include "boundaryConditions.cuh"
 #include "phaseField.cuh"
@@ -101,6 +103,14 @@ int main(int argc, char *argv[])
     // Make sure all initialization kernels have finished
     checkCudaErrorsOutline(cudaDeviceSynchronize());
 
+    // Generate info
+    host::generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET);
+
+    constexpr std::array<host::FieldConfig, 3> OUTPUT_FIELDS{
+        {{host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true}}};
+
     // Time loop
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
@@ -138,15 +148,8 @@ int main(int argc, char *argv[])
         if (STEP % MACRO_SAVE == 0)
         {
 
-            host::copyAndSaveToBinary(fields.rho, SIM_DIR, STEP, "rho");
-            host::copyAndSaveToBinary(fields.phi, SIM_DIR, STEP, "phi");
-            host::copyAndSaveToBinary(fields.uz, SIM_DIR, STEP, "uz");
-
-#if AVERAGE_UZ
-
-            host::copyAndSaveToBinary(fields.avg, SIM_DIR, STEP, "avg");
-
-#endif
+            host::saveConfiguredFields(OUTPUT_FIELDS, SIM_DIR, STEP);
+            host::writeVTSStructuredGrid(OUTPUT_FIELDS, SIM_DIR, SIM_ID, STEP);
 
             // Print step
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
@@ -205,8 +208,6 @@ int main(int argc, char *argv[])
     std::cout << "     Performance             : " << MLUPS << " MLUPS\n";
     std::cout << "// =============================================== //\n\n";
 
-    // Generate info
-    host::generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET, MLUPS);
     getLastCudaErrorOutline("Final sync");
 
     return 0;
