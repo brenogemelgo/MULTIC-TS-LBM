@@ -52,12 +52,16 @@ namespace LBM
 #elif defined(D3Q27)
     using VelocitySet = d3q27;
 #endif
-    using PhaseVelocitySet = d3q7;
+}
+
+namespace Phase
+{
+    using VelocitySet = LBM::d3q7;
 }
 
 // #define RUN_MODE
-// #define SAMPLE_MODE
-#define PROFILE_MODE
+#define SAMPLE_MODE
+// #define PROFILE_MODE
 
 #if defined(RUN_MODE)
 

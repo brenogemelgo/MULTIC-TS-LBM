@@ -42,7 +42,7 @@ SourceFiles
 #ifndef PHASEFIELD_CUH
 #define PHASEFIELD_CUH
 
-namespace phase
+namespace Phase
 {
     __global__ void computeNormals(LBMFields d)
     {
@@ -61,7 +61,7 @@ namespace phase
         const label_t idx3 = device::global3(x, y, z);
 
         scalar_t phi = 0.0f;
-        device::constexpr_for<0, LBM::PhaseVelocitySet::Q()>(
+        device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
                 phi += d.g[Q * size::plane() + idx3];

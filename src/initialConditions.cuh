@@ -149,10 +149,10 @@ namespace LBM
                 d.f[device::global4(x, y, z, Q)] = to_pop(feq);
             });
 
-        device::constexpr_for<0, PhaseVelocitySet::Q()>(
+        device::constexpr_for<0, Phase::VelocitySet::Q()>(
             [&](const auto Q)
             {
-                d.g[device::global4(x, y, z, Q)] = PhaseVelocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
+                d.g[device::global4(x, y, z, Q)] = Phase::VelocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
             });
     }
 }

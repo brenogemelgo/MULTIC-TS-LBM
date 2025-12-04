@@ -111,8 +111,8 @@ int main(int argc, char *argv[])
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
-        phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
-        phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
+        Phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
+        Phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         LBM::computeMoments<<<grid3D, block3D, dynamic, queue>>>(fields);
         LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);

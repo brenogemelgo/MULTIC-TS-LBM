@@ -106,7 +106,7 @@ namespace LBM
                     }
                 });
 
-            d.g[5 * size::plane() + idx3_zp1] = PhaseVelocitySet::w<5>() * (1.0f + 4.0f * uz);
+            d.g[5 * size::plane() + idx3_zp1] = Phase::VelocitySet::w<5>() * (1.0f + 4.0f * uz);
         }
 
         __device__ static inline constexpr void applyOutflow(LBMFields d) noexcept
@@ -160,7 +160,7 @@ namespace LBM
                     }
                 });
 
-            d.g[6 * size::plane() + idx3_zm1] = PhaseVelocitySet::w<6>() * phi * (1.0f - 4.0f * physics::u_ref);
+            d.g[6 * size::plane() + idx3_zm1] = Phase::VelocitySet::w<6>() * phi * (1.0f - 4.0f * physics::u_ref);
         }
 
 #elif defined(DROPLET)

@@ -172,12 +172,12 @@ namespace host
         constexpr size_t NCELLS = static_cast<size_t>(mesh::nx) * static_cast<size_t>(mesh::ny) * static_cast<size_t>(mesh::nz);
         constexpr size_t SIZE = NCELLS * sizeof(scalar_t);
         constexpr size_t F_DIST_SIZE = NCELLS * static_cast<size_t>(LBM::VelocitySet::Q()) * sizeof(pop_t);
-        constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(LBM::PhaseVelocitySet::Q()) * sizeof(scalar_t);
+        constexpr size_t G_DIST_SIZE = NCELLS * static_cast<size_t>(Phase::VelocitySet::Q()) * sizeof(scalar_t);
 
         static_assert(NCELLS > 0, "Empty grid?");
         static_assert(SIZE / sizeof(scalar_t) == NCELLS, "SIZE overflow");
         static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(LBM::VelocitySet::Q()), "F_DIST_SIZE overflow");
-        static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(LBM::PhaseVelocitySet::Q()), "G_DIST_SIZE overflow");
+        static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(Phase::VelocitySet::Q()), "G_DIST_SIZE overflow");
 
         checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ux, SIZE));

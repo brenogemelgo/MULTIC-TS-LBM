@@ -204,15 +204,15 @@ namespace LBM
         const scalar_t normz = d.normz[idx3];
         const scalar_t sharp = physics::gamma * phi * (1.0f - phi);
 
-        device::constexpr_for<0, PhaseVelocitySet::Q()>(
+        device::constexpr_for<0, Phase::VelocitySet::Q()>(
             [&](const auto Q)
             {
-                const scalar_t geq = PhaseVelocitySet::g_eq<Q>(phi, ux, uy, uz);
-                const scalar_t hi = PhaseVelocitySet::anti_diffusion<Q>(sharp, normx, normy, normz);
+                const scalar_t geq = Phase::VelocitySet::g_eq<Q>(phi, ux, uy, uz);
+                const scalar_t hi = Phase::VelocitySet::anti_diffusion<Q>(sharp, normx, normy, normz);
 
-                label_t xx = x + static_cast<label_t>(PhaseVelocitySet::cx<Q>());
-                label_t yy = y + static_cast<label_t>(PhaseVelocitySet::cy<Q>());
-                label_t zz = z + static_cast<label_t>(PhaseVelocitySet::cz<Q>());
+                label_t xx = x + static_cast<label_t>(Phase::VelocitySet::cx<Q>());
+                label_t yy = y + static_cast<label_t>(Phase::VelocitySet::cy<Q>());
+                label_t zz = z + static_cast<label_t>(Phase::VelocitySet::cz<Q>());
 
                 xx = device::wrapX(xx);
                 yy = device::wrapY(yy);
