@@ -188,9 +188,12 @@ namespace LBM
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
                 const scalar_t fneq = VelocitySet::f_neq<Q>(pxx, pyy, pzz, pxy, pxz, pyz, ux, uy, uz);
 
-                const label_t xx = x + static_cast<label_t>(VelocitySet::cx<Q>());
-                const label_t yy = y + static_cast<label_t>(VelocitySet::cy<Q>());
-                const label_t zz = z + static_cast<label_t>(VelocitySet::cz<Q>());
+                label_t xx = x + static_cast<label_t>(VelocitySet::cx<Q>());
+                label_t yy = y + static_cast<label_t>(VelocitySet::cy<Q>());
+                label_t zz = z + static_cast<label_t>(VelocitySet::cz<Q>());
+
+                xx = device::wrapX(xx);
+                yy = device::wrapY(yy);
 
                 d.f[device::global4(xx, yy, zz, Q)] = to_pop(feq + omco * fneq + force);
             });
@@ -204,12 +207,15 @@ namespace LBM
         device::constexpr_for<0, PhaseVelocitySet::Q()>(
             [&](const auto Q)
             {
-                const label_t xx = x + static_cast<label_t>(PhaseVelocitySet::cx<Q>());
-                const label_t yy = y + static_cast<label_t>(PhaseVelocitySet::cy<Q>());
-                const label_t zz = z + static_cast<label_t>(PhaseVelocitySet::cz<Q>());
-
                 const scalar_t geq = PhaseVelocitySet::g_eq<Q>(phi, ux, uy, uz);
                 const scalar_t hi = PhaseVelocitySet::anti_diffusion<Q>(sharp, normx, normy, normz);
+
+                label_t xx = x + static_cast<label_t>(PhaseVelocitySet::cx<Q>());
+                label_t yy = y + static_cast<label_t>(PhaseVelocitySet::cy<Q>());
+                label_t zz = z + static_cast<label_t>(PhaseVelocitySet::cz<Q>());
+
+                xx = device::wrapX(xx);
+                yy = device::wrapY(yy);
 
                 d.g[device::global4(xx, yy, zz, Q)] = geq + hi;
             });
@@ -223,16 +229,6 @@ namespace LBM
     __global__ void callOutflow(LBMFields d)
     {
         BoundaryConditions::applyOutflow(d);
-    }
-
-    __global__ void callPeriodicX(LBMFields d)
-    {
-        BoundaryConditions::periodicX(d);
-    }
-
-    __global__ void callPeriodicY(LBMFields d)
-    {
-        BoundaryConditions::periodicY(d);
     }
 }
 

@@ -163,129 +163,13 @@ namespace LBM
             d.g[6 * size::plane() + idx3_zm1] = PhaseVelocitySet::w<6>() * phi * (1.0f - 4.0f * physics::u_ref);
         }
 
-        __device__ static inline constexpr void periodicX(LBMFields d) noexcept
-        {
-            const label_t y = threadIdx.x + blockIdx.x * blockDim.x;
-            const label_t z = threadIdx.y + blockIdx.y * blockDim.y;
-
-            if (y <= 0 || y >= mesh::ny - 1 || z <= 0 || z >= mesh::nz - 1)
-            {
-                return;
-            }
-
-            const label_t bL = device::global3(1, y, z);
-            const label_t bR = device::global3(mesh::nx - 2, y, z);
-
-            device::constexpr_for<0, VelocitySet::Q()>(
-                [&](const auto Q)
-                {
-                    if constexpr (VelocitySet::cx<Q>() > 0)
-                    {
-                        d.f[Q * size::plane() + bL] = d.f[Q * size::plane() + bR];
-                    }
-                    if constexpr (VelocitySet::cx<Q>() < 0)
-                    {
-                        d.f[Q * size::plane() + bR] = d.f[Q * size::plane() + bL];
-                    }
-                });
-
-            device::constexpr_for<0, PhaseVelocitySet::Q()>(
-                [&](const auto Q)
-                {
-                    if constexpr (PhaseVelocitySet::cx<Q>() > 0)
-                    {
-                        d.g[Q * size::plane() + bL] = d.g[Q * size::plane() + bR];
-                    }
-                    if constexpr (PhaseVelocitySet::cx<Q>() < 0)
-                    {
-                        d.g[Q * size::plane() + bR] = d.g[Q * size::plane() + bL];
-                    }
-                });
-
-            const label_t gL = device::global3(0, y, z);
-            const label_t gR = device::global3(mesh::nx - 1, y, z);
-
-            d.rho[gL] = d.rho[bR];
-            d.rho[gR] = d.rho[bL];
-
-            d.phi[gL] = d.phi[bR];
-            d.phi[gR] = d.phi[bL];
-
-            d.ux[gL] = d.ux[bR];
-            d.ux[gR] = d.ux[bL];
-
-            d.uy[gL] = d.uy[bR];
-            d.uy[gR] = d.uy[bL];
-
-            d.uz[gL] = d.uz[bR];
-            d.uz[gR] = d.uz[bL];
-        }
-
-        __device__ static inline constexpr void periodicY(LBMFields d) noexcept
-        {
-            const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
-            const label_t z = threadIdx.y + blockIdx.y * blockDim.y;
-
-            if (x <= 0 || x >= mesh::nx - 1 || z <= 0 || z >= mesh::nz - 1)
-            {
-                return;
-            }
-
-            const label_t bB = device::global3(x, 1, z);
-            const label_t bT = device::global3(x, mesh::ny - 2, z);
-
-            device::constexpr_for<0, VelocitySet::Q()>(
-                [&](const auto Q)
-                {
-                    if constexpr (VelocitySet::cy<Q>() > 0)
-                    {
-                        d.f[Q * size::plane() + bB] = d.f[Q * size::plane() + bT];
-                    }
-                    if constexpr (VelocitySet::cy<Q>() < 0)
-                    {
-                        d.f[Q * size::plane() + bT] = d.f[Q * size::plane() + bB];
-                    }
-                });
-
-            device::constexpr_for<0, PhaseVelocitySet::Q()>(
-                [&](const auto Q)
-                {
-                    if constexpr (PhaseVelocitySet::cy<Q>() > 0)
-                    {
-                        d.g[Q * size::plane() + bB] = d.g[Q * size::plane() + bT];
-                    }
-                    if constexpr (PhaseVelocitySet::cy<Q>() < 0)
-                    {
-                        d.g[Q * size::plane() + bT] = d.g[Q * size::plane() + bB];
-                    }
-                });
-
-            const label_t gB = device::global3(x, 0, z);
-            const label_t gT = device::global3(x, mesh::ny - 1, z);
-
-            d.rho[gB] = d.rho[bT];
-            d.rho[gT] = d.rho[bB];
-
-            d.phi[gB] = d.phi[bT];
-            d.phi[gT] = d.phi[bB];
-
-            d.ux[gB] = d.ux[bT];
-            d.ux[gT] = d.ux[bB];
-
-            d.uy[gB] = d.uy[bT];
-            d.uy[gT] = d.uy[bB];
-
-            d.uz[gB] = d.uz[bT];
-            d.uz[gT] = d.uz[bB];
-        }
-
 #elif defined(DROPLET)
 
 #endif
 
     private:
         template <label_t Q>
-        __device__ static inline scalar_t computeFneq(
+        __device__ static inline constexpr scalar_t computeFneq(
             const LBMFields &d,
             const label_t fluidNode) noexcept
         {
@@ -326,7 +210,7 @@ namespace LBM
             }
         }
 
-        __device__ [[nodiscard]] static inline uint32_t hash32(label_t x) noexcept
+        __device__ [[nodiscard]] static inline constexpr uint32_t hash32(label_t x) noexcept
         {
             x ^= x >> 16;
             x *= 0x7FEB352Du;
@@ -336,7 +220,7 @@ namespace LBM
             return x;
         }
 
-        __device__ [[nodiscard]] static inline scalar_t uniform01(const uint32_t seed) noexcept
+        __device__ [[nodiscard]] static inline constexpr scalar_t uniform01(const uint32_t seed) noexcept
         {
             const scalar_t inv2_32 = static_cast<scalar_t>(2.3283064365386963e-10f);
             return (static_cast<scalar_t>(seed) + static_cast<scalar_t>(0.5f)) * inv2_32;
@@ -358,7 +242,7 @@ namespace LBM
         }
 
         template <label_t NOISE_PERIOD = 10>
-        __device__ [[nodiscard]] static inline scalar_t gaussian_noise(
+        __device__ [[nodiscard]] static inline constexpr scalar_t gaussian_noise(
             const label_t x,
             const label_t y,
             const label_t STEP) noexcept

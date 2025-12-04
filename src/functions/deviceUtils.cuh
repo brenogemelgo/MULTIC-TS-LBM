@@ -64,6 +64,32 @@ namespace device
         return Q * size::plane() + global3(x, y, z);
     }
 
+    __device__ [[nodiscard]] inline label_t wrapX(const label_t xx) noexcept
+    {
+        if (xx == 0)
+        {
+            return mesh::nx - 2;
+        }
+        if (xx == mesh::nx - 1)
+        {
+            return 1;
+        }
+        return xx;
+    }
+
+    __device__ [[nodiscard]] inline label_t wrapY(const label_t yy) noexcept
+    {
+        if (yy == 0)
+        {
+            return mesh::ny - 2;
+        }
+        if (yy == mesh::ny - 1)
+        {
+            return 1;
+        }
+        return yy;
+    }
+
     __device__ [[nodiscard]] inline label_t globalThreadIdx(
         const label_t tx,
         const label_t ty,

@@ -71,12 +71,8 @@ int main(int argc, char *argv[])
                           host::divUp(mesh::ny, block3D.y),
                           host::divUp(mesh::nz, block3D.z));
 
-    constexpr dim3 blockX(block::nx, block::ny, 1u);
-    constexpr dim3 blockY(block::nx, block::ny, 1u);
     constexpr dim3 blockZ(block::nx, block::ny, 1u);
 
-    constexpr dim3 gridX(host::divUp(mesh::ny, blockX.x), host::divUp(mesh::nz, blockX.y), 1u);
-    constexpr dim3 gridY(host::divUp(mesh::nx, blockY.x), host::divUp(mesh::nz, blockY.y), 1u);
     constexpr dim3 gridZ(host::divUp(mesh::nx, blockZ.x), host::divUp(mesh::ny, blockZ.y), 1u);
 
     constexpr size_t dynamic = 0;
@@ -98,6 +94,8 @@ int main(int argc, char *argv[])
 
     host::generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET);
 
+#if !BENCHMARK
+
     std::vector<std::thread> vtk_threads;
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
@@ -106,10 +104,13 @@ int main(int argc, char *argv[])
          {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
          {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true}}};
 
+#endif
+
+    cudaDeviceSynchronize();
+
     const auto START_TIME = std::chrono::high_resolution_clock::now();
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
-        phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
         phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
         phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 
@@ -120,8 +121,6 @@ int main(int argc, char *argv[])
 
         LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
         LBM::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-        LBM::callPeriodicX<<<gridX, blockX, dynamic, queue>>>(fields);
-        LBM::callPeriodicY<<<gridY, blockY, dynamic, queue>>>(fields);
 
 #elif defined(DROPLET)
 
@@ -160,6 +159,8 @@ int main(int argc, char *argv[])
 #endif
     }
 
+#if !BENCHMARK
+
     for (auto &t : vtk_threads)
     {
         if (t.joinable())
@@ -168,7 +169,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    checkCudaErrorsOutline(cudaStreamSynchronize(queue));
+#endif
+
+    cudaStreamSynchronize(queue);
     const auto END_TIME = std::chrono::high_resolution_clock::now();
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
 

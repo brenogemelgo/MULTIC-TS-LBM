@@ -44,7 +44,7 @@ SourceFiles
 
 namespace phase
 {
-    __global__ void computePhase(LBMFields d)
+    __global__ void computeNormals(LBMFields d)
     {
         const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -68,23 +68,6 @@ namespace phase
             });
 
         d.phi[idx3] = phi;
-    }
-
-    __global__ void computeNormals(LBMFields d)
-    {
-        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
-        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
-        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
-
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
-        {
-            return;
-        }
-
-        const label_t idx3 = device::global3(x, y, z);
 
         scalar_t sgx = LBM::VelocitySet::w_1() * (d.phi[device::global3(x + 1, y, z)] - d.phi[device::global3(x - 1, y, z)]) +
                        LBM::VelocitySet::w_2() * (d.phi[device::global3(x + 1, y + 1, z)] - d.phi[device::global3(x - 1, y - 1, z)] +

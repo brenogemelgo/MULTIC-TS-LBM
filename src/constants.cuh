@@ -56,8 +56,8 @@ namespace LBM
 }
 
 // #define RUN_MODE
-#define SAMPLE_MODE
-// #define PROFILE_MODE
+// #define SAMPLE_MODE
+#define PROFILE_MODE
 
 #if defined(RUN_MODE)
 
