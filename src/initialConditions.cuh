@@ -58,7 +58,7 @@ namespace LBM
         const label_t idx3 = device::global3(x, y, z);
 
         // Non-zero fields
-        d.rho[idx3] = 1.0f;
+        d.rho[idx3] = static_cast<scalar_t>(1);
     }
 
 #if defined(JET)
@@ -84,7 +84,7 @@ namespace LBM
 
         const label_t idx3_in = device::global3(x, y, 0);
 
-        d.phi[idx3_in] = 1.0f;
+        d.phi[idx3_in] = static_cast<scalar_t>(1);
         d.uz[idx3_in] = physics::u_ref;
     }
 
@@ -106,12 +106,12 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t dx = (static_cast<scalar_t>(x) - geometry::center_x()) / 2.0f;
+        const scalar_t dx = (static_cast<scalar_t>(x) - geometry::center_x()) / static_cast<scalar_t>(2);
         const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
         const scalar_t dz = static_cast<scalar_t>(z) - geometry::center_z();
         const scalar_t radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
 
-        const scalar_t phi = 0.5f + 0.5f * tanhf(2.0f * (static_cast<scalar_t>(mesh::radius) - radialDist) / 3.0f);
+        const scalar_t phi = static_cast<scalar_t>(0.5) + static_cast<scalar_t>(0.5) * tanhf(static_cast<scalar_t>(2) * (static_cast<scalar_t>(mesh::radius) - radialDist) / static_cast<scalar_t>(3));
         d.phi[idx3] = phi;
     }
 
@@ -134,7 +134,7 @@ namespace LBM
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
 
-        const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
+        const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
@@ -142,7 +142,7 @@ namespace LBM
                 constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::cy<Q>());
                 constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::cz<Q>());
 
-                const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
+                const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
                 const scalar_t feq = VelocitySet::f_eq<Q>(d.rho[idx3], uu, cu);
 

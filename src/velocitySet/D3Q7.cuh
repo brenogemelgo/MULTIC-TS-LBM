@@ -29,7 +29,10 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    D3Q7 velocity set class declaration (focused on phase field)
+    D3Q7 velocity set class declaration
+
+Note
+    This velocity set is built around the phase field requirements
 
 SourceFiles
     D3Q7.cuh
@@ -144,7 +147,7 @@ namespace LBM
             const scalar_t uy,
             const scalar_t uz) noexcept
         {
-            return w<Q>() * phi * (1.0f + 4.0f * (cx<Q>() * ux + cy<Q>() * uy + cz<Q>() * uz));
+            return w<Q>() * phi * (static_cast<scalar_t>(1) + as2() * (cx<Q>() * ux + cy<Q>() * uy + cz<Q>() * uz));
         }
 
         template <label_t Q>

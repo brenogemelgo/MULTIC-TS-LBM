@@ -152,7 +152,7 @@ namespace LBM
             const scalar_t uu,
             const scalar_t cu) noexcept
         {
-            return w<Q>() * rho * (1.0f - uu + cu + 0.5f * cu * cu) - w<Q>();
+            return w<Q>() * rho * (static_cast<scalar_t>(1) - uu + cu + static_cast<scalar_t>(0.5) * cu * cu) - w<Q>();
         }
 
         template <label_t Q>
@@ -167,13 +167,13 @@ namespace LBM
             const scalar_t /*uy*/,
             const scalar_t /*uz*/) noexcept
         {
-            return (w<Q>() * 4.5f) *
+            return (w<Q>() * static_cast<scalar_t>(4.5)) *
                    ((cx<Q>() * cx<Q>() - cs2()) * pxx +
                     (cy<Q>() * cy<Q>() - cs2()) * pyy +
                     (cz<Q>() * cz<Q>() - cs2()) * pzz +
-                    2.0f * (cx<Q>() * cy<Q>() * pxy +
-                            cx<Q>() * cz<Q>() * pxz +
-                            cy<Q>() * cz<Q>() * pyz));
+                    static_cast<scalar_t>(2) * (cx<Q>() * cy<Q>() * pxy +
+                                                cx<Q>() * cz<Q>() * pxz +
+                                                cy<Q>() * cz<Q>() * pyz));
         }
 
         template <label_t Q>
@@ -186,10 +186,10 @@ namespace LBM
             const scalar_t ffy,
             const scalar_t ffz) noexcept
         {
-            return 0.5f * w<Q>() *
-                   ((3.0f * (cx<Q>() - ux) + 3.0f * cu * cx<Q>()) * ffx +
-                    (3.0f * (cy<Q>() - uy) + 3.0f * cu * cy<Q>()) * ffy +
-                    (3.0f * (cz<Q>() - uz) + 3.0f * cu * cz<Q>()) * ffz);
+            return static_cast<scalar_t>(0.5) * w<Q>() *
+                   ((as2() * (cx<Q>() - ux) + as2() * cu * cx<Q>()) * ffx +
+                    (as2() * (cy<Q>() - uy) + as2() * cu * cy<Q>()) * ffy +
+                    (as2() * (cz<Q>() - uz) + as2() * cu * cz<Q>()) * ffz);
         }
 
     private:

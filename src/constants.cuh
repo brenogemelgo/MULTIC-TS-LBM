@@ -94,11 +94,11 @@ namespace mesh
 
 namespace physics
 {
-    static constexpr scalar_t u_ref = 0.05f;
+    static constexpr scalar_t u_ref = static_cast<scalar_t>(0.05);
     static constexpr int reynolds = 5000;
     static constexpr int weber = 500;
     static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;
-    static constexpr scalar_t gamma = 1.0f;
+    static constexpr scalar_t gamma = static_cast<scalar_t>(1);
 }
 
 #elif defined(DROPLET)
@@ -116,14 +116,10 @@ namespace mesh
 namespace physics
 {
 
-    static constexpr scalar_t u_ref = 0.0f;
+    static constexpr scalar_t u_ref = static_cast<scalar_t>(0);
     static constexpr int reynolds = 0;
     static constexpr int weber = 0;
-    static constexpr scalar_t sigma = 0.1f;
-    static constexpr scalar_t gamma = 0.15f * 5.0f;
-
-    static constexpr scalar_t tau = 0.55f;
-    static constexpr scalar_t visc_ref = (tau - 0.5f) / 3.0f;
+    static constexpr scalar_t visc_ref = (tau - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
 }
 
 #endif

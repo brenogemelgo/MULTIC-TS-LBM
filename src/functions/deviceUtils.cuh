@@ -106,7 +106,7 @@ namespace device
     __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept
     {
         const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
-        const scalar_t s = fminf(fmaxf((zn - sponge::z_start()) * sponge::inv_sponge(), 0.0f), 1.0f);
+        const scalar_t s = fminf(fmaxf((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
         const scalar_t s2 = s * s;
         const scalar_t ramp = s2 * s;
         return fmaf(ramp, relaxation::omega_delta(), relaxation::omega_ref());

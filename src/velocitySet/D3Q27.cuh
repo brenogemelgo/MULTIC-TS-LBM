@@ -166,7 +166,7 @@ namespace LBM
             const scalar_t uu,
             const scalar_t cu) noexcept
         {
-            return w<Q>() * rho * (1.0f - uu + cu + 0.5f * cu * cu + oos() * cu * cu * cu - uu * cu) - w<Q>();
+            return w<Q>() * rho * (static_cast<scalar_t>(1) - uu + cu + static_cast<scalar_t>(0.5) * cu * cu + oos() * cu * cu * cu - uu * cu) - w<Q>();
         }
 
         template <label_t Q>
@@ -181,23 +181,23 @@ namespace LBM
             const scalar_t uy,
             const scalar_t uz) noexcept
         {
-            return (w<Q>() * 4.5f) *
+            return (w<Q>() * static_cast<scalar_t>(4.5)) *
                    ((cx<Q>() * cx<Q>() - cs2()) * pxx +
                     (cy<Q>() * cy<Q>() - cs2()) * pyy +
                     (cz<Q>() * cz<Q>() - cs2()) * pzz +
-                    2.0f * (cx<Q>() * cy<Q>() * pxy +
-                            cx<Q>() * cz<Q>() * pxz +
-                            cy<Q>() * cz<Q>() * pyz) +
-                    (cx<Q>() * cx<Q>() * cx<Q>() - cx<Q>()) * (3.0f * ux * pxx) +
-                    (cy<Q>() * cy<Q>() * cy<Q>() - cy<Q>()) * (3.0f * uy * pyy) +
-                    (cz<Q>() * cz<Q>() * cz<Q>() - cz<Q>()) * (3.0f * uz * pzz) +
-                    3.0f * ((cx<Q>() * cx<Q>() * cy<Q>() - cs2() * cy<Q>()) * (pxx * uy + 2.0f * ux * pxy) +
-                            (cx<Q>() * cx<Q>() * cz<Q>() - cs2() * cz<Q>()) * (pxx * uz + 2.0f * ux * pxz) +
-                            (cx<Q>() * cy<Q>() * cy<Q>() - cs2() * cx<Q>()) * (pxy * uy + 2.0f * ux * pyy) +
-                            (cy<Q>() * cy<Q>() * cz<Q>() - cs2() * cz<Q>()) * (pyy * uz + 2.0f * uy * pyz) +
-                            (cx<Q>() * cz<Q>() * cz<Q>() - cs2() * cx<Q>()) * (pxz * uz + 2.0f * ux * pzz) +
-                            (cy<Q>() * cz<Q>() * cz<Q>() - cs2() * cy<Q>()) * (pyz * uz + 2.0f * uy * pzz)) +
-                    6.0f * (cx<Q>() * cy<Q>() * cz<Q>()) * (ux * pyz + uy * pxz + uz * pxy));
+                    static_cast<scalar_t>(2) * (cx<Q>() * cy<Q>() * pxy +
+                                                cx<Q>() * cz<Q>() * pxz +
+                                                cy<Q>() * cz<Q>() * pyz) +
+                    (cx<Q>() * cx<Q>() * cx<Q>() - cx<Q>()) * (as2() * ux * pxx) +
+                    (cy<Q>() * cy<Q>() * cy<Q>() - cy<Q>()) * (as2() * uy * pyy) +
+                    (cz<Q>() * cz<Q>() * cz<Q>() - cz<Q>()) * (as2() * uz * pzz) +
+                    as2() * ((cx<Q>() * cx<Q>() * cy<Q>() - cs2() * cy<Q>()) * (pxx * uy + static_cast<scalar_t>(2) * ux * pxy) +
+                             (cx<Q>() * cx<Q>() * cz<Q>() - cs2() * cz<Q>()) * (pxx * uz + static_cast<scalar_t>(2) * ux * pxz) +
+                             (cx<Q>() * cy<Q>() * cy<Q>() - cs2() * cx<Q>()) * (pxy * uy + static_cast<scalar_t>(2) * ux * pyy) +
+                             (cy<Q>() * cy<Q>() * cz<Q>() - cs2() * cz<Q>()) * (pyy * uz + static_cast<scalar_t>(2) * uy * pyz) +
+                             (cx<Q>() * cz<Q>() * cz<Q>() - cs2() * cx<Q>()) * (pxz * uz + static_cast<scalar_t>(2) * ux * pzz) +
+                             (cy<Q>() * cz<Q>() * cz<Q>() - cs2() * cy<Q>()) * (pyz * uz + static_cast<scalar_t>(2) * uy * pzz)) +
+                    static_cast<scalar_t>(6) * (cx<Q>() * cy<Q>() * cz<Q>()) * (ux * pyz + uy * pxz + uz * pxy));
         }
 
         template <label_t Q>
@@ -210,10 +210,10 @@ namespace LBM
             const scalar_t ffy,
             const scalar_t ffz) noexcept
         {
-            return 0.5f * w<Q>() *
-                   ((3.0f * (cx<Q>() - ux) + 3.0f * cu * cx<Q>()) * ffx +
-                    (3.0f * (cy<Q>() - uy) + 3.0f * cu * cy<Q>()) * ffy +
-                    (3.0f * (cz<Q>() - uz) + 3.0f * cu * cz<Q>()) * ffz);
+            return static_cast<scalar_t>(0.5) * w<Q>() *
+                   ((as2() * (cx<Q>() - ux) + as2() * cu * cx<Q>()) * ffx +
+                    (as2() * (cy<Q>() - uy) + as2() * cu * cy<Q>()) * ffy +
+                    (as2() * (cz<Q>() - uz) + as2() * cu * cz<Q>()) * ffz);
         }
 
     private:

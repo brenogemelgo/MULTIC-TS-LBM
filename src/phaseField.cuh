@@ -60,7 +60,7 @@ namespace Phase
 
         const label_t idx3 = device::global3(x, y, z);
 
-        scalar_t phi = 0.0f;
+        scalar_t phi = static_cast<scalar_t>(0);
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
@@ -69,12 +69,12 @@ namespace Phase
 
         d.phi[idx3] = phi;
 
-        scalar_t gx = 0.5f * (d.phi[device::global3(x + 1, y, z)] - d.phi[device::global3(x - 1, y, z)]);
-        scalar_t gy = 0.5f * (d.phi[device::global3(x, y + 1, z)] - d.phi[device::global3(x, y - 1, z)]);
-        scalar_t gz = 0.5f * (d.phi[device::global3(x, y, z + 1)] - d.phi[device::global3(x, y, z - 1)]);
+        scalar_t gx = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x + 1, y, z)] - d.phi[device::global3(x - 1, y, z)]);
+        scalar_t gy = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x, y + 1, z)] - d.phi[device::global3(x, y - 1, z)]);
+        scalar_t gz = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x, y, z + 1)] - d.phi[device::global3(x, y, z - 1)]);
 
         const scalar_t ind = sqrtf(gx * gx + gy * gy + gz * gz);
-        const scalar_t invInd = 1.0f / (ind + 1e-9f);
+        const scalar_t invInd = static_cast<scalar_t>(1) / (ind + static_cast<scalar_t>(1e-9));
 
         const scalar_t normX = gx * invInd;
         const scalar_t normY = gy * invInd;
@@ -102,9 +102,10 @@ namespace Phase
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t curvature = 0.5f * ((d.normx[device::global3(x + 1, y, z)] - d.normx[device::global3(x - 1, y, z)]) +
-                                           (d.normy[device::global3(x, y + 1, z)] - d.normy[device::global3(x, y - 1, z)]) +
-                                           (d.normz[device::global3(x, y, z + 1)] - d.normz[device::global3(x, y, z - 1)]));
+        const scalar_t curvature = static_cast<scalar_t>(0.5) *
+                                   ((d.normx[device::global3(x + 1, y, z)] - d.normx[device::global3(x - 1, y, z)]) +
+                                    (d.normy[device::global3(x, y + 1, z)] - d.normy[device::global3(x, y - 1, z)]) +
+                                    (d.normz[device::global3(x, y, z + 1)] - d.normz[device::global3(x, y, z - 1)]));
 
         const scalar_t stCurv = -physics::sigma * curvature * d.ind[idx3];
         d.ffx[idx3] = stCurv * d.normx[idx3];

@@ -60,7 +60,7 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        scalar_t rho = 0.0f;
+        scalar_t rho = static_cast<scalar_t>(0);
         scalar_t pop[VelocitySet::Q()];
 
         device::constexpr_for<0, VelocitySet::Q()>(
@@ -71,18 +71,18 @@ namespace LBM
                 rho += fq;
             });
 
-        rho += 1.0f;
+        rho += static_cast<scalar_t>(1);
         d.rho[idx3] = rho;
 
         const scalar_t ffx = d.ffx[idx3];
         const scalar_t ffy = d.ffy[idx3];
         const scalar_t ffz = d.ffz[idx3];
 
-        const scalar_t invRho = 1.0f / rho;
+        const scalar_t invRho = static_cast<scalar_t>(1) / rho;
 
-        scalar_t ux = 0.0f;
-        scalar_t uy = 0.0f;
-        scalar_t uz = 0.0f;
+        scalar_t ux = static_cast<scalar_t>(0);
+        scalar_t uy = static_cast<scalar_t>(0);
+        scalar_t uz = static_cast<scalar_t>(0);
 
         if constexpr (VelocitySet::Q() == 19)
         {
@@ -97,18 +97,18 @@ namespace LBM
             uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
         }
 
-        ux += ffx * 0.5f * invRho;
-        uy += ffy * 0.5f * invRho;
-        uz += ffz * 0.5f * invRho;
+        ux += ffx * static_cast<scalar_t>(0.5) * invRho;
+        uy += ffy * static_cast<scalar_t>(0.5) * invRho;
+        uz += ffz * static_cast<scalar_t>(0.5) * invRho;
 
         d.ux[idx3] = ux;
         d.uy[idx3] = uy;
         d.uz[idx3] = uz;
 
-        scalar_t pxx = 0.0f, pyy = 0.0f, pzz = 0.0f;
-        scalar_t pxy = 0.0f, pxz = 0.0f, pyz = 0.0f;
+        scalar_t pxx = static_cast<scalar_t>(0), pyy = static_cast<scalar_t>(0), pzz = static_cast<scalar_t>(0);
+        scalar_t pxy = static_cast<scalar_t>(0), pxz = static_cast<scalar_t>(0), pyz = static_cast<scalar_t>(0);
 
-        const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
+        const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
@@ -116,7 +116,7 @@ namespace LBM
                 constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::cy<Q>());
                 constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::cz<Q>());
 
-                const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
+                const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
                 const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
@@ -169,12 +169,12 @@ namespace LBM
         const scalar_t ffz = d.ffz[idx3];
 
 #if defined(JET)
-        const scalar_t omco = 1.0f - device::cubic_sponge(z);
+        const scalar_t omco = static_cast<scalar_t>(1) - device::cubic_sponge(z);
 #elif defined(DROPLET)
         constexpr scalar_t omco = relaxation::omco_ref();
 #endif
 
-        const scalar_t uu = 1.5f * (ux * ux + uy * uy + uz * uz);
+        const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
@@ -182,7 +182,7 @@ namespace LBM
                 constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::cy<Q>());
                 constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::cz<Q>());
 
-                const scalar_t cu = 3.0f * (cx * ux + cy * uy + cz * uz);
+                const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
                 const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
@@ -192,6 +192,7 @@ namespace LBM
                 label_t yy = y + static_cast<label_t>(VelocitySet::cy<Q>());
                 label_t zz = z + static_cast<label_t>(VelocitySet::cz<Q>());
 
+                // Periodic wrapping
                 xx = device::wrapX(xx);
                 yy = device::wrapY(yy);
 
@@ -202,7 +203,7 @@ namespace LBM
         const scalar_t normx = d.normx[idx3];
         const scalar_t normy = d.normy[idx3];
         const scalar_t normz = d.normz[idx3];
-        const scalar_t sharp = physics::gamma * phi * (1.0f - phi);
+        const scalar_t sharp = physics::gamma * phi * (static_cast<scalar_t>(1) - phi);
 
         device::constexpr_for<0, Phase::VelocitySet::Q()>(
             [&](const auto Q)
@@ -214,6 +215,7 @@ namespace LBM
                 label_t yy = y + static_cast<label_t>(Phase::VelocitySet::cy<Q>());
                 label_t zz = z + static_cast<label_t>(Phase::VelocitySet::cz<Q>());
 
+                // Periodic wrapping
                 xx = device::wrapX(xx);
                 yy = device::wrapY(yy);
 
