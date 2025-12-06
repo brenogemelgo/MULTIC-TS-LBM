@@ -29,28 +29,59 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Header file for the flow case classes
+    Droplet velocity set class declaration
 
 SourceFiles
-    flowCase.cuh
+    droplet.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FLOWCASE_CUH
-#define FLOWCASE_CUH
+#ifndef DROPLET_CUH
+#define DROPLET_CUH
 
-#include "../cuda/utils.cuh"
+#include "flowCase.cuh"
 
 namespace LBM
 {
-    class flowCase
+    class droplet : private flowCase
     {
     public:
-        __host__ __device__ [[nodiscard]] inline consteval flowCase() noexcept {};
+        __host__ __device__ [[nodiscard]] inline consteval droplet(){};
+
+        __host__ __device__ [[nodiscard]] static inline consteval bool droplet_case() noexcept
+        {
+            return true;
+        }
+
+        __host__ __device__ [[nodiscard]] static inline consteval bool jet_case() noexcept
+        {
+            return false;
+        }
+
+        __host__ static inline void initialConditions(
+            const LBMFields &fields,
+            const dim3 grid3D,
+            const dim3 block3D,
+            const size_t dynamic,
+            const cudaStream_t queue)
+        {
+            LBM::setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
+        }
+
+        __host__ static inline void boundaryConditions(
+            const LBMFields &fields,
+            const dim3 gridZ,
+            const dim3 blockZ,
+            const size_t dynamic,
+            const cudaStream_t queue,
+            const label_t STEP)
+        {
+            // Placeholder
+        }
+
+    private:
+        // No private methods
     };
 }
-
-#include "droplet.cuh"
-#include "jet.cuh"
 
 #endif

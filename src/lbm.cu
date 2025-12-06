@@ -42,6 +42,8 @@ SourceFiles
 #ifndef LBM_CUH
 #define LBM_CUH
 
+#include "LBMIncludes.cuh"
+
 namespace LBM
 {
     __global__ void computeMoments(LBMFields d)

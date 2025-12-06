@@ -39,7 +39,6 @@ SourceFiles
 #ifndef JET_CUH
 #define JET_CUH
 
-#include "../cuda/utils.cuh"
 #include "flowCase.cuh"
 
 namespace LBM
@@ -49,18 +48,40 @@ namespace LBM
     public:
         __host__ __device__ [[nodiscard]] inline consteval jet(){};
 
-        __device__ static inline constexpr void callBoundaries(
-            LBMFields d,
-            const label_t t) noexcept
+        __host__ __device__ [[nodiscard]] static inline consteval bool droplet_case() noexcept
         {
-            jetBC::applyInflow(d, t);
-            jetBC::applyOutflow(d);
-            jetBC::periodicX(d);
-            jetBC::periodicY(d);
+            return false;
+        }
+
+        __host__ __device__ [[nodiscard]] static inline consteval bool jet_case() noexcept
+        {
+            return true;
+        }
+
+        __host__ static inline void initialConditions(
+            const LBMFields &fields,
+            const dim3 grid3D,
+            const dim3 block3D,
+            const size_t dynamic,
+            const cudaStream_t queue)
+        {
+            LBM::setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+        }
+
+        __host__ static inline void boundaryConditions(
+            const LBMFields &fields,
+            const dim3 gridZ,
+            const dim3 blockZ,
+            const size_t dynamic,
+            const cudaStream_t queue,
+            const label_t STEP)
+        {
+            LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
+            LBM::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
         }
 
     private:
-        // abc
+        // No private methods
     };
 }
 

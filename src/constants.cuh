@@ -44,6 +44,7 @@ SourceFiles
 #include "cuda/utils.cuh"
 #include "structs/structs.cuh"
 #include "velocitySet/velocitySet.cuh"
+#include "flowCase/flowCase.cuh"
 
 namespace LBM
 {
@@ -51,6 +52,11 @@ namespace LBM
     using VelocitySet = d3q19;
 #elif defined(D3Q27)
     using VelocitySet = d3q27;
+#endif
+#if defined(DROPLET)
+    using FlowCase = droplet;
+#elif defined(JET)
+    using FlowCase = jet;
 #endif
 }
 
@@ -118,7 +124,11 @@ namespace physics
 
     static constexpr scalar_t u_ref = static_cast<scalar_t>(0);
     static constexpr int reynolds = 0;
-    static constexpr int weber = 0;
+    static constexpr int weber = 1;
+    static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;
+    static constexpr scalar_t gamma = static_cast<scalar_t>(1);
+
+    static constexpr scalar_t tau = static_cast<scalar_t>(0.505);
     static constexpr scalar_t visc_ref = (tau - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
 }
 

@@ -29,33 +29,34 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Droplet velocity set class declaration
+    Kernel definitions for include in classes
+
+Namespace
+    LBM
 
 SourceFiles
-    droplet.cuh
+    LBMIncludes.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef DROPLET_CUH
-#define DROPLET_CUH
-
-#include "../cuda/utils.cuh"
-#include "flowCase.cuh"
+#ifndef LBMINCLUDES_CUH
+#define LBMINCLUDES_CUH
 
 namespace LBM
 {
-    class droplet : private flowCase
-    {
-    public:
-        __host__ __device__ [[nodiscard]] inline consteval droplet(){};
 
-        __device__ static inline constexpr void callBoundaries(
-            LBMFields d,
-            const label_t t) noexcept {}
+    // Initial conditions
+    __global__ void setFields(LBMFields d);
+    __global__ void setJet(LBMFields d);
+    __global__ void setDroplet(LBMFields d);
+    __global__ void setDistros(LBMFields d);
 
-    private:
-        // abc
-    };
+    __global__ void computeMoments(LBMFields d);
+    __global__ void streamCollide(LBMFields d);
+
+    // Boundary conditions
+    __global__ void callInflow(LBMFields d, const label_t t);
+    __global__ void callOutflow(LBMFields d);
 }
 
 #endif

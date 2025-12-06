@@ -40,11 +40,11 @@ SourceFiles
 #include "functions/hostUtils.cuh"
 #include "functions/ioFields.cuh"
 #include "functions/vtkWriter.cuh"
-#include "initialConditions.cuh"
+#include "initialConditions.cu"
 #include "boundaryConditions.cuh"
 #include "phaseField.cuh"
 #include "derivedFields/timeAverage.cuh"
-#include "lbm.cuh"
+#include "lbm.cu"
 
 int main(int argc, char *argv[])
 {
@@ -58,47 +58,49 @@ int main(int argc, char *argv[])
     const std::string SIM_ID = argv[3];
     const std::string SIM_DIR = host::createSimulationDirectory(FLOW_CASE, VELOCITY_SET, SIM_ID);
 
+    // Get device from pipeline argument
     if (host::setDeviceFromEnv() < 0)
     {
         return 1;
     }
 
+    // Allocate device fields
     host::setDeviceFields();
 
+    // Block-wise configuration
     constexpr dim3 block3D(block::nx, block::ny, block::nz);
-
     constexpr dim3 grid3D(host::divUp(mesh::nx, block3D.x),
                           host::divUp(mesh::ny, block3D.y),
                           host::divUp(mesh::nz, block3D.z));
 
     constexpr dim3 blockZ(block::nx, block::ny, 1u);
-
     constexpr dim3 gridZ(host::divUp(mesh::nx, blockZ.x), host::divUp(mesh::ny, blockZ.y), 1u);
 
+    // Dynamic shared memory size
     constexpr size_t dynamic = 0;
 
+    // Stream setup
     cudaStream_t queue{};
     checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
+    // Initial conditions
     LBM::setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
-
-#if defined(JET)
-    LBM::setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
-#elif defined(DROPLET)
-    LBM::setDroplet<<<grid3D, block3D, dynamic, queue>>>(fields);
-#endif
-
+    LBM::FlowCase::initialConditions(fields, grid3D, block3D, dynamic, queue);
     LBM::setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
+    // Make sure everything is initialized
     checkCudaErrorsOutline(cudaDeviceSynchronize());
 
+    // Generate info file (for post-processing regex purposes)
     host::generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET);
 
 #if !BENCHMARK
 
+    // Initialize thread for asynchronous VTS generation
     std::vector<std::thread> vtk_threads;
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
+    // Fields to be saved
     constexpr std::array<host::FieldConfig, 3> OUTPUT_FIELDS{
         {{host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
          {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
@@ -106,25 +108,25 @@ int main(int argc, char *argv[])
 
 #endif
 
-    cudaDeviceSynchronize();
+    // Warmup
+    checkCudaErrorsOutline(cudaDeviceSynchronize());
 
+    // Start clock
     const auto START_TIME = std::chrono::high_resolution_clock::now();
+
+    // Time loop
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
+        // Phase field
         Phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
         Phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 
+        // Hydrodynamics
         LBM::computeMoments<<<grid3D, block3D, dynamic, queue>>>(fields);
         LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
-#if defined(JET)
-
-        LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
-        LBM::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
-
-#elif defined(DROPLET)
-
-#endif
+        // Flow case specific boundary conditions
+        LBM::FlowCase::boundaryConditions(fields, gridZ, blockZ, dynamic, queue, STEP);
 
 #if AVERAGE_UZ
 

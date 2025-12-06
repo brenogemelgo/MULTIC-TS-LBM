@@ -35,12 +35,14 @@ Namespace
     LBM
 
 SourceFiles
-    initialConditions.cuh
+    initialConditions.cu
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef INITIALCONDITIONS_CUH
 #define INITIALCONDITIONS_CUH
+
+#include "LBMIncludes.cuh"
 
 namespace LBM
 {
@@ -60,8 +62,6 @@ namespace LBM
         // Non-zero fields
         d.rho[idx3] = static_cast<scalar_t>(1);
     }
-
-#if defined(JET)
 
     __global__ void setJet(LBMFields d)
     {
@@ -88,8 +88,6 @@ namespace LBM
         d.uz[idx3_in] = physics::u_ref;
     }
 
-#elif defined(DROPLET)
-
     __global__ void setDroplet(LBMFields d)
     {
         const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -114,8 +112,6 @@ namespace LBM
         const scalar_t phi = static_cast<scalar_t>(0.5) + static_cast<scalar_t>(0.5) * tanhf(static_cast<scalar_t>(2) * (static_cast<scalar_t>(mesh::radius) - radialDist) / static_cast<scalar_t>(3));
         d.phi[idx3] = phi;
     }
-
-#endif
 
     __global__ void setDistros(LBMFields d)
     {

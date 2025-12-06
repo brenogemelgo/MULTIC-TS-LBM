@@ -49,8 +49,6 @@ namespace LBM
     public:
         __host__ __device__ [[nodiscard]] inline consteval BoundaryConditions(){};
 
-#if defined(JET)
-
         __device__ static inline constexpr void applyInflow(
             LBMFields d,
             const label_t t) noexcept
@@ -99,10 +97,11 @@ namespace LBM
                         constexpr scalar_t w = VelocitySet::w<Q>();
 
                         const scalar_t feq = w * P - w;
+                        const scalar_t fneq = VelocitySet::f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
+                                                                    d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
+                                                                    d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
 
-                        const scalar_t fneq = computeFneq<Q>(d, fluidNode);
-
-                        d.f[Q * size::plane() + fluidNode] = to_pop(feq + relaxation::omco_zmin() * fneq);
+                        d.f[Q * size::plane() + fluidNode] = to_pop(feq + relaxation::omco_ref() * fneq);
                     }
                 });
 
@@ -154,18 +153,16 @@ namespace LBM
                         const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
                         const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
-                        const scalar_t fneq = computeFneq<Q>(d, fluidNode);
+                        const scalar_t fneq = VelocitySet::f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
+                                                                    d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
+                                                                    d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
 
-                        d.f[Q * size::plane() + fluidNode] = to_pop(feq + relaxation::omco_zmax() * fneq);
+                        d.f[Q * size::plane() + fluidNode] = to_pop(feq + relaxation::omco_ref() * fneq);
                     }
                 });
 
             d.g[6 * size::plane() + idx3_zm1] = Phase::VelocitySet::w<6>() * phi * (static_cast<scalar_t>(1) - Phase::VelocitySet::as2() * physics::u_ref);
         }
-
-#elif defined(DROPLET)
-
-#endif
 
     private:
         template <label_t Q>
