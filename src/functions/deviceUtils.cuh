@@ -90,6 +90,19 @@ namespace device
         return yy;
     }
 
+    __device__ [[nodiscard]] inline label_t wrapZ(const label_t zz) noexcept
+    {
+        if (zz == 0)
+        {
+            return mesh::nz - 2;
+        }
+        if (zz == mesh::nz - 1)
+        {
+            return 1;
+        }
+        return zz;
+    }
+
     __device__ [[nodiscard]] inline label_t globalThreadIdx(
         const label_t tx,
         const label_t ty,
@@ -101,18 +114,21 @@ namespace device
         return tx + block::nx * (ty + block::ny * (tz + block::nz * (bx + block::num_block_x() * (by + block::num_block_y() * bz))));
     }
 
-#if defined(JET)
-
     __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept
     {
-        const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
-        const scalar_t s = fminf(fmaxf((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
-        const scalar_t s2 = s * s;
-        const scalar_t ramp = s2 * s;
-        return fmaf(ramp, relaxation::omega_delta(), relaxation::omega_ref());
+        if constexpr (LBM::FlowCase::jet_case())
+        {
+            const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
+            const scalar_t s = fminf(fmaxf((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
+            const scalar_t s2 = s * s;
+            const scalar_t ramp = s2 * s;
+            return fmaf(ramp, relaxation::omega_delta(), relaxation::omega_ref());
+        }
+        else if constexpr (LBM::FlowCase::droplet_case())
+        {
+            return 0;
+        }
     }
-
-#endif
 
     template <const label_t Start, const label_t End, typename F>
     __device__ inline constexpr void constexpr_for(F &&f) noexcept

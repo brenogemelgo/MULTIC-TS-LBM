@@ -53,6 +53,7 @@ namespace LBM
 #elif defined(D3Q27)
     using VelocitySet = d3q27;
 #endif
+
 #if defined(DROPLET)
     using FlowCase = droplet;
 #elif defined(JET)
@@ -111,7 +112,7 @@ namespace physics
 
 namespace mesh
 {
-    static constexpr label_t res = 75;
+    static constexpr label_t res = 128;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res;
@@ -124,11 +125,11 @@ namespace physics
 
     static constexpr scalar_t u_ref = static_cast<scalar_t>(0);
     static constexpr int reynolds = 0;
-    static constexpr int weber = 1;
-    static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;
+    static constexpr int weber = 0;
+    static constexpr scalar_t sigma = static_cast<scalar_t>(0.1);
     static constexpr scalar_t gamma = static_cast<scalar_t>(1);
 
-    static constexpr scalar_t tau = static_cast<scalar_t>(0.505);
+    static constexpr scalar_t tau = static_cast<scalar_t>(0.55);
     static constexpr scalar_t visc_ref = (tau - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
 }
 

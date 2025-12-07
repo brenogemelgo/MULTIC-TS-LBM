@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
         // Phase field
+        Phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
         Phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
         Phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
 

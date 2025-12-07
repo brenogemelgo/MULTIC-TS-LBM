@@ -51,6 +51,7 @@ namespace LBM
     __global__ void setDroplet(LBMFields d);
     __global__ void setDistros(LBMFields d);
 
+    // Moments and core routines
     __global__ void computeMoments(LBMFields d);
     __global__ void streamCollide(LBMFields d);
 

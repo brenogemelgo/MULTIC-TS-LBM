@@ -170,11 +170,16 @@ namespace LBM
         const scalar_t ffy = d.ffy[idx3];
         const scalar_t ffz = d.ffz[idx3];
 
-#if defined(JET)
-        const scalar_t omco = static_cast<scalar_t>(1) - device::cubic_sponge(z);
-#elif defined(DROPLET)
-        constexpr scalar_t omco = relaxation::omco_ref();
-#endif
+        scalar_t omco;
+
+        if constexpr (FlowCase::jet_case())
+        {
+            omco = static_cast<scalar_t>(1) - device::cubic_sponge(z);
+        }
+        else
+        {
+            omco = relaxation::omco_ref();
+        }
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
         device::constexpr_for<0, VelocitySet::Q()>(
@@ -195,8 +200,17 @@ namespace LBM
                 label_t zz = z + static_cast<label_t>(VelocitySet::cz<Q>());
 
                 // Periodic wrapping
-                xx = device::wrapX(xx);
-                yy = device::wrapY(yy);
+                if constexpr (FlowCase::jet_case())
+                {
+                    xx = device::wrapX(xx);
+                    yy = device::wrapY(yy);
+                }
+                else if constexpr (FlowCase::droplet_case())
+                {
+                    xx = device::wrapX(xx);
+                    yy = device::wrapY(yy);
+                    zz = device::wrapZ(zz);
+                }
 
                 d.f[device::global4(xx, yy, zz, Q)] = to_pop(feq + omco * fneq + force);
             });
@@ -218,8 +232,17 @@ namespace LBM
                 label_t zz = z + static_cast<label_t>(Phase::VelocitySet::cz<Q>());
 
                 // Periodic wrapping
-                xx = device::wrapX(xx);
-                yy = device::wrapY(yy);
+                if constexpr (FlowCase::jet_case())
+                {
+                    xx = device::wrapX(xx);
+                    yy = device::wrapY(yy);
+                }
+                else if constexpr (FlowCase::droplet_case())
+                {
+                    xx = device::wrapX(xx);
+                    yy = device::wrapY(yy);
+                    zz = device::wrapZ(zz);
+                }
 
                 d.g[device::global4(xx, yy, zz, Q)] = geq + hi;
             });

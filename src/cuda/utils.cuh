@@ -64,20 +64,9 @@ SourceFiles
 
 namespace block
 {
-
-#if defined(JET)
-
     static constexpr unsigned nx = 32u;
     static constexpr unsigned ny = 4u;
     static constexpr unsigned nz = 4u;
-
-#elif defined(DROPLET)
-
-    static constexpr unsigned nx = 8u;
-    static constexpr unsigned ny = 8u;
-    static constexpr unsigned nz = 8u;
-
-#endif
 
     static constexpr int pad = 1;
     static constexpr int tile_nx = static_cast<int>(nx) + 2 * pad;
