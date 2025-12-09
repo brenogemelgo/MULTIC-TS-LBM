@@ -65,10 +65,10 @@ nvcc -O3 --restrict \
      -D${VELOCITY_SET} -D${FLOW_CASE} \
      -DENABLE_FP16=1 \
      -DBENCHMARK=0 \
-     -DD_TIMEAVG=1 \
-     -DD_REYNOLDS_MOMENTS=1 \
-     -DD_INSTANTANEOUS=1 \
-     -DD_GRADIENTS=1 \
+     -DD_TIMEAVG=0 \
+     -DD_REYNOLDS_MOMENTS=0 \
+     -DD_INSTANTANEOUS=0 \
+     -DD_GRADIENTS=0 \
      -o "${EXECUTABLE}"
 
 echo "Compilation completed successfully: ${EXECUTABLE}"

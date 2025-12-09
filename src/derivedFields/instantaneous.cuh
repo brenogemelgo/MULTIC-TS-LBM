@@ -42,6 +42,9 @@ SourceFiles
 #ifndef INSTANTANEOUS_CUH
 #define INSTANTANEOUS_CUH
 
+#include "../cuda/utils.cuh"
+#include "functions/ioFields.cuh"
+
 #if D_INSTANTANEOUS
 
 namespace LBM
@@ -59,19 +62,15 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        // Load velocity
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
 
-        // Velocity magnitude
         const scalar_t umag2 = ux * ux + uy * uy + uz * uz;
         const scalar_t umag = sqrt(umag2);
 
-        // Mach number: Ma = |u| * a_s
         const scalar_t Ma = umag * VelocitySet::as2();
 
-        // Store
         d.umag[idx3] = umag;
         d.Ma[idx3] = Ma;
     }
@@ -96,14 +95,53 @@ namespace LBM
 
         const scalar_t umag2 = ux * ux + uy * uy + uz * uz;
 
-        // Kinetic energy k = 1/2 |u|^2
         const scalar_t k = static_cast<scalar_t>(0.5) * umag2;
 
-        // Dynamic pressure q = 1/2 rho |u|^2
         const scalar_t q = static_cast<scalar_t>(0.5) * rho * umag2;
 
         d.k[idx3] = k;
         d.q_dyn[idx3] = q;
+    }
+}
+
+namespace Derived
+{
+    namespace Instant
+    {
+
+        constexpr bool enabled =
+
+#if D_INSTANTANEOUS
+
+            true;
+
+#else
+
+            false;
+
+#endif
+
+        constexpr std::array<host::FieldConfig, 4> fields{{
+            {host::FieldID::Umag, "umag", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Mach, "Ma", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::K, "k", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Q_dyn, "q_dyn", host::FieldDumpShape::Grid3D, true},
+        }};
+
+        template <dim3 grid, dim3 block, size_t dynamic>
+        __host__ static inline void launch(
+            cudaStream_t queue,
+            LBMFields d) noexcept
+        {
+
+#if D_INSTANTANEOUS
+
+            LBM::computeKinematics<<<grid, block, dynamic, queue>>>(d);
+            LBM::computeEnergyFields<<<grid, block, dynamic, queue>>>(d);
+
+#endif
+        }
+
     }
 }
 

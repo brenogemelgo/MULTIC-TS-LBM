@@ -29,35 +29,91 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Kernel definitions for include in classes
+    Derived fields registry
 
 Namespace
-    LBM
+    Derived
 
 SourceFiles
-    LBMIncludes.cuh
+    derivedRegistry.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef LBMINCLUDES_CUH
-#define LBMINCLUDES_CUH
+#ifndef DERIVEDREGISTRY_CUH
+#define DERIVEDREGISTRY_CUH
 
-namespace LBM
+#include "derivedFields/timeAverage.cuh"
+#include "derivedFields/reynoldsMoments.cuh"
+#include "derivedFields/instantaneous.cuh"
+#include "derivedFields/gradients.cuh"
+
+namespace Derived
 {
 
-    // Initial conditions
-    __global__ void setFields(LBMFields d);
-    __global__ void setJet(LBMFields d);
-    __global__ void setDroplet(LBMFields d);
-    __global__ void setDistros(LBMFields d);
+    __host__ [[nodiscard]] static inline std::vector<host::FieldConfig> makeOutputFields()
+    {
+        std::vector<host::FieldConfig> fields;
+        fields.reserve(3 + 3 + 6 + 4 + 2); // rough upper bound
 
-    // Moments and core routines
-    __global__ void computeMoments(LBMFields d);
-    __global__ void streamCollide(LBMFields d);
+#if D_TIMEAVG
 
-    // Boundary conditions
-    __global__ void callInflow(LBMFields d, const label_t t);
-    __global__ void callOutflow(LBMFields d);
+        fields.insert(fields.end(), TimeAvg::fields.begin(), TimeAvg::fields.end());
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+        fields.insert(fields.end(), Reynolds::fields.begin(), Reynolds::fields.end());
+
+#endif
+
+#if D_INSTANTANEOUS
+
+        fields.insert(fields.end(), Instant::fields.begin(), Instant::fields.end());
+
+#endif
+
+#if D_GRADIENTS
+
+        fields.insert(fields.end(), Gradients::fields.begin(), Gradients::fields.end());
+
+#endif
+
+        return fields;
+    }
+
+    template <dim3 grid, dim3 block, size_t dynamic>
+    __host__ static inline void launchAllDerived(
+        cudaStream_t queue,
+        LBMFields d,
+        const label_t step) noexcept
+    {
+
+#if D_TIMEAVG
+
+        TimeAvg::launch<grid, block, dynamic>(queue, d, step);
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+        Reynolds::launch<grid, block, dynamic>(queue, d, step);
+
+#endif
+
+#if D_INSTANTANEOUS
+
+        Instant::launch<grid, block, dynamic>(queue, d);
+
+#endif
+
+#if D_GRADIENTS
+
+        Gradients::launch<grid, block, dynamic>(queue, d);
+
+#endif
+    }
+
 }
 
 #endif

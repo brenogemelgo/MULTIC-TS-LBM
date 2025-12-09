@@ -129,19 +129,6 @@ namespace device
             return 0;
         }
     }
-
-    template <const label_t Start, const label_t End, typename F>
-    __device__ inline constexpr void constexpr_for(F &&f) noexcept
-    {
-        if constexpr (Start < End)
-        {
-            f(integralConstant<label_t, Start>());
-            if constexpr (Start + 1 < End)
-            {
-                constexpr_for<Start + 1, End>(std::forward<F>(f));
-            }
-        }
-    }
 }
 
 #endif

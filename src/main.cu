@@ -44,10 +44,7 @@ SourceFiles
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
 #include "phaseField.cuh"
-#include "derivedFields/gradients.cuh"
-#include "derivedFields/instantaneous.cuh"
-#include "derivedFields/reynoldsMoments.cuh"
-#include "derivedFields/timeAverage.cuh"
+#include "derivedFields/registry.cuh"
 #include "lbm.cu"
 
 int main(int argc, char *argv[])
@@ -104,23 +101,21 @@ int main(int argc, char *argv[])
     std::vector<std::thread> vtk_threads;
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
-    // Fields to be saved
-    constexpr std::array<host::FieldConfig, 15> OUTPUT_FIELDS{
-        {{host::FieldID::Avg_phi, "avg_phi", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_uz, "avg_uz", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_umag, "avg_umag", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_uxux, "avg_uxux", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_uyuy, "avg_uyuy", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_uzuz, "avg_uzuz", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_uxuy, "avg_uxuy", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_uxuz, "avg_uxuz", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Avg_uyuz, "avg_uyuz", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Umag, "umag", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Mach, "Ma", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::K, "k", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Q_dyn, "q_dyn", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Vort, "vort", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Q_crit, "q_crit", host::FieldDumpShape::Grid3D, true}}};
+    // Base fields (always saved)
+    constexpr std::array<host::FieldConfig, 3> BASE_FIELDS{{
+        {host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
+        {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
+        {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true},
+    }};
+
+    // Derived fields from modules (possibly empty)
+    const auto DERIVED_FIELDS = Derived::makeOutputFields();
+
+    // Compose final list in a vector
+    std::vector<host::FieldConfig> OUTPUT_FIELDS;
+    OUTPUT_FIELDS.reserve(BASE_FIELDS.size() + DERIVED_FIELDS.size());
+    OUTPUT_FIELDS.insert(OUTPUT_FIELDS.end(), BASE_FIELDS.begin(), BASE_FIELDS.end());
+    OUTPUT_FIELDS.insert(OUTPUT_FIELDS.end(), DERIVED_FIELDS.begin(), DERIVED_FIELDS.end());
 
 #endif
 
@@ -144,30 +139,9 @@ int main(int argc, char *argv[])
         // Flow case specific boundary conditions
         LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
 
-#if D_TIMEAVG
-
-        LBM::timeAverage<<<grid3D, block3D, dynamic, queue>>>(fields, STEP + 1);
-
-#endif
-
-#if D_REYNOLDS_MOMENTS
-
-        LBM::reynoldsMomentsAverage<<<grid3D, block3D, dynamic, queue>>>(fields, STEP + 1);
-
-#endif
-
-#if D_INSTANTANEOUS
-
-        LBM::computeKinematics<<<grid3D, block3D, dynamic, queue>>>(fields);
-        LBM::computeEnergyFields<<<grid3D, block3D, dynamic, queue>>>(fields);
-
-#endif
-
-#if D_GRADIENTS
-
-        LBM::computeVorticity<<<grid3D, block3D, dynamic, queue>>>(fields);
-        LBM::computeQCriterion<<<grid3D, block3D, dynamic, queue>>>(fields);
-
+#if D_TIMEAVG || D_REYNOLDS_MOMENTS || D_INSTANTANEOUS || D_GRADIENTS
+        // Derived fields (time-avg, Reynolds, instantaneous, gradients)
+        Derived::launchAllDerived<grid3D, block3D, dynamic>(queue, fields, STEP);
 #endif
 
 #if !BENCHMARK

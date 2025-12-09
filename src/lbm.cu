@@ -42,7 +42,7 @@ SourceFiles
 #ifndef LBM_CUH
 #define LBM_CUH
 
-#include "LBMIncludes.cuh"
+#include "functions/LBMIncludes.cuh"
 
 namespace LBM
 {

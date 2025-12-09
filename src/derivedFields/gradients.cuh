@@ -42,36 +42,48 @@ SourceFiles
 #ifndef GRADIENTS_CUH
 #define GRADIENTS_CUH
 
+#include "../cuda/utils.cuh"
+#include "functions/ioFields.cuh"
+
 #if D_GRADIENTS
 
 namespace LBM
 {
-    // ============================================================
-    // Utility: safe neighbor fetch using simple clamping
-    // ============================================================
-    __device__ inline scalar_t fetch(const scalar_t *f, int x, int y, int z)
+    __device__ [[nodiscard]] static inline scalar_t fetch(
+        const scalar_t *f,
+        label_t x,
+        label_t y,
+        label_t z) noexcept
     {
-        x = x < 0 ? 0 : (x >= mesh::nx ? mesh::nx - 1 : x);
-        y = y < 0 ? 0 : (y >= mesh::ny ? mesh::ny - 1 : y);
-        z = z < 0 ? 0 : (z >= mesh::nz ? mesh::nz - 1 : z);
+        if (x >= mesh::nx)
+        {
+            x = mesh::nx - 1;
+        }
+        if (y >= mesh::ny)
+        {
+            y = mesh::ny - 1;
+        }
+        if (z >= mesh::nz)
+        {
+            z = mesh::nz - 1;
+        }
+
         return f[device::global3(x, y, z)];
     }
 
-    // ============================================================
-    // 1. VORTICITY  |ω| = sqrt[(∂w/∂y - ∂v/∂z)^2 + ... ]
-    // ============================================================
     __global__ void computeVorticity(LBMFields d)
     {
-        const int x = threadIdx.x + blockIdx.x * blockDim.x;
-        const int y = threadIdx.y + blockIdx.y * blockDim.y;
-        const int z = threadIdx.z + blockIdx.z * blockDim.z;
+        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
+        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
+        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
         if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
+        {
             return;
+        }
 
-        const label_t idx = device::global3(x, y, z);
+        const label_t idx3 = device::global3(x, y, z);
 
-        // Load neighbors
         const scalar_t ux_xp = fetch(d.ux, x + 1, y, z);
         const scalar_t ux_xm = fetch(d.ux, x - 1, y, z);
         const scalar_t ux_yp = fetch(d.ux, x, y + 1, z);
@@ -93,7 +105,6 @@ namespace LBM
         const scalar_t uz_zp = fetch(d.uz, x, y, z + 1);
         const scalar_t uz_zm = fetch(d.uz, x, y, z - 1);
 
-        // Partial derivatives
         const scalar_t dux_dy = (ux_yp - ux_ym) * 0.5;
         const scalar_t dux_dz = (ux_zp - ux_zm) * 0.5;
 
@@ -103,32 +114,28 @@ namespace LBM
         const scalar_t duz_dx = (uz_xp - uz_xm) * 0.5;
         const scalar_t duz_dy = (uz_yp - uz_ym) * 0.5;
 
-        // Vorticity vector components
         const scalar_t wx = duz_dy - duy_dz;
         const scalar_t wy = dux_dz - duz_dx;
         const scalar_t wz = duy_dx - dux_dy;
 
-        // Magnitude
         const scalar_t vort = sqrt(wx * wx + wy * wy + wz * wz);
 
-        d.vort[idx] = vort;
+        d.vort[idx3] = vort;
     }
 
-    // ============================================================
-    // 2. Q-CRITERION: Q = 1/2 (||Ω||² - ||S||²)
-    // ============================================================
     __global__ void computeQCriterion(LBMFields d)
     {
-        const int x = threadIdx.x + blockIdx.x * blockDim.x;
-        const int y = threadIdx.y + blockIdx.y * blockDim.y;
-        const int z = threadIdx.z + blockIdx.z * blockDim.z;
+        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
+        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
+        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
         if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
+        {
             return;
+        }
 
-        const label_t idx = device::global3(x, y, z);
+        const label_t idx3 = device::global3(x, y, z);
 
-        // Neighbor velocity samples
         const scalar_t ux_xp = fetch(d.ux, x + 1, y, z);
         const scalar_t ux_xm = fetch(d.ux, x - 1, y, z);
         const scalar_t ux_yp = fetch(d.ux, x, y + 1, z);
@@ -150,7 +157,6 @@ namespace LBM
         const scalar_t uz_zp = fetch(d.uz, x, y, z + 1);
         const scalar_t uz_zm = fetch(d.uz, x, y, z - 1);
 
-        // Velocity gradients (central diff)
         const scalar_t dux_dx = (ux_xp - ux_xm) * 0.5;
         const scalar_t dux_dy = (ux_yp - ux_ym) * 0.5;
         const scalar_t dux_dz = (ux_zp - ux_zm) * 0.5;
@@ -163,7 +169,6 @@ namespace LBM
         const scalar_t duz_dy = (uz_yp - uz_ym) * 0.5;
         const scalar_t duz_dz = (uz_zp - uz_zm) * 0.5;
 
-        // Strain-rate tensor S_ij
         const scalar_t Sxx = dux_dx;
         const scalar_t Syy = duy_dy;
         const scalar_t Szz = duz_dz;
@@ -172,23 +177,52 @@ namespace LBM
         const scalar_t Sxz = static_cast<scalar_t>(0.5) * (dux_dz + duz_dx);
         const scalar_t Syz = static_cast<scalar_t>(0.5) * (duy_dz + duz_dy);
 
-        // Rotation tensor Ω_ij
         const scalar_t Oxy = static_cast<scalar_t>(0.5) * (dux_dy - duy_dx);
         const scalar_t Oxz = static_cast<scalar_t>(0.5) * (dux_dz - duz_dx);
         const scalar_t Oyz = static_cast<scalar_t>(0.5) * (duy_dz - duz_dy);
 
-        // Norms
         const scalar_t S2 = Sxx * Sxx + Syy * Syy + Szz * Szz + static_cast<scalar_t>(2.0) * (Sxy * Sxy + Sxz * Sxz + Syz * Syz);
 
         const scalar_t O2 = static_cast<scalar_t>(2.0) * (Oxy * Oxy + Oxz * Oxz + Oyz * Oyz);
 
-        // Q = 1/2 (||Ω||^2 − ||S||^2)
         const scalar_t Q = static_cast<scalar_t>(0.5) * (O2 - S2);
 
-        d.q_crit[idx] = Q;
+        d.q_crit[idx3] = Q;
     }
 }
 
 #endif
+
+namespace Derived
+{
+    namespace Gradients
+    {
+
+        constexpr bool enabled =
+#if D_GRADIENTS
+            true;
+#else
+            false;
+#endif
+
+        constexpr std::array<host::FieldConfig, 2> fields{{
+            {host::FieldID::Vort, "vort", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Q_crit, "q_crit", host::FieldDumpShape::Grid3D, true},
+        }};
+
+        template <dim3 grid, dim3 block, size_t dynamic>
+        __host__ static inline void launch(
+            cudaStream_t queue,
+            LBMFields d) noexcept
+        {
+
+#if D_GRADIENTS
+            LBM::computeVorticity<<<grid, block, dynamic, queue>>>(d);
+            LBM::computeQCriterion<<<grid, block, dynamic, queue>>>(d);
+#endif
+        }
+
+    }
+}
 
 #endif

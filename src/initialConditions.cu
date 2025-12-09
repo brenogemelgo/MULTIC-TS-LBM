@@ -42,7 +42,7 @@ SourceFiles
 #ifndef INITIALCONDITIONS_CUH
 #define INITIALCONDITIONS_CUH
 
-#include "LBMIncludes.cuh"
+#include "functions/LBMIncludes.cuh"
 
 namespace LBM
 {

@@ -42,6 +42,9 @@ SourceFiles
 #ifndef REYNOLDSMOMENTS_CUH
 #define REYNOLDSMOMENTS_CUH
 
+#include "../cuda/utils.cuh"
+#include "functions/ioFields.cuh"
+
 #if D_REYNOLDS_MOMENTS
 
 namespace LBM
@@ -61,16 +64,10 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        // ============================================================
-        // Load instantaneous velocities
-        // ============================================================
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
 
-        // ============================================================
-        // Compute instantaneous products
-        // ============================================================
         const scalar_t uxux = ux * ux;
         const scalar_t uyuy = uy * uy;
         const scalar_t uzuz = uz * uz;
@@ -79,17 +76,11 @@ namespace LBM
         const scalar_t uxuz = ux * uz;
         const scalar_t uyuz = uy * uz;
 
-        // ============================================================
-        // Running-average update lambda
-        // ============================================================
         auto update = [t] __device__(scalar_t oldv, scalar_t instv)
         {
             return oldv + (instv - oldv) / static_cast<scalar_t>(t);
         };
 
-        // ============================================================
-        // Write updated Reynolds stresses
-        // ============================================================
         d.avg_uxux[idx3] = update(d.avg_uxux[idx3], uxux);
         d.avg_uyuy[idx3] = update(d.avg_uyuy[idx3], uyuy);
         d.avg_uzuz[idx3] = update(d.avg_uzuz[idx3], uzuz);
@@ -97,6 +88,49 @@ namespace LBM
         d.avg_uxuy[idx3] = update(d.avg_uxuy[idx3], uxuy);
         d.avg_uxuz[idx3] = update(d.avg_uxuz[idx3], uxuz);
         d.avg_uyuz[idx3] = update(d.avg_uyuz[idx3], uyuz);
+    }
+}
+
+namespace Derived
+{
+    namespace Reynolds
+    {
+
+        constexpr bool enabled =
+
+#if D_REYNOLDS_MOMENTS
+
+            true;
+
+#else
+
+            false;
+
+#endif
+
+        constexpr std::array<host::FieldConfig, 6> fields{{
+            {host::FieldID::Avg_uxux, "avg_uxux", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_uyuy, "avg_uyuy", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_uzuz, "avg_uzuz", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_uxuy, "avg_uxuy", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_uxuz, "avg_uxuz", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_uyuz, "avg_uyuz", host::FieldDumpShape::Grid3D, true},
+        }};
+
+        template <dim3 grid, dim3 block, size_t dynamic>
+        __host__ static inline void launch(
+            cudaStream_t queue,
+            LBMFields d,
+            const label_t t) noexcept
+        {
+
+#if D_REYNOLDS_MOMENTS
+
+            LBM::reynoldsMomentsAverage<<<grid, block, dynamic, queue>>>(d, t + 1);
+
+#endif
+        }
+
     }
 }
 

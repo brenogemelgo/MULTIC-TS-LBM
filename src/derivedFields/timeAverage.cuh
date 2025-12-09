@@ -42,6 +42,9 @@ SourceFiles
 #ifndef TIMEAVERAGE_CUH
 #define TIMEAVERAGE_CUH
 
+#include "../cuda/utils.cuh"
+#include "functions/ioFields.cuh"
+
 #if D_TIMEAVG
 
 namespace LBM
@@ -76,6 +79,46 @@ namespace LBM
         d.avg_phi[idx3] = update(d.avg_phi[idx3], phi);
         d.avg_uz[idx3] = update(d.avg_uz[idx3], uz);
         d.avg_umag[idx3] = update(d.avg_umag[idx3], umag);
+    }
+}
+
+namespace Derived
+{
+    namespace TimeAvg
+    {
+
+        constexpr bool enabled =
+
+#if D_TIMEAVG
+
+            true;
+
+#else
+
+            false;
+
+#endif
+
+        constexpr std::array<host::FieldConfig, 3> fields{{
+            {host::FieldID::Avg_phi, "avg_phi", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_uz, "avg_uz", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_umag, "avg_umag", host::FieldDumpShape::Grid3D, true},
+        }};
+
+        template <dim3 grid, dim3 block, size_t dynamic>
+        __host__ static inline void launch(
+            cudaStream_t queue,
+            LBMFields d,
+            const label_t t) noexcept
+        {
+
+#if D_TIMEAVG
+
+            LBM::timeAverage<<<grid, block, dynamic, queue>>>(d, t + 1);
+
+#endif
+        }
+
     }
 }
 

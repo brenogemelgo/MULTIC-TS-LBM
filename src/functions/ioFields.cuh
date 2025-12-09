@@ -67,41 +67,21 @@ namespace host
         Ffx,
         Ffy,
         Ffz,
-
-#if D_TIMEAVG
-
         Avg_phi,
         Avg_uz,
         Avg_umag,
-
-#endif
-
-#if D_REYNOLDS_MOMENTS
-
         Avg_uxux,
         Avg_uyuy,
         Avg_uzuz,
         Avg_uxuy,
         Avg_uxuz,
         Avg_uyuz,
-
-#endif
-
-#if D_INSTANTANEOUS
-
         Umag,
         Mach,
         K,
         Q_dyn,
-
-#endif
-
-#if D_GRADIENTS
-
         Vort,
         Q_crit
-
-#endif
     };
 
     enum class FieldDumpShape : std::uint8_t
@@ -214,9 +194,9 @@ namespace host
         }
     }
 
-    template <std::size_t N>
+    template <typename Container>
     __host__ static inline void saveConfiguredFields(
-        const std::array<FieldConfig, N> &fieldsCfg,
+        const Container &fieldsCfg,
         const std::string &SIM_DIR,
         const label_t STEP)
     {

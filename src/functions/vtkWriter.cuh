@@ -80,9 +80,9 @@ namespace host
         };
     }
 
-    template <std::size_t N>
+    template <typename Container>
     __host__ static inline void writeStructuredGrid(
-        const std::array<FieldConfig, N> &fieldsCfg,
+        const Container &fieldsCfg,
         const std::string &SIM_DIR,
         const std::string &SIM_ID,
         const label_t STEP)
@@ -101,7 +101,7 @@ namespace host
         const std::filesystem::path vtsPath = std::filesystem::path(SIM_DIR) / vtsFileName;
 
         std::vector<detail::AppendedArray> arrays;
-        arrays.reserve(N + 1);
+        arrays.reserve(fieldsCfg.size() + 1); // N -> fieldsCfg.size()
 
         uint64_t currentOffset = 0;
         constexpr uint64_t headerSize = sizeof(std::uint32_t);
@@ -118,21 +118,26 @@ namespace host
                     continue;
                 }
 
-                const std::filesystem::path binPath = std::filesystem::path(SIM_DIR) / (std::string(cfg.name) + stepSuffix + ".bin");
+                const std::filesystem::path binPath =
+                    std::filesystem::path(SIM_DIR) / (std::string(cfg.name) + stepSuffix + ".bin");
 
                 std::error_code ec_fs;
-                const uint64_t fs = static_cast<uint64_t>(std::filesystem::file_size(binPath, ec_fs));
+                const uint64_t fs =
+                    static_cast<uint64_t>(std::filesystem::file_size(binPath, ec_fs));
                 if (ec_fs)
                 {
-                    std::cerr << "VTS writer: could not get size for " << binPath.string() << " (" << ec_fs.message() << "), skipping variable " << cfg.name << ".\n";
-
+                    std::cerr << "VTS writer: could not get size for "
+                              << binPath.string() << " (" << ec_fs.message()
+                              << "), skipping variable " << cfg.name << ".\n";
                     continue;
                 }
 
                 if (fs != cellBytes)
                 {
-                    std::cerr << "VTS writer: file " << binPath.string() << " has size " << fs << " bytes, expected " << cellBytes << " for full 3D field. " << "Skipping variable " << cfg.name << ".\n";
-
+                    std::cerr << "VTS writer: file " << binPath.string()
+                              << " has size " << fs << " bytes, expected "
+                              << cellBytes << " for full 3D field. "
+                              << "Skipping variable " << cfg.name << ".\n";
                     continue;
                 }
 
@@ -150,7 +155,8 @@ namespace host
 
             if (!hasFieldArrays)
             {
-                std::cerr << "VTS writer: no valid 3D fields to write for step " << STEP << ", aborting VTS.\n";
+                std::cerr << "VTS writer: no valid 3D fields to write for step "
+                          << STEP << ", aborting VTS.\n";
                 return;
             }
 
@@ -169,7 +175,8 @@ namespace host
             std::ofstream vts(vtsPath, std::ios::binary | std::ios::trunc);
             if (!vts)
             {
-                std::cerr << "Error opening VTS file " << vtsPath.string() << " for writing.\n";
+                std::cerr << "Error opening VTS file "
+                          << vtsPath.string() << " for writing.\n";
                 return;
             }
 
@@ -224,17 +231,20 @@ namespace host
                     std::ifstream in(arr.path, std::ios::binary);
                     if (!in)
                     {
-                        std::cerr << "Error opening binary field file " << arr.path.string() << " when writing VTS. Writing zeros instead.\n";
+                        std::cerr << "Error opening binary field file "
+                                  << arr.path.string()
+                                  << " when writing VTS. Writing zeros instead.\n";
                         std::vector<char> zeros(arr.nbytes, 0);
-                        vts.write(zeros.data(), static_cast<std::streamsize>(zeros.size()));
-
+                        vts.write(zeros.data(),
+                                  static_cast<std::streamsize>(zeros.size()));
                         continue;
                     }
 
                     std::vector<char> buffer(1 << 20);
                     while (in)
                     {
-                        in.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+                        in.read(buffer.data(),
+                                static_cast<std::streamsize>(buffer.size()));
                         const std::streamsize got = in.gcount();
                         if (got > 0)
                         {

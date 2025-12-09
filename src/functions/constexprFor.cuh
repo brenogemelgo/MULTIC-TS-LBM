@@ -29,78 +29,15 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Structs used in the code
+    Compile-time device loop unrolling implementation
 
 SourceFiles
-    structs.cuh
+    constexprFor.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef STRUCTS_CUH
-#define STRUCTS_CUH
-
-struct LBMFields
-{
-    scalar_t *rho;
-    scalar_t *ux;
-    scalar_t *uy;
-    scalar_t *uz;
-    scalar_t *pxx;
-    scalar_t *pyy;
-    scalar_t *pzz;
-    scalar_t *pxy;
-    scalar_t *pxz;
-    scalar_t *pyz;
-
-    scalar_t *phi;
-    scalar_t *normx;
-    scalar_t *normy;
-    scalar_t *normz;
-    scalar_t *ind;
-    scalar_t *ffx;
-    scalar_t *ffy;
-    scalar_t *ffz;
-
-    pop_t *f;
-    scalar_t *g;
-
-#if D_TIMEAVG
-
-    scalar_t *avg_phi;  // Phi time average
-    scalar_t *avg_uz;   // Axial velocity time average
-    scalar_t *avg_umag; // Velocity magnitude time average
-
-#endif
-
-#if D_REYNOLDS_MOMENTS
-
-    scalar_t *avg_uxux; // xx
-    scalar_t *avg_uyuy; // yy
-    scalar_t *avg_uzuz; // zz
-    scalar_t *avg_uxuy; // xy
-    scalar_t *avg_uxuz; // xz
-    scalar_t *avg_uyuz; // yz
-
-#endif
-
-#if D_INSTANTANEOUS
-
-    scalar_t *umag;  // Velocity magnitude
-    scalar_t *Ma;    // Mach number
-    scalar_t *k;     // Kinetic energy
-    scalar_t *q_dyn; // Dynamic pressure
-
-#endif
-
-#if D_GRADIENTS
-
-    scalar_t *vort;   // Vorticity
-    scalar_t *q_crit; // Q-criterion
-
-#endif
-};
-
-LBMFields fields{};
+#ifndef CONSTEXPRFOR_CUH
+#define CONSTEXPRFOR_CUH
 
 template <typename T, T v>
 struct integralConstant
@@ -119,5 +56,21 @@ struct integralConstant
         return value;
     }
 };
+
+namespace device
+{
+    template <const label_t Start, const label_t End, typename F>
+    __device__ inline constexpr void constexpr_for(F &&f) noexcept
+    {
+        if constexpr (Start < End)
+        {
+            f(integralConstant<label_t, Start>());
+            if constexpr (Start + 1 < End)
+            {
+                constexpr_for<Start + 1, End>(std::forward<F>(f));
+            }
+        }
+    }
+}
 
 #endif
