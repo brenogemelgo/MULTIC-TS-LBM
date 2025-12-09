@@ -31,6 +31,9 @@ License
 Description
     Header file for the flow case classes
 
+Namespace
+    LBM
+
 SourceFiles
     flowCase.cuh
 

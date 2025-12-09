@@ -67,7 +67,41 @@ namespace host
         Ffx,
         Ffy,
         Ffz,
-        Avg
+
+#if D_TIMEAVG
+
+        Avg_phi,
+        Avg_uz,
+        Avg_umag,
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+        Avg_uxux,
+        Avg_uyuy,
+        Avg_uzuz,
+        Avg_uxuy,
+        Avg_uxuz,
+        Avg_uyuz,
+
+#endif
+
+#if D_INSTANTANEOUS
+
+        Umag,
+        Mach,
+        K,
+        Q_dyn,
+
+#endif
+
+#if D_GRADIENTS
+
+        Vort,
+        Q_crit
+
+#endif
     };
 
     enum class FieldDumpShape : std::uint8_t
@@ -124,12 +158,55 @@ namespace host
             return fields.ffy;
         case FieldID::Ffz:
             return fields.ffz;
-        case FieldID::Avg:
 
-#if AVERAGE_UZ
-            return fields.avg;
-#else
-            return nullptr;
+#if D_TIMEAVG
+
+        case FieldID::Avg_phi:
+            return fields.avg_phi;
+        case FieldID::Avg_uz:
+            return fields.avg_uz;
+        case FieldID::Avg_umag:
+            return fields.avg_umag;
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+        case FieldID::Avg_uxux:
+            return fields.avg_uxux;
+        case FieldID::Avg_uyuy:
+            return fields.avg_uyuy;
+        case FieldID::Avg_uzuz:
+            return fields.avg_uzuz;
+        case FieldID::Avg_uxuy:
+            return fields.avg_uxuy;
+        case FieldID::Avg_uxuz:
+            return fields.avg_uxuz;
+        case FieldID::Avg_uyuz:
+            return fields.avg_uyuz;
+
+#endif
+
+#if D_INSTANTANEOUS
+
+        case FieldID::Umag:
+            return fields.umag;
+        case FieldID::Mach:
+            return fields.Ma;
+        case FieldID::K:
+            return fields.k;
+        case FieldID::Q_dyn:
+            return fields.q_dyn;
+
+#endif
+
+#if D_GRADIENTS
+
+        case FieldID::Vort:
+            return fields.vort;
+        case FieldID::Q_crit:
+            return fields.q_crit;
+
 #endif
 
         default:

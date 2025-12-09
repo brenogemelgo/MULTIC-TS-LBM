@@ -200,9 +200,38 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.f, F_DIST_SIZE));
         checkCudaErrors(cudaMalloc(&fields.g, G_DIST_SIZE));
 
-#if AVERAGE_UZ
+#if D_TIMEAVG
 
-        checkCudaErrors(cudaMalloc(&fields.avg, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_phi, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_uz, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_umag, SIZE));
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+        checkCudaErrors(cudaMalloc(&fields.avg_uxux, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_uyuy, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_uzuz, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_uxuy, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_uxuz, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_uyuz, SIZE));
+
+#endif
+
+#if D_INSTANTANEOUS
+
+        checkCudaErrors(cudaMalloc(&fields.umag, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.Ma, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.k, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.q_dyn, SIZE));
+
+#endif
+
+#if D_GRADIENTS
+
+        checkCudaErrors(cudaMalloc(&fields.vort, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.q_crit, SIZE));
 
 #endif
 
@@ -226,9 +255,38 @@ namespace host
         checkCudaErrors(cudaMemset(fields.f, 0, F_DIST_SIZE));
         checkCudaErrors(cudaMemset(fields.g, 0, G_DIST_SIZE));
 
-#if AVERAGE_UZ
+#if D_TIMEAVG
 
-        checkCudaErrors(cudaMemset(fields.avg, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_phi, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_uz, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_umag, 0, SIZE));
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+        checkCudaErrors(cudaMemset(fields.avg_uxux, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_uyuy, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_uzuz, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_uxuy, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_uxuz, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_uyuz, 0, SIZE));
+
+#endif
+
+#if D_INSTANTANEOUS
+
+        checkCudaErrors(cudaMemset(fields.umag, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.Ma, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.k, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.q_dyn, 0, SIZE));
+
+#endif
+
+#if D_GRADIENTS
+
+        checkCudaErrors(cudaMemset(fields.vort, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.q_crit, 0, SIZE));
 
 #endif
 

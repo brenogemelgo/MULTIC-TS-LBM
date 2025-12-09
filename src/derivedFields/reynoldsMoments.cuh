@@ -29,24 +29,24 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Time averaging kernels
+    Reynolds moments kernels
 
 Namespace
     LBM
 
 SourceFiles
-    timeAverage.cuh
+    reynoldsMoments.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TIMEAVERAGE_CUH
-#define TIMEAVERAGE_CUH
+#ifndef REYNOLDSMOMENTS_CUH
+#define REYNOLDSMOMENTS_CUH
 
-#if D_TIMEAVG
+#if D_REYNOLDS_MOMENTS
 
 namespace LBM
 {
-    __global__ void timeAverage(
+    __global__ void reynoldsMomentsAverage(
         LBMFields d,
         const label_t t)
     {
@@ -61,21 +61,42 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t phi = d.phi[idx3];
+        // ============================================================
+        // Load instantaneous velocities
+        // ============================================================
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
 
-        const scalar_t umag = sqrt(ux * ux + uy * uy + uz * uz);
+        // ============================================================
+        // Compute instantaneous products
+        // ============================================================
+        const scalar_t uxux = ux * ux;
+        const scalar_t uyuy = uy * uy;
+        const scalar_t uzuz = uz * uz;
 
-        auto update = [t] __device__(scalar_t old_val, scalar_t new_val)
+        const scalar_t uxuy = ux * uy;
+        const scalar_t uxuz = ux * uz;
+        const scalar_t uyuz = uy * uz;
+
+        // ============================================================
+        // Running-average update lambda
+        // ============================================================
+        auto update = [t] __device__(scalar_t oldv, scalar_t instv)
         {
-            return old_val + (new_val - old_val) / static_cast<scalar_t>(t);
+            return oldv + (instv - oldv) / static_cast<scalar_t>(t);
         };
 
-        d.avg_phi[idx3] = update(d.avg_phi[idx3], phi);
-        d.avg_uz[idx3] = update(d.avg_uz[idx3], uz);
-        d.avg_umag[idx3] = update(d.avg_umag[idx3], umag);
+        // ============================================================
+        // Write updated Reynolds stresses
+        // ============================================================
+        d.avg_uxux[idx3] = update(d.avg_uxux[idx3], uxux);
+        d.avg_uyuy[idx3] = update(d.avg_uyuy[idx3], uyuy);
+        d.avg_uzuz[idx3] = update(d.avg_uzuz[idx3], uzuz);
+
+        d.avg_uxuy[idx3] = update(d.avg_uxuy[idx3], uxuy);
+        d.avg_uxuz[idx3] = update(d.avg_uxuz[idx3], uxuz);
+        d.avg_uyuz[idx3] = update(d.avg_uyuz[idx3], uyuz);
     }
 }
 

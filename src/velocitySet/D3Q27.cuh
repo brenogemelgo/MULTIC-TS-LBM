@@ -193,11 +193,11 @@ namespace LBM
                     (cz<Q>() * cz<Q>() * cz<Q>() - cz<Q>()) * (as2() * uz * pzz) +
                     as2() * ((cx<Q>() * cx<Q>() * cy<Q>() - cs2() * cy<Q>()) * (pxx * uy + static_cast<scalar_t>(2) * ux * pxy) +
                              (cx<Q>() * cx<Q>() * cz<Q>() - cs2() * cz<Q>()) * (pxx * uz + static_cast<scalar_t>(2) * ux * pxz) +
-                             (cx<Q>() * cy<Q>() * cy<Q>() - cs2() * cx<Q>()) * (pxy * uy + static_cast<scalar_t>(2) * ux * pyy) +
+                             (cx<Q>() * cy<Q>() * cy<Q>() - cs2() * cx<Q>()) * (pyy * ux + static_cast<scalar_t>(2) * uy * pxy) +
                              (cy<Q>() * cy<Q>() * cz<Q>() - cs2() * cz<Q>()) * (pyy * uz + static_cast<scalar_t>(2) * uy * pyz) +
-                             (cx<Q>() * cz<Q>() * cz<Q>() - cs2() * cx<Q>()) * (pxz * uz + static_cast<scalar_t>(2) * ux * pzz) +
-                             (cy<Q>() * cz<Q>() * cz<Q>() - cs2() * cy<Q>()) * (pyz * uz + static_cast<scalar_t>(2) * uy * pzz)) +
-                    static_cast<scalar_t>(6) * (cx<Q>() * cy<Q>() * cz<Q>()) * (ux * pyz + uy * pxz + uz * pxy));
+                             (cx<Q>() * cz<Q>() * cz<Q>() - cs2() * cx<Q>()) * (pzz * ux + static_cast<scalar_t>(2) * uz * pxz) +
+                             (cy<Q>() * cz<Q>() * cz<Q>() - cs2() * cy<Q>()) * (pzz * uy + static_cast<scalar_t>(2) * uz * pyz)) +
+                    static_cast<scalar_t>(6) * cx<Q>() * cy<Q>() * cz<Q>() * (ux * pyz + uy * pxz + uz * pxy));
         }
 
         template <label_t Q>

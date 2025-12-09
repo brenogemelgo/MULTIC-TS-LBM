@@ -29,26 +29,24 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Time averaging kernels
+    Instantaneous derived fields (no neighbors)
 
 Namespace
     LBM
 
 SourceFiles
-    timeAverage.cuh
+    instantaneous.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TIMEAVERAGE_CUH
-#define TIMEAVERAGE_CUH
+#ifndef INSTANTANEOUS_CUH
+#define INSTANTANEOUS_CUH
 
-#if D_TIMEAVG
+#if D_INSTANTANEOUS
 
 namespace LBM
 {
-    __global__ void timeAverage(
-        LBMFields d,
-        const label_t t)
+    __global__ void computeKinematics(LBMFields d)
     {
         const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -61,21 +59,51 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t phi = d.phi[idx3];
+        // Load velocity
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
 
-        const scalar_t umag = sqrt(ux * ux + uy * uy + uz * uz);
+        // Velocity magnitude
+        const scalar_t umag2 = ux * ux + uy * uy + uz * uz;
+        const scalar_t umag = sqrt(umag2);
 
-        auto update = [t] __device__(scalar_t old_val, scalar_t new_val)
+        // Mach number: Ma = |u| * a_s
+        const scalar_t Ma = umag * VelocitySet::as2();
+
+        // Store
+        d.umag[idx3] = umag;
+        d.Ma[idx3] = Ma;
+    }
+
+    __global__ void computeEnergyFields(LBMFields d)
+    {
+        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
+        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
+        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
+
+        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
         {
-            return old_val + (new_val - old_val) / static_cast<scalar_t>(t);
-        };
+            return;
+        }
 
-        d.avg_phi[idx3] = update(d.avg_phi[idx3], phi);
-        d.avg_uz[idx3] = update(d.avg_uz[idx3], uz);
-        d.avg_umag[idx3] = update(d.avg_umag[idx3], umag);
+        const label_t idx3 = device::global3(x, y, z);
+
+        const scalar_t ux = d.ux[idx3];
+        const scalar_t uy = d.uy[idx3];
+        const scalar_t uz = d.uz[idx3];
+        const scalar_t rho = d.rho[idx3];
+
+        const scalar_t umag2 = ux * ux + uy * uy + uz * uz;
+
+        // Kinetic energy k = 1/2 |u|^2
+        const scalar_t k = static_cast<scalar_t>(0.5) * umag2;
+
+        // Dynamic pressure q = 1/2 rho |u|^2
+        const scalar_t q = static_cast<scalar_t>(0.5) * rho * umag2;
+
+        d.k[idx3] = k;
+        d.q_dyn[idx3] = q;
     }
 }
 

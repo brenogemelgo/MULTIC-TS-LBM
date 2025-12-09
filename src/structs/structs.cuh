@@ -64,9 +64,38 @@ struct LBMFields
     pop_t *f;
     scalar_t *g;
 
-#if AVERAGE_UZ
+#if D_TIMEAVG
 
-    scalar_t *avg;
+    scalar_t *avg_phi;  // Phi time average
+    scalar_t *avg_uz;   // Axial velocity time average
+    scalar_t *avg_umag; // Velocity magnitude time average
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+    scalar_t *avg_uxux; // xx
+    scalar_t *avg_uyuy; // yy
+    scalar_t *avg_uzuz; // zz
+    scalar_t *avg_uxuy; // xy
+    scalar_t *avg_uxuz; // xz
+    scalar_t *avg_uyuz; // yz
+
+#endif
+
+#if D_INSTANTANEOUS
+
+    scalar_t *umag;  // Velocity magnitude
+    scalar_t *Ma;    // Mach number
+    scalar_t *k;     // Kinetic energy
+    scalar_t *q_dyn; // Dynamic pressure
+
+#endif
+
+#if D_GRADIENTS
+
+    scalar_t *vort;   // Vorticity
+    scalar_t *q_crit; // Q-criterion
 
 #endif
 };

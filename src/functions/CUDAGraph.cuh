@@ -29,56 +29,48 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Time averaging kernels
+    CUDA Graph implementation
 
 Namespace
-    LBM
+    graph
 
 SourceFiles
-    timeAverage.cuh
+    CUDAGraph.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TIMEAVERAGE_CUH
-#define TIMEAVERAGE_CUH
+#ifndef CUDAGRAPH_CUH
+#define CUDAGRAPH_CUH
 
-#if D_TIMEAVG
+#include "../phaseField.cuh"
 
-namespace LBM
+namespace graph
 {
-    __global__ void timeAverage(
-        LBMFields d,
-        const label_t t)
+    template <dim3 grid, dim3 block, size_t dynamic>
+    __host__ inline void captureGraph(
+        cudaGraph_t &graph,
+        cudaGraphExec_t &graphExec,
+        const LBMFields &fields,
+        const cudaStream_t queue)
     {
-        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
-        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
-        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
+        checkCudaErrorsOutline(cudaStreamBeginCapture(queue, cudaStreamCaptureModeGlobal));
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
-        {
-            return;
-        }
+        // Phase field
+        Phase::computePhase<<<grid, block, dynamic, queue>>>(fields);
+        Phase::computeNormals<<<grid, block, dynamic, queue>>>(fields);
+        Phase::computeForces<<<grid, block, dynamic, queue>>>(fields);
 
-        const label_t idx3 = device::global3(x, y, z);
+        // Hydrodynamics
+        LBM::computeMoments<<<grid, block, dynamic, queue>>>(fields);
+        LBM::streamCollide<<<grid, block, dynamic, queue>>>(fields);
 
-        const scalar_t phi = d.phi[idx3];
-        const scalar_t ux = d.ux[idx3];
-        const scalar_t uy = d.uy[idx3];
-        const scalar_t uz = d.uz[idx3];
+        // NOTE: We intentionally DO NOT include FlowCase::boundaryConditions
+        // or timeAverage here, because they depend on STEP and/or other
+        // time-varying parameters. We launch them after the graph each step.
 
-        const scalar_t umag = sqrt(ux * ux + uy * uy + uz * uz);
-
-        auto update = [t] __device__(scalar_t old_val, scalar_t new_val)
-        {
-            return old_val + (new_val - old_val) / static_cast<scalar_t>(t);
-        };
-
-        d.avg_phi[idx3] = update(d.avg_phi[idx3], phi);
-        d.avg_uz[idx3] = update(d.avg_uz[idx3], uz);
-        d.avg_umag[idx3] = update(d.avg_umag[idx3], umag);
+        checkCudaErrorsOutline(cudaStreamEndCapture(queue, &graph));
+        checkCudaErrorsOutline(cudaGraphInstantiate(&graphExec, graph, nullptr, nullptr, 0));
     }
 }
-
-#endif
 
 #endif

@@ -31,6 +31,9 @@ License
 Description
     Jet velocity set class declaration
 
+Namespace
+    LBM
+
 SourceFiles
     jet.cuh
 
@@ -58,26 +61,22 @@ namespace LBM
             return true;
         }
 
+        template <dim3 grid, dim3 block, size_t dynamic>
         __host__ static inline void initialConditions(
             const LBMFields &fields,
-            const dim3 grid3D,
-            const dim3 block3D,
-            const size_t dynamic,
             const cudaStream_t queue)
         {
-            LBM::setJet<<<grid3D, block3D, dynamic, queue>>>(fields);
+            setJet<<<grid, block, dynamic, queue>>>(fields);
         }
 
+        template <dim3 grid, dim3 block, size_t dynamic>
         __host__ static inline void boundaryConditions(
             const LBMFields &fields,
-            const dim3 gridZ,
-            const dim3 blockZ,
-            const size_t dynamic,
             const cudaStream_t queue,
             const label_t STEP)
         {
-            LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
-            LBM::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+            callInflow<<<grid, block, dynamic, queue>>>(fields, STEP);
+            callOutflow<<<grid, block, dynamic, queue>>>(fields);
         }
 
     private:

@@ -40,9 +40,13 @@ SourceFiles
 #include "functions/hostUtils.cuh"
 #include "functions/ioFields.cuh"
 #include "functions/vtkWriter.cuh"
+#include "functions/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
 #include "phaseField.cuh"
+#include "derivedFields/gradients.cuh"
+#include "derivedFields/instantaneous.cuh"
+#include "derivedFields/reynoldsMoments.cuh"
 #include "derivedFields/timeAverage.cuh"
 #include "lbm.cu"
 
@@ -85,7 +89,7 @@ int main(int argc, char *argv[])
 
     // Initial conditions
     LBM::setFields<<<grid3D, block3D, dynamic, queue>>>(fields);
-    LBM::FlowCase::initialConditions(fields, grid3D, block3D, dynamic, queue);
+    LBM::FlowCase::initialConditions<grid3D, block3D, dynamic>(fields, queue);
     LBM::setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // Make sure everything is initialized
@@ -101,15 +105,32 @@ int main(int argc, char *argv[])
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
     // Fields to be saved
-    constexpr std::array<host::FieldConfig, 3> OUTPUT_FIELDS{
-        {{host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
-         {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true}}};
+    constexpr std::array<host::FieldConfig, 15> OUTPUT_FIELDS{
+        {{host::FieldID::Avg_phi, "avg_phi", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_uz, "avg_uz", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_umag, "avg_umag", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_uxux, "avg_uxux", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_uyuy, "avg_uyuy", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_uzuz, "avg_uzuz", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_uxuy, "avg_uxuy", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_uxuz, "avg_uxuz", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Avg_uyuz, "avg_uyuz", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Umag, "umag", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Mach, "Ma", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::K, "k", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Q_dyn, "q_dyn", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Vort, "vort", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Q_crit, "q_crit", host::FieldDumpShape::Grid3D, true}}};
 
 #endif
 
-    // Warmup
+    // Warmup (optional)
     checkCudaErrorsOutline(cudaDeviceSynchronize());
+
+    // Build CUDA Graph
+    cudaGraph_t graph{};
+    cudaGraphExec_t graphExec{};
+    graph::captureGraph<grid3D, block3D, dynamic>(graph, graphExec, fields, queue);
 
     // Start clock
     const auto START_TIME = std::chrono::high_resolution_clock::now();
@@ -117,21 +138,35 @@ int main(int argc, char *argv[])
     // Time loop
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
-        // Phase field
-        Phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
-        Phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
-        Phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
-
-        // Hydrodynamics
-        LBM::computeMoments<<<grid3D, block3D, dynamic, queue>>>(fields);
-        LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
+        // Launch captured sequence
+        cudaGraphLaunch(graphExec, queue);
 
         // Flow case specific boundary conditions
-        LBM::FlowCase::boundaryConditions(fields, gridZ, blockZ, dynamic, queue, STEP);
+        LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
 
-#if AVERAGE_UZ
+#if D_TIMEAVG
 
         LBM::timeAverage<<<grid3D, block3D, dynamic, queue>>>(fields, STEP + 1);
+
+#endif
+
+#if D_REYNOLDS_MOMENTS
+
+        LBM::reynoldsMomentsAverage<<<grid3D, block3D, dynamic, queue>>>(fields, STEP + 1);
+
+#endif
+
+#if D_INSTANTANEOUS
+
+        LBM::computeKinematics<<<grid3D, block3D, dynamic, queue>>>(fields);
+        LBM::computeEnergyFields<<<grid3D, block3D, dynamic, queue>>>(fields);
+
+#endif
+
+#if D_GRADIENTS
+
+        LBM::computeVorticity<<<grid3D, block3D, dynamic, queue>>>(fields);
+        LBM::computeQCriterion<<<grid3D, block3D, dynamic, queue>>>(fields);
 
 #endif
 
@@ -174,10 +209,18 @@ int main(int argc, char *argv[])
 
 #endif
 
+    // Make sure everything is done on the GPU
     cudaStreamSynchronize(queue);
     const auto END_TIME = std::chrono::high_resolution_clock::now();
+
+    // Destroy CUDA Graph resources
+    checkCudaErrorsOutline(cudaGraphExecDestroy(graphExec));
+    checkCudaErrorsOutline(cudaGraphDestroy(graph));
+
+    // Destroy stream
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
 
+    // Free device memory
     cudaFree(fields.f);
     cudaFree(fields.g);
     cudaFree(fields.rho);
@@ -199,7 +242,7 @@ int main(int argc, char *argv[])
     cudaFree(fields.ffy);
     cudaFree(fields.ffz);
 
-#if AVERAGE_UZ
+#if DFIELDS
 
     cudaFree(fields.avg);
 

@@ -165,48 +165,6 @@ namespace LBM
         }
 
     private:
-        template <label_t Q>
-        __device__ static inline constexpr scalar_t computeFneq(
-            const LBMFields &d,
-            const label_t fluidNode) noexcept
-        {
-            constexpr scalar_t w = VelocitySet::w<Q>();
-            constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::cx<Q>());
-            constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::cy<Q>());
-            constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::cz<Q>());
-
-            if constexpr (VelocitySet::Q() == 19)
-            {
-                return (w * static_cast<scalar_t>(4.5)) *
-                       ((cx * cx - cs2()) * d.pxx[fluidNode] +
-                        (cy * cy - cs2()) * d.pyy[fluidNode] +
-                        (cz * cz - cs2()) * d.pzz[fluidNode] +
-                        static_cast<scalar_t>(2) * (cx * cy * d.pxy[fluidNode] +
-                                                    cx * cz * d.pxz[fluidNode] +
-                                                    cy * cz * d.pyz[fluidNode]));
-            }
-            else if constexpr (VelocitySet::Q() == 27)
-            {
-                return (w * static_cast<scalar_t>(4.5)) *
-                       ((cx * cx - cs2()) * d.pxx[fluidNode] +
-                        (cy * cy - cs2()) * d.pyy[fluidNode] +
-                        (cz * cz - cs2()) * d.pzz[fluidNode] +
-                        static_cast<scalar_t>(2) * (cx * cy * d.pxy[fluidNode] +
-                                                    cx * cz * d.pxz[fluidNode] +
-                                                    cy * cz * d.pyz[fluidNode]) +
-                        (cx * cx * cx - cx) * (VelocitySet::as2() * d.ux[fluidNode] * d.pxx[fluidNode]) +
-                        (cy * cy * cy - cy) * (VelocitySet::as2() * d.uy[fluidNode] * d.pyy[fluidNode]) +
-                        (cz * cz * cz - cz) * (VelocitySet::as2() * d.uz[fluidNode] * d.pzz[fluidNode]) +
-                        VelocitySet::as2() * ((cx * cx * cy - cs2() * cy) * (d.pxx[fluidNode] * d.uy[fluidNode] + static_cast<scalar_t>(2) * d.ux[fluidNode] * d.pxy[fluidNode]) +
-                                              (cx * cx * cz - cs2() * cz) * (d.pxx[fluidNode] * d.uz[fluidNode] + static_cast<scalar_t>(2) * d.ux[fluidNode] * d.pxz[fluidNode]) +
-                                              (cx * cy * cy - cs2() * cx) * (d.pxy[fluidNode] * d.uy[fluidNode] + static_cast<scalar_t>(2) * d.ux[fluidNode] * d.pyy[fluidNode]) +
-                                              (cy * cy * cz - cs2() * cz) * (d.pyy[fluidNode] * d.uz[fluidNode] + static_cast<scalar_t>(2) * d.uy[fluidNode] * d.pyz[fluidNode]) +
-                                              (cx * cz * cz - cs2() * cx) * (d.pxz[fluidNode] * d.uz[fluidNode] + static_cast<scalar_t>(2) * d.ux[fluidNode] * d.pzz[fluidNode]) +
-                                              (cy * cz * cz - cs2() * cy) * (d.pyz[fluidNode] * d.uz[fluidNode] + static_cast<scalar_t>(2) * d.uy[fluidNode] * d.pzz[fluidNode])) +
-                        static_cast<scalar_t>(6) * (cx * cy * cz) * (d.ux[fluidNode] * d.pyz[fluidNode] + d.uy[fluidNode] * d.pxz[fluidNode] + d.uz[fluidNode] * d.pxy[fluidNode]));
-            }
-        }
-
         __device__ [[nodiscard]] static inline constexpr uint32_t hash32(label_t x) noexcept
         {
             x ^= x >> 16;
