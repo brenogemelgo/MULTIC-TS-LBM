@@ -77,7 +77,6 @@ namespace host
         Avg_uxuz,
         Avg_uyuz,
         Umag,
-        Mach,
         K,
         Q_dyn,
         Vort,
@@ -171,8 +170,6 @@ namespace host
 
         case FieldID::Umag:
             return fields.umag;
-        case FieldID::Mach:
-            return fields.Ma;
         case FieldID::K:
             return fields.k;
         case FieldID::Q_dyn:

@@ -73,7 +73,7 @@ namespace LBM
             const label_t idx3_bnd = device::global3(x, y, 0);
             const label_t idx3_zp1 = device::global3(x, y, 1);
 
-            const scalar_t z = gaussian_noise<10>(x, y, t);
+            const scalar_t z = gaussian_noise<1>(x, y, t);
             const scalar_t uz = physics::u_ref + static_cast<scalar_t>(0.004) * z;
 
             d.rho[idx3_bnd] = static_cast<scalar_t>(1);

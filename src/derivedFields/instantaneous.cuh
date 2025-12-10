@@ -69,10 +69,7 @@ namespace LBM
         const scalar_t umag2 = ux * ux + uy * uy + uz * uz;
         const scalar_t umag = sqrt(umag2);
 
-        const scalar_t Ma = umag * VelocitySet::as2();
-
         d.umag[idx3] = umag;
-        d.Ma[idx3] = Ma;
     }
 
     __global__ void computeEnergyFields(LBMFields d)
@@ -123,7 +120,6 @@ namespace Derived
 
         constexpr std::array<host::FieldConfig, 4> fields{{
             {host::FieldID::Umag, "umag", host::FieldDumpShape::Grid3D, true},
-            {host::FieldID::Mach, "Ma", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::K, "k", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::Q_dyn, "q_dyn", host::FieldDumpShape::Grid3D, true},
         }};

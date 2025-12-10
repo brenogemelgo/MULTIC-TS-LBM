@@ -67,8 +67,8 @@ namespace Phase
     using VelocitySet = LBM::d3q7;
 }
 
-// #define RUN_MODE
-#define SAMPLE_MODE
+#define RUN_MODE
+// #define SAMPLE_MODE
 // #define PROFILE_MODE
 
 #if defined(RUN_MODE)

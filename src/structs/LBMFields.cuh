@@ -86,7 +86,6 @@ struct LBMFields
 #if D_INSTANTANEOUS
 
     scalar_t *umag;  // Velocity magnitude
-    scalar_t *Ma;    // Mach number
     scalar_t *k;     // Kinetic energy
     scalar_t *q_dyn; // Dynamic pressure
 

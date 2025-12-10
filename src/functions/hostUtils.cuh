@@ -222,7 +222,6 @@ namespace host
 #if D_INSTANTANEOUS
 
         checkCudaErrors(cudaMalloc(&fields.umag, SIZE));
-        checkCudaErrors(cudaMalloc(&fields.Ma, SIZE));
         checkCudaErrors(cudaMalloc(&fields.k, SIZE));
         checkCudaErrors(cudaMalloc(&fields.q_dyn, SIZE));
 
@@ -277,7 +276,6 @@ namespace host
 #if D_INSTANTANEOUS
 
         checkCudaErrors(cudaMemset(fields.umag, 0, SIZE));
-        checkCudaErrors(cudaMemset(fields.Ma, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.k, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.q_dyn, 0, SIZE));
 
