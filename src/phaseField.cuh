@@ -69,6 +69,7 @@ namespace Phase
 
         d.phi[idx3] = phi;
     }
+
     __global__ void computeNormals(LBMFields d)
     {
         const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
@@ -85,9 +86,45 @@ namespace Phase
 
         const label_t idx3 = device::global3(x, y, z);
 
-        scalar_t gx = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x + 1, y, z)] - d.phi[device::global3(x - 1, y, z)]);
-        scalar_t gy = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x, y + 1, z)] - d.phi[device::global3(x, y - 1, z)]);
-        scalar_t gz = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x, y, z + 1)] - d.phi[device::global3(x, y, z - 1)]);
+        scalar_t sgx = LBM::VelocitySet::w_1() * (d.phi[device::global3(x + 1, y, z)] - d.phi[device::global3(x - 1, y, z)]) +
+                       LBM::VelocitySet::w_2() * (d.phi[device::global3(x + 1, y + 1, z)] - d.phi[device::global3(x - 1, y - 1, z)] +
+                                                  d.phi[device::global3(x + 1, y, z + 1)] - d.phi[device::global3(x - 1, y, z - 1)] +
+                                                  d.phi[device::global3(x + 1, y - 1, z)] - d.phi[device::global3(x - 1, y + 1, z)] +
+                                                  d.phi[device::global3(x + 1, y, z - 1)] - d.phi[device::global3(x - 1, y, z + 1)]);
+
+        scalar_t sgy = LBM::VelocitySet::w_1() * (d.phi[device::global3(x, y + 1, z)] - d.phi[device::global3(x, y - 1, z)]) +
+                       LBM::VelocitySet::w_2() * (d.phi[device::global3(x + 1, y + 1, z)] - d.phi[device::global3(x - 1, y - 1, z)] +
+                                                  d.phi[device::global3(x, y + 1, z + 1)] - d.phi[device::global3(x, y - 1, z - 1)] +
+                                                  d.phi[device::global3(x - 1, y + 1, z)] - d.phi[device::global3(x + 1, y - 1, z)] +
+                                                  d.phi[device::global3(x, y + 1, z - 1)] - d.phi[device::global3(x, y - 1, z + 1)]);
+
+        scalar_t sgz = LBM::VelocitySet::w_1() * (d.phi[device::global3(x, y, z + 1)] - d.phi[device::global3(x, y, z - 1)]) +
+                       LBM::VelocitySet::w_2() * (d.phi[device::global3(x + 1, y, z + 1)] - d.phi[device::global3(x - 1, y, z - 1)] +
+                                                  d.phi[device::global3(x, y + 1, z + 1)] - d.phi[device::global3(x, y - 1, z - 1)] +
+                                                  d.phi[device::global3(x - 1, y, z + 1)] - d.phi[device::global3(x + 1, y, z - 1)] +
+                                                  d.phi[device::global3(x, y - 1, z + 1)] - d.phi[device::global3(x, y + 1, z - 1)]);
+
+        if constexpr (LBM::VelocitySet::Q() == 27)
+        {
+            sgx += LBM::d3q27::w_3() * (d.phi[device::global3(x + 1, y + 1, z + 1)] - d.phi[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.phi[device::global3(x + 1, y + 1, z - 1)] - d.phi[device::global3(x - 1, y - 1, z + 1)] +
+                                        d.phi[device::global3(x + 1, y - 1, z + 1)] - d.phi[device::global3(x - 1, y + 1, z - 1)] +
+                                        d.phi[device::global3(x + 1, y - 1, z - 1)] - d.phi[device::global3(x - 1, y + 1, z + 1)]);
+
+            sgy += LBM::d3q27::w_3() * (d.phi[device::global3(x + 1, y + 1, z + 1)] - d.phi[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.phi[device::global3(x + 1, y + 1, z - 1)] - d.phi[device::global3(x - 1, y - 1, z + 1)] +
+                                        d.phi[device::global3(x - 1, y + 1, z - 1)] - d.phi[device::global3(x + 1, y - 1, z + 1)] +
+                                        d.phi[device::global3(x - 1, y + 1, z + 1)] - d.phi[device::global3(x + 1, y - 1, z - 1)]);
+
+            sgz += LBM::d3q27::w_3() * (d.phi[device::global3(x + 1, y + 1, z + 1)] - d.phi[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.phi[device::global3(x - 1, y - 1, z + 1)] - d.phi[device::global3(x + 1, y + 1, z - 1)] +
+                                        d.phi[device::global3(x + 1, y - 1, z + 1)] - d.phi[device::global3(x - 1, y + 1, z - 1)] +
+                                        d.phi[device::global3(x - 1, y + 1, z + 1)] - d.phi[device::global3(x + 1, y - 1, z - 1)]);
+        }
+
+        const scalar_t gx = LBM::VelocitySet::as2() * sgx;
+        const scalar_t gy = LBM::VelocitySet::as2() * sgy;
+        const scalar_t gz = LBM::VelocitySet::as2() * sgz;
 
         const scalar_t ind = sqrtf(gx * gx + gy * gy + gz * gz);
         const scalar_t invInd = static_cast<scalar_t>(1) / (ind + static_cast<scalar_t>(1e-9));
@@ -118,10 +155,43 @@ namespace Phase
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t curvature = static_cast<scalar_t>(0.5) *
-                                   ((d.normx[device::global3(x + 1, y, z)] - d.normx[device::global3(x - 1, y, z)]) +
-                                    (d.normy[device::global3(x, y + 1, z)] - d.normy[device::global3(x, y - 1, z)]) +
-                                    (d.normz[device::global3(x, y, z + 1)] - d.normz[device::global3(x, y, z - 1)]));
+        scalar_t scx = LBM::VelocitySet::w_1() * (d.normx[device::global3(x + 1, y, z)] - d.normx[device::global3(x - 1, y, z)]) +
+                       LBM::VelocitySet::w_2() * (d.normx[device::global3(x + 1, y + 1, z)] - d.normx[device::global3(x - 1, y - 1, z)] +
+                                                  d.normx[device::global3(x + 1, y, z + 1)] - d.normx[device::global3(x - 1, y, z - 1)] +
+                                                  d.normx[device::global3(x + 1, y - 1, z)] - d.normx[device::global3(x - 1, y + 1, z)] +
+                                                  d.normx[device::global3(x + 1, y, z - 1)] - d.normx[device::global3(x - 1, y, z + 1)]);
+
+        scalar_t scy = LBM::VelocitySet::w_1() * (d.normy[device::global3(x, y + 1, z)] - d.normy[device::global3(x, y - 1, z)]) +
+                       LBM::VelocitySet::w_2() * (d.normy[device::global3(x + 1, y + 1, z)] - d.normy[device::global3(x - 1, y - 1, z)] +
+                                                  d.normy[device::global3(x, y + 1, z + 1)] - d.normy[device::global3(x, y - 1, z - 1)] +
+                                                  d.normy[device::global3(x - 1, y + 1, z)] - d.normy[device::global3(x + 1, y - 1, z)] +
+                                                  d.normy[device::global3(x, y + 1, z - 1)] - d.normy[device::global3(x, y - 1, z + 1)]);
+
+        scalar_t scz = LBM::VelocitySet::w_1() * (d.normz[device::global3(x, y, z + 1)] - d.normz[device::global3(x, y, z - 1)]) +
+                       LBM::VelocitySet::w_2() * (d.normz[device::global3(x + 1, y, z + 1)] - d.normz[device::global3(x - 1, y, z - 1)] +
+                                                  d.normz[device::global3(x, y + 1, z + 1)] - d.normz[device::global3(x, y - 1, z - 1)] +
+                                                  d.normz[device::global3(x - 1, y, z + 1)] - d.normz[device::global3(x + 1, y, z - 1)] +
+                                                  d.normz[device::global3(x, y - 1, z + 1)] - d.normz[device::global3(x, y + 1, z - 1)]);
+
+        if constexpr (LBM::VelocitySet::Q() == 27)
+        {
+            scx += LBM::d3q27::w_3() * (d.normx[device::global3(x + 1, y + 1, z + 1)] - d.normx[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.normx[device::global3(x + 1, y + 1, z - 1)] - d.normx[device::global3(x - 1, y - 1, z + 1)] +
+                                        d.normx[device::global3(x + 1, y - 1, z + 1)] - d.normx[device::global3(x - 1, y + 1, z - 1)] +
+                                        d.normx[device::global3(x + 1, y - 1, z - 1)] - d.normx[device::global3(x - 1, y + 1, z + 1)]);
+
+            scy += LBM::d3q27::w_3() * (d.normy[device::global3(x + 1, y + 1, z + 1)] - d.normy[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.normy[device::global3(x + 1, y + 1, z - 1)] - d.normy[device::global3(x - 1, y - 1, z + 1)] +
+                                        d.normy[device::global3(x - 1, y + 1, z - 1)] - d.normy[device::global3(x + 1, y - 1, z + 1)] +
+                                        d.normy[device::global3(x - 1, y + 1, z + 1)] - d.normy[device::global3(x + 1, y - 1, z - 1)]);
+
+            scz += LBM::d3q27::w_3() * (d.normz[device::global3(x + 1, y + 1, z + 1)] - d.normz[device::global3(x - 1, y - 1, z - 1)] +
+                                        d.normz[device::global3(x - 1, y - 1, z + 1)] - d.normz[device::global3(x + 1, y + 1, z - 1)] +
+                                        d.normz[device::global3(x + 1, y - 1, z + 1)] - d.normz[device::global3(x - 1, y + 1, z - 1)] +
+                                        d.normz[device::global3(x - 1, y + 1, z + 1)] - d.normz[device::global3(x + 1, y - 1, z - 1)]);
+        }
+
+        const scalar_t curvature = LBM::VelocitySet::as2() * (scx + scy + scz);
 
         const scalar_t stCurv = -physics::sigma * curvature * d.ind[idx3];
         d.ffx[idx3] = stCurv * d.normx[idx3];

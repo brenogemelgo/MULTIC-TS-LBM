@@ -43,7 +43,7 @@ SourceFiles
 #include "functions/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
-#include "phaseField.cuh"
+#include "phaseFieldLow.cuh"
 #include "derivedFields/registry.cuh"
 #include "lbm.cu"
 

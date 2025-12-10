@@ -42,7 +42,7 @@ SourceFiles
 #ifndef CUDAGRAPH_CUH
 #define CUDAGRAPH_CUH
 
-#include "../phaseField.cuh"
+#include "../phaseFieldLow.cuh"
 
 namespace graph
 {
