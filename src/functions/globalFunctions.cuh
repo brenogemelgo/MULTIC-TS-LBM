@@ -49,6 +49,8 @@ SourceFiles
 #ifndef GLOBALFUNCTIONS_CUH
 #define GLOBALFUNCTIONS_CUH
 
+#include "constants.cuh"
+
 namespace block
 {
     __host__ __device__ [[nodiscard]] static inline consteval unsigned num_block_x() noexcept

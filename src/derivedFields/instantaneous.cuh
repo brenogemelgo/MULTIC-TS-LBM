@@ -42,7 +42,6 @@ SourceFiles
 #ifndef INSTANTANEOUS_CUH
 #define INSTANTANEOUS_CUH
 
-#include "../cuda/utils.cuh"
 #include "functions/ioFields.cuh"
 
 #if D_INSTANTANEOUS
@@ -105,17 +104,11 @@ namespace Derived
 {
     namespace Instant
     {
-
         constexpr bool enabled =
-
 #if D_INSTANTANEOUS
-
             true;
-
 #else
-
             false;
-
 #endif
 
         constexpr std::array<host::FieldConfig, 4> fields{{
@@ -129,12 +122,9 @@ namespace Derived
             cudaStream_t queue,
             LBMFields d) noexcept
         {
-
 #if D_INSTANTANEOUS
-
             LBM::computeKinematics<<<grid, block, dynamic, queue>>>(d);
             LBM::computeEnergyFields<<<grid, block, dynamic, queue>>>(d);
-
 #endif
         }
 

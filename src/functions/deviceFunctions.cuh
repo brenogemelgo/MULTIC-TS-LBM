@@ -42,8 +42,7 @@ SourceFiles
 #ifndef DEVICEFUNCTIONS_CUH
 #define DEVICEFUNCTIONS_CUH
 
-#include "constants.cuh"
-#include "globalUtils.cuh"
+#include "globalFunctions.cuh"
 
 namespace device
 {
@@ -112,6 +111,15 @@ namespace device
         const label_t bz) noexcept
     {
         return tx + block::nx * (ty + block::ny * (tz + block::nz * (bx + block::num_block_x() * (by + block::num_block_y() * bz))));
+    }
+
+    __device__ [[nodiscard]] inline scalar_t smoothstep(
+        const scalar_t edge0,
+        const scalar_t edge1,
+        scalar_t x) noexcept
+    {
+        x = __saturatef((x - edge0) / (edge1 - edge0));
+        return x * x * (3.0f - 2.0f * x);
     }
 
     __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept

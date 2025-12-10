@@ -42,7 +42,6 @@ SourceFiles
 #ifndef GRADIENTS_CUH
 #define GRADIENTS_CUH
 
-#include "../cuda/utils.cuh"
 #include "functions/ioFields.cuh"
 
 #if D_GRADIENTS
@@ -197,7 +196,6 @@ namespace Derived
 {
     namespace Gradients
     {
-
         constexpr bool enabled =
 #if D_GRADIENTS
             true;
@@ -215,7 +213,6 @@ namespace Derived
             cudaStream_t queue,
             LBMFields d) noexcept
         {
-
 #if D_GRADIENTS
             LBM::computeVorticity<<<grid, block, dynamic, queue>>>(d);
             LBM::computeQCriterion<<<grid, block, dynamic, queue>>>(d);

@@ -42,10 +42,10 @@ SourceFiles
 #ifndef DERIVEDREGISTRY_CUH
 #define DERIVEDREGISTRY_CUH
 
-#include "derivedFields/timeAverage.cuh"
-#include "derivedFields/reynoldsMoments.cuh"
-#include "derivedFields/instantaneous.cuh"
-#include "derivedFields/gradients.cuh"
+#include "timeAverage.cuh"
+#include "reynoldsMoments.cuh"
+#include "instantaneous.cuh"
+#include "gradients.cuh"
 
 namespace Derived
 {
@@ -54,31 +54,18 @@ namespace Derived
     {
         std::vector<host::FieldConfig> fields;
         fields.reserve(3 + 3 + 6 + 4 + 2); // rough upper bound
-
 #if D_TIMEAVG
-
         fields.insert(fields.end(), TimeAvg::fields.begin(), TimeAvg::fields.end());
-
 #endif
-
 #if D_REYNOLDS_MOMENTS
-
         fields.insert(fields.end(), Reynolds::fields.begin(), Reynolds::fields.end());
-
 #endif
-
 #if D_INSTANTANEOUS
-
         fields.insert(fields.end(), Instant::fields.begin(), Instant::fields.end());
-
 #endif
-
 #if D_GRADIENTS
-
         fields.insert(fields.end(), Gradients::fields.begin(), Gradients::fields.end());
-
 #endif
-
         return fields;
     }
 
@@ -88,29 +75,17 @@ namespace Derived
         LBMFields d,
         const label_t step) noexcept
     {
-
 #if D_TIMEAVG
-
         TimeAvg::launch<grid, block, dynamic>(queue, d, step);
-
 #endif
-
 #if D_REYNOLDS_MOMENTS
-
         Reynolds::launch<grid, block, dynamic>(queue, d, step);
-
 #endif
-
 #if D_INSTANTANEOUS
-
         Instant::launch<grid, block, dynamic>(queue, d);
-
 #endif
-
 #if D_GRADIENTS
-
         Gradients::launch<grid, block, dynamic>(queue, d);
-
 #endif
     }
 

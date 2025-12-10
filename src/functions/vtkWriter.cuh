@@ -42,8 +42,7 @@ SourceFiles
 #ifndef VTKWRITER_CUH
 #define VTKWRITER_CUH
 
-#include "constants.cuh"
-#include "globalUtils.cuh"
+#include "globalFunctions.cuh"
 
 namespace host
 {

@@ -42,8 +42,7 @@ SourceFiles
 #ifndef HOSTFUNCTIONS_CUH
 #define HOSTFUNCTIONS_CUH
 
-#include "constants.cuh"
-#include "globalUtils.cuh"
+#include "globalFunctions.cuh"
 
 namespace host
 {
@@ -167,7 +166,7 @@ namespace host
         return (a + b - 1u) / b;
     }
 
-    __host__ [[gnu::cold]] static inline void setDeviceFields()
+    __host__ [[gnu::cold]] static inline void allocateFields()
     {
         constexpr size_t NCELLS = static_cast<size_t>(mesh::nx) * static_cast<size_t>(mesh::ny) * static_cast<size_t>(mesh::nz);
         constexpr size_t SIZE = NCELLS * sizeof(scalar_t);
@@ -288,7 +287,7 @@ namespace host
 
 #endif
 
-        getLastCudaErrorOutline("setDeviceFields: post-initialization");
+        getLastCudaErrorOutline("allocateFields: post-initialization");
     }
 }
 

@@ -42,7 +42,6 @@ SourceFiles
 #ifndef TIMEAVERAGE_CUH
 #define TIMEAVERAGE_CUH
 
-#include "../cuda/utils.cuh"
 #include "functions/ioFields.cuh"
 
 #if D_TIMEAVG
@@ -86,17 +85,11 @@ namespace Derived
 {
     namespace TimeAvg
     {
-
         constexpr bool enabled =
-
 #if D_TIMEAVG
-
             true;
-
 #else
-
             false;
-
 #endif
 
         constexpr std::array<host::FieldConfig, 3> fields{{
@@ -111,11 +104,8 @@ namespace Derived
             LBMFields d,
             const label_t t) noexcept
         {
-
 #if D_TIMEAVG
-
             LBM::timeAverage<<<grid, block, dynamic, queue>>>(d, t + 1);
-
 #endif
         }
 

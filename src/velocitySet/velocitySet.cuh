@@ -39,7 +39,7 @@ SourceFiles
 #ifndef VELOCITYSET_CUH
 #define VELOCITYSET_CUH
 
-#include "../cuda/utils.cuh"
+#include "cuda/utils.cuh"
 
 namespace LBM
 {

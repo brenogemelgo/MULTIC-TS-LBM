@@ -42,8 +42,8 @@ SourceFiles
 #ifndef FLOWCASE_CUH
 #define FLOWCASE_CUH
 
-#include "../cuda/utils.cuh"
-#include "../functions/LBMIncludes.cuh"
+#include "cuda/utils.cuh"
+#include "include/LBMIncludes.cuh"
 
 namespace LBM
 {

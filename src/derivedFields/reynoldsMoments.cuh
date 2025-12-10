@@ -42,7 +42,6 @@ SourceFiles
 #ifndef REYNOLDSMOMENTS_CUH
 #define REYNOLDSMOMENTS_CUH
 
-#include "../cuda/utils.cuh"
 #include "functions/ioFields.cuh"
 
 #if D_REYNOLDS_MOMENTS
@@ -95,17 +94,11 @@ namespace Derived
 {
     namespace Reynolds
     {
-
         constexpr bool enabled =
-
 #if D_REYNOLDS_MOMENTS
-
             true;
-
 #else
-
             false;
-
 #endif
 
         constexpr std::array<host::FieldConfig, 6> fields{{
@@ -123,11 +116,8 @@ namespace Derived
             LBMFields d,
             const label_t t) noexcept
         {
-
 #if D_REYNOLDS_MOMENTS
-
             LBM::reynoldsMomentsAverage<<<grid, block, dynamic, queue>>>(d, t + 1);
-
 #endif
         }
 

@@ -42,7 +42,7 @@ SourceFiles
 #ifndef CUDAGRAPH_CUH
 #define CUDAGRAPH_CUH
 
-#include "../phaseFieldLow.cuh"
+#include "phaseField.cuh"
 
 namespace graph
 {
@@ -64,8 +64,8 @@ namespace graph
         LBM::computeMoments<<<grid, block, dynamic, queue>>>(fields);
         LBM::streamCollide<<<grid, block, dynamic, queue>>>(fields);
 
-        // NOTE: We intentionally DO NOT include FlowCase::boundaryConditions
-        // or timeAverage here, because they depend on STEP and/or other
+        // NOTE: We intentionally DO NOT include boundary conditions or
+        // derived fields here, because they depend on STEP and/or other
         // time-varying parameters. We launch them after the graph each step.
 
         checkCudaErrorsOutline(cudaStreamEndCapture(queue, &graph));

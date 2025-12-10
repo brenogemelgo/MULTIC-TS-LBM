@@ -42,8 +42,7 @@ SourceFiles
 #ifndef IOFIELDS_CUH
 #define IOFIELDS_CUH
 
-#include "constants.cuh"
-#include "globalUtils.cuh"
+#include "globalFunctions.cuh"
 
 namespace host
 {

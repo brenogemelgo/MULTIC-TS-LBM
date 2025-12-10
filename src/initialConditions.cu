@@ -42,7 +42,7 @@ SourceFiles
 #ifndef INITIALCONDITIONS_CUH
 #define INITIALCONDITIONS_CUH
 
-#include "functions/LBMIncludes.cuh"
+#include "include/LBMIncludes.cuh"
 
 namespace LBM
 {
@@ -84,7 +84,6 @@ namespace LBM
 
         const label_t idx3_in = device::global3(x, y, 0);
 
-        // TODO: smooth phi for improved isotropy under low order gradients
         d.phi[idx3_in] = static_cast<scalar_t>(1);
         d.uz[idx3_in] = physics::u_ref;
     }

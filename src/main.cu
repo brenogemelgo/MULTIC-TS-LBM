@@ -36,14 +36,14 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#include "functions/deviceUtils.cuh"
-#include "functions/hostUtils.cuh"
+#include "functions/deviceFunctions.cuh"
+#include "functions/hostFunctions.cuh"
 #include "functions/ioFields.cuh"
 #include "functions/vtkWriter.cuh"
-#include "functions/CUDAGraph.cuh"
+#include "cuda/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
-#include "phaseFieldLow.cuh"
+#include "phaseField.cuh"
 #include "derivedFields/registry.cuh"
 #include "lbm.cu"
 
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     }
 
     // Allocate device fields
-    host::setDeviceFields();
+    host::allocateFields();
 
     // Block-wise configuration
     constexpr dim3 block3D(block::nx, block::ny, block::nz);
