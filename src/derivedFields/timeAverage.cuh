@@ -68,7 +68,7 @@ namespace LBM
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
 
-        const scalar_t umag = sqrt(ux * ux + uy * uy + uz * uz);
+        const scalar_t umag = math::sqrt(ux * ux + uy * uy + uz * uz);
 
         auto update = [t] __device__(scalar_t old_val, scalar_t new_val)
         {

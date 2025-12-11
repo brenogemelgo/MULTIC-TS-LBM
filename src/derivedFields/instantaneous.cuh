@@ -66,7 +66,7 @@ namespace LBM
         const scalar_t uz = d.uz[idx3];
 
         const scalar_t umag2 = ux * ux + uy * uy + uz * uz;
-        const scalar_t umag = sqrt(umag2);
+        const scalar_t umag = math::sqrt(umag2);
 
         d.umag[idx3] = umag;
     }
@@ -92,7 +92,6 @@ namespace LBM
         const scalar_t umag2 = ux * ux + uy * uy + uz * uz;
 
         const scalar_t k = static_cast<scalar_t>(0.5) * umag2;
-
         const scalar_t q = static_cast<scalar_t>(0.5) * rho * umag2;
 
         d.k[idx3] = k;

@@ -188,11 +188,11 @@ namespace LBM
             scalar_t &z1,
             scalar_t &z2) noexcept
         {
-            rrx = fmaxf(rrx, static_cast<scalar_t>(1e-12));
-            const scalar_t r = sqrtf(-static_cast<scalar_t>(2) * logf(rrx));
+            rrx = math::max(rrx, static_cast<scalar_t>(1e-12));
+            const scalar_t r = math::sqrt(-static_cast<scalar_t>(2) * math::log(rrx));
             const scalar_t theta = math::two_pi() * rry;
             scalar_t s, c;
-            sincosf(theta, &s, &c);
+            math::sincos(theta, &s, &c);
             z1 = r * c;
             z2 = r * s;
         }

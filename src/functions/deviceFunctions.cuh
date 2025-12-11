@@ -113,13 +113,9 @@ namespace device
         return tx + block::nx * (ty + block::ny * (tz + block::nz * (bx + block::num_block_x() * (by + block::num_block_y() * bz))));
     }
 
-    __device__ [[nodiscard]] inline scalar_t smoothstep(
-        const scalar_t edge0,
-        const scalar_t edge1,
-        scalar_t x) noexcept
+    __device__ static inline void prefetch_L2(const void *ptr) noexcept
     {
-        x = __saturatef((x - edge0) / (edge1 - edge0));
-        return x * x * (3.0f - 2.0f * x);
+        asm volatile("prefetch.global.L2 [%0];" ::"l"(ptr));
     }
 
     __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept
@@ -127,7 +123,7 @@ namespace device
         if constexpr (LBM::FlowCase::jet_case())
         {
             const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
-            const scalar_t s = fminf(fmaxf((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
+            const scalar_t s = math::min(math::max((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
             const scalar_t s2 = s * s;
             const scalar_t ramp = s2 * s;
             return fmaf(ramp, relaxation::omega_delta(), relaxation::omega_ref());

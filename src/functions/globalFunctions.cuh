@@ -129,6 +129,73 @@ namespace math
     {
         return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(6));
     }
+
+    __host__ __device__ [[nodiscard]] static inline scalar_t sqrt(const scalar_t x) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::sqrtf(x);
+        }
+        else
+        {
+            return ::sqrt(x);
+        }
+    }
+
+    __host__ __device__ [[nodiscard]] static inline scalar_t tanh(const scalar_t x) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::tanhf(x);
+        }
+        else
+        {
+            return ::tanh(x);
+        }
+    }
+
+    __host__ __device__ [[nodiscard]] static inline scalar_t min(
+        const scalar_t a,
+        const scalar_t b) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::fminf(x);
+        }
+        else
+        {
+            return ::fmin(x);
+        }
+    }
+
+    __host__ __device__ [[nodiscard]] static inline scalar_t max(
+        const scalar_t a,
+        const scalar_t b) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::fmaxf(x);
+        }
+        else
+        {
+            return ::fmax(x);
+        }
+    }
+
+    __host__ __device__ static inline void sincos(
+        const scalar_t x,
+        const scalar_t &s,
+        const scalar_t &c) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            ::sincosf(x, &s, &c);
+        }
+        else
+        {
+            ::sincos(x, &s, &c);
+        }
+    }
 }
 
 namespace sponge

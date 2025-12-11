@@ -117,7 +117,7 @@ namespace LBM
         const scalar_t wy = dux_dz - duz_dx;
         const scalar_t wz = duy_dx - dux_dy;
 
-        const scalar_t vort = sqrt(wx * wx + wy * wy + wz * wz);
+        const scalar_t vort = math::sqrt(wx * wx + wy * wy + wz * wz);
 
         d.vort[idx3] = vort;
     }

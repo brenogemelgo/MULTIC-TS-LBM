@@ -107,9 +107,9 @@ namespace LBM
         const scalar_t dx = (static_cast<scalar_t>(x) - geometry::center_x()) / static_cast<scalar_t>(2);
         const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
         const scalar_t dz = static_cast<scalar_t>(z) - geometry::center_z();
-        const scalar_t radialDist = sqrtf(dx * dx + dy * dy + dz * dz);
+        const scalar_t radialDist = math::sqrt(dx * dx + dy * dy + dz * dz);
 
-        const scalar_t phi = static_cast<scalar_t>(0.5) + static_cast<scalar_t>(0.5) * tanhf(static_cast<scalar_t>(2) * (static_cast<scalar_t>(mesh::radius) - radialDist) / static_cast<scalar_t>(3));
+        const scalar_t phi = static_cast<scalar_t>(0.5) + static_cast<scalar_t>(0.5) * math::tanh(static_cast<scalar_t>(2) * (static_cast<scalar_t>(mesh::radius) - radialDist) / static_cast<scalar_t>(3));
         d.phi[idx3] = phi;
     }
 

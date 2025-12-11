@@ -43,7 +43,7 @@ SourceFiles
 #include "cuda/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
-#include "phaseFieldPrefetch.cuh"
+#include "phaseField.cuh"
 #include "derivedFields/registry.cuh"
 #include "lbm.cu"
 
@@ -122,20 +122,12 @@ int main(int argc, char *argv[])
     // Warmup (optional)
     checkCudaErrorsOutline(cudaDeviceSynchronize());
 
-    // Build CUDA Graph
-    // cudaGraph_t graph{};
-    // cudaGraphExec_t graphExec{};
-    // graph::captureGraph<grid3D, block3D, dynamic>(graph, graphExec, fields, queue);
-
     // Start clock
     const auto START_TIME = std::chrono::high_resolution_clock::now();
 
     // Time loop
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
-        // Launch captured sequence
-        // cudaGraphLaunch(graphExec, queue);
-
         // Phase field
         Phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
         Phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
@@ -195,10 +187,6 @@ int main(int argc, char *argv[])
     // Make sure everything is done on the GPU
     cudaStreamSynchronize(queue);
     const auto END_TIME = std::chrono::high_resolution_clock::now();
-
-    // Destroy CUDA Graph resources
-    // checkCudaErrorsOutline(cudaGraphExecDestroy(graphExec));
-    // checkCudaErrorsOutline(cudaGraphDestroy(graph));
 
     // Destroy stream
     checkCudaErrorsOutline(cudaStreamDestroy(queue));

@@ -90,7 +90,7 @@ namespace Phase
         scalar_t gy = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x, y + 1, z)] - d.phi[device::global3(x, y - 1, z)]);
         scalar_t gz = static_cast<scalar_t>(0.5) * (d.phi[device::global3(x, y, z + 1)] - d.phi[device::global3(x, y, z - 1)]);
 
-        const scalar_t ind = sqrtf(gx * gx + gy * gy + gz * gz);
+        const scalar_t ind = math::sqrt(gx * gx + gy * gy + gz * gz);
         const scalar_t invInd = static_cast<scalar_t>(1) / (ind + static_cast<scalar_t>(1e-9));
 
         const scalar_t normX = gx * invInd;
