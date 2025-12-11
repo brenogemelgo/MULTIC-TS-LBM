@@ -46,7 +46,7 @@ SourceFiles
 
 namespace device
 {
-    __device__ [[nodiscard]] inline label_t global3(
+    __device__ [[nodiscard]] static inline label_t global3(
         const label_t x,
         const label_t y,
         const label_t z) noexcept
@@ -54,16 +54,27 @@ namespace device
         return x + y * mesh::nx + z * size::stride();
     }
 
-    __device__ [[nodiscard]] inline label_t global4(
+    __device__ [[nodiscard]] static inline label_t global4(
         const label_t x,
         const label_t y,
         const label_t z,
         const label_t Q) noexcept
     {
-        return Q * size::plane() + global3(x, y, z);
+        return Q * size::cells() + global3(x, y, z);
     }
 
-    __device__ [[nodiscard]] inline label_t wrapX(const label_t xx) noexcept
+    __device__ [[nodiscard]] static inline bool guard(
+        const label_t x,
+        const label_t y,
+        const label_t z) noexcept
+    {
+        return (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
+                x == 0 || x == mesh::nx - 1 ||
+                y == 0 || y == mesh::ny - 1 ||
+                z == 0 || z == mesh::nz - 1);
+    }
+
+    __device__ [[nodiscard]] static inline label_t wrapX(const label_t xx) noexcept
     {
         if (xx == 0)
         {
@@ -76,7 +87,7 @@ namespace device
         return xx;
     }
 
-    __device__ [[nodiscard]] inline label_t wrapY(const label_t yy) noexcept
+    __device__ [[nodiscard]] static inline label_t wrapY(const label_t yy) noexcept
     {
         if (yy == 0)
         {
@@ -89,7 +100,7 @@ namespace device
         return yy;
     }
 
-    __device__ [[nodiscard]] inline label_t wrapZ(const label_t zz) noexcept
+    __device__ [[nodiscard]] static inline label_t wrapZ(const label_t zz) noexcept
     {
         if (zz == 0)
         {
@@ -102,7 +113,7 @@ namespace device
         return zz;
     }
 
-    __device__ [[nodiscard]] inline label_t globalThreadIdx(
+    __device__ [[nodiscard]] static inline label_t globalThreadIdx(
         const label_t tx,
         const label_t ty,
         const label_t tz,
@@ -118,7 +129,7 @@ namespace device
         asm volatile("prefetch.global.L2 [%0];" ::"l"(ptr));
     }
 
-    __device__ [[nodiscard]] inline scalar_t cubic_sponge(const label_t z) noexcept
+    __device__ [[nodiscard]] static inline scalar_t cubic_sponge(const label_t z) noexcept
     {
         if constexpr (LBM::FlowCase::jet_case())
         {

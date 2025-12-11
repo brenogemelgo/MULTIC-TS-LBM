@@ -76,7 +76,7 @@ namespace size
         return mesh::nx * mesh::ny;
     }
 
-    __host__ __device__ [[nodiscard]] static inline consteval label_t plane() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval label_t cells() noexcept
     {
         return mesh::nx * mesh::ny * mesh::nz;
     }
@@ -142,6 +142,46 @@ namespace math
         }
     }
 
+    __host__ __device__ [[nodiscard]] static inline scalar_t log(const scalar_t x) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::logf(x);
+        }
+        else
+        {
+            return ::log(x);
+        }
+    }
+
+    __host__ __device__ [[nodiscard]] static inline scalar_t min(
+        const scalar_t a,
+        const scalar_t b) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::fminf(a, b);
+        }
+        else
+        {
+            return ::fmin(a, b);
+        }
+    }
+
+    __host__ __device__ [[nodiscard]] static inline scalar_t max(
+        const scalar_t a,
+        const scalar_t b) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::fmaxf(a, b);
+        }
+        else
+        {
+            return ::fmax(a, b);
+        }
+    }
+
     __host__ __device__ [[nodiscard]] static inline scalar_t tanh(const scalar_t x) noexcept
     {
         if constexpr (std::is_same_v<scalar_t, float>)
@@ -154,46 +194,18 @@ namespace math
         }
     }
 
-    __host__ __device__ [[nodiscard]] static inline scalar_t min(
-        const scalar_t a,
-        const scalar_t b) noexcept
-    {
-        if constexpr (std::is_same_v<scalar_t, float>)
-        {
-            return ::fminf(x);
-        }
-        else
-        {
-            return ::fmin(x);
-        }
-    }
-
-    __host__ __device__ [[nodiscard]] static inline scalar_t max(
-        const scalar_t a,
-        const scalar_t b) noexcept
-    {
-        if constexpr (std::is_same_v<scalar_t, float>)
-        {
-            return ::fmaxf(x);
-        }
-        else
-        {
-            return ::fmax(x);
-        }
-    }
-
     __host__ __device__ static inline void sincos(
         const scalar_t x,
-        const scalar_t &s,
-        const scalar_t &c) noexcept
+        scalar_t *s,
+        scalar_t *c) noexcept
     {
         if constexpr (std::is_same_v<scalar_t, float>)
         {
-            ::sincosf(x, &s, &c);
+            ::sincosf(x, s, c);
         }
         else
         {
-            ::sincos(x, &s, &c);
+            ::sincos(x, s, c);
         }
     }
 }
@@ -300,24 +312,6 @@ namespace relaxation
 
 #endif
 
-}
-
-namespace LBM
-{
-    __host__ __device__ [[nodiscard]] static inline consteval scalar_t cs() noexcept
-    {
-        return static_cast<scalar_t>(0.57735026918962576451);
-    }
-
-    __host__ __device__ [[nodiscard]] static inline consteval scalar_t cs2() noexcept
-    {
-        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(3));
-    }
-
-    __host__ __device__ [[nodiscard]] static inline consteval scalar_t cs2_d3q7() noexcept
-    {
-        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(4));
-    }
 }
 
 #endif

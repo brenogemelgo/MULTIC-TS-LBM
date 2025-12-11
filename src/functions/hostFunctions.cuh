@@ -98,7 +98,7 @@ namespace host
         }
     }
 
-    template <const size_t SIZE = size::plane()>
+    template <const size_t SIZE = size::cells()>
     __host__ [[gnu::cold]] static inline void copyAndSaveToBinary(
         const scalar_t *d_data,
         const std::string &SIM_DIR,

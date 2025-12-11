@@ -219,6 +219,13 @@ namespace Derived
 #endif
         }
 
+        __host__ static inline void free(LBMFields &d)
+        {
+#if D_GRADIENTS
+            cudaFree(d.vort);
+            cudaFree(d.q_crit);
+#endif
+        }
     }
 }
 

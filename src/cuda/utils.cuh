@@ -61,6 +61,9 @@ SourceFiles
 #include <unordered_map>
 #include <array>
 #include <thread>
+#include <future>
+#include <queue>
+#include <condition_variable>
 
 namespace block
 {

@@ -127,6 +127,14 @@ namespace Derived
 #endif
         }
 
+        __host__ static inline void free(LBMFields &d)
+        {
+#if D_INSTANTANEOUS
+            cudaFree(d.umag);
+            cudaFree(d.k);
+            cudaFree(d.q_dyn);
+#endif
+        }
     }
 }
 

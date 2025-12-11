@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    CUDA kernels for phase field calculations
+    CUDA kernels for low-order phase field calculations
 
 Namespace
     phase
@@ -64,7 +64,7 @@ namespace Phase
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
-                phi += d.g[Q * size::plane() + idx3];
+                phi += d.g[Q * size::cells() + idx3];
             });
 
         d.phi[idx3] = phi;

@@ -40,6 +40,7 @@ SourceFiles
 #include "functions/hostFunctions.cuh"
 #include "functions/ioFields.cuh"
 #include "functions/vtkWriter.cuh"
+#include "threadPool/threadPool.cuh"
 #include "cuda/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
@@ -97,9 +98,8 @@ int main(int argc, char *argv[])
 
 #if !BENCHMARK
 
-    // Initialize thread for asynchronous VTS generation
-    std::vector<std::thread> vtk_threads;
-    vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
+    // Thread pool for VTS writing (one thread per CPU core minus one)
+    thread::Pool vtk_pool(std::max(2u, std::thread::hardware_concurrency() - 1));
 
     // Base fields (always saved)
     constexpr std::array<host::FieldConfig, 3> BASE_FIELDS{{
@@ -122,26 +122,25 @@ int main(int argc, char *argv[])
     // Warmup (optional)
     checkCudaErrorsOutline(cudaDeviceSynchronize());
 
+    // Build CUDA Graph
+    cudaGraph_t graph{};
+    cudaGraphExec_t graphExec{};
+    graph::captureGraph<grid3D, block3D, dynamic>(graph, graphExec, fields, queue);
+
     // Start clock
     const auto START_TIME = std::chrono::high_resolution_clock::now();
 
     // Time loop
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
-        // Phase field
-        Phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
-        Phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
-        Phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
-
-        // Hydrodynamics
-        LBM::computeMoments<<<grid3D, block3D, dynamic, queue>>>(fields);
-        LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
+        // Launch captured sequence
+        cudaGraphLaunch(graphExec, queue);
 
         // Flow case specific boundary conditions
         LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
 
+        // Derived fields
 #if D_TIMEAVG || D_REYNOLDS_MOMENTS || D_INSTANTANEOUS || D_GRADIENTS
-        // Derived fields (time-avg, Reynolds, instantaneous, gradients)
         Derived::launchAllDerived<grid3D, block3D, dynamic>(queue, fields, STEP);
 #endif
 
@@ -151,42 +150,34 @@ int main(int argc, char *argv[])
 
         if (isOutputStep)
         {
-            checkCudaErrors(cudaStreamSynchronize(queue));
+            cudaEvent_t evt;
+            checkCudaErrors(cudaEventCreateWithFlags(&evt, cudaEventDisableTiming));
+            checkCudaErrors(cudaEventRecord(evt, queue));
 
+            const auto fieldsCfg = OUTPUT_FIELDS;
             const auto step_copy = STEP;
+            const auto sim_dir = SIM_DIR;
+            const auto sim_id = SIM_ID;
 
-            host::saveConfiguredFields(OUTPUT_FIELDS, SIM_DIR, step_copy);
+            vtk_pool.enqueue([evt, fieldsCfg, sim_dir, sim_id, step_copy]()
+                             {checkCudaErrors(cudaEventSynchronize(evt));
+                              checkCudaErrors(cudaEventDestroy(evt));
+                              host::saveConfiguredFields(fieldsCfg, sim_dir, step_copy);
+                              host::writeStructuredGrid(fieldsCfg, sim_dir, sim_id, step_copy); });
 
-            vtk_threads.emplace_back(
-                [step_copy,
-                 fieldsCfg = OUTPUT_FIELDS,
-                 sim_dir = SIM_DIR,
-                 sim_id = SIM_ID]
-                {
-                    host::writeStructuredGrid(fieldsCfg, sim_dir, sim_id, step_copy);
-                });
-
-            std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
+            std::cout << "Step " << STEP << ": scheduled async VTS\n";
         }
 
 #endif
     }
-
-#if !BENCHMARK
-
-    for (auto &t : vtk_threads)
-    {
-        if (t.joinable())
-        {
-            t.join();
-        }
-    }
-
-#endif
 
     // Make sure everything is done on the GPU
     cudaStreamSynchronize(queue);
     const auto END_TIME = std::chrono::high_resolution_clock::now();
+
+    // Destroy CUDA Graph resources
+    checkCudaErrorsOutline(cudaGraphExecDestroy(graphExec));
+    checkCudaErrorsOutline(cudaGraphDestroy(graph));
 
     // Destroy stream
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
@@ -212,6 +203,9 @@ int main(int argc, char *argv[])
     cudaFree(fields.ffx);
     cudaFree(fields.ffy);
     cudaFree(fields.ffz);
+
+    // Free derived fields (conditional; only frees what was allocated)
+    Derived::freeAll(fields);
 
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
 

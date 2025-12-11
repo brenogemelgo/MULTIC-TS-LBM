@@ -209,7 +209,7 @@ namespace host
             switch (cfg.shape)
             {
             case FieldDumpShape::Grid3D:
-                host::copyAndSaveToBinary<size::plane()>(d_ptr, SIM_DIR, STEP, cfg.name);
+                host::copyAndSaveToBinary<size::cells()>(d_ptr, SIM_DIR, STEP, cfg.name);
 
                 break;
 

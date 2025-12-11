@@ -89,6 +89,21 @@ namespace Derived
 #endif
     }
 
+    __host__ static inline void freeAll(LBMFields &d) noexcept
+    {
+#if D_TIMEAVG
+        TimeAvg::free(d);
+#endif
+#if D_REYNOLDS_MOMENTS
+        Reynolds::free(d);
+#endif
+#if D_INSTANTANEOUS
+        Instant::free(d);
+#endif
+#if D_GRADIENTS
+        Gradients::free(d);
+#endif
+    }
 }
 
 #endif

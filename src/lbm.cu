@@ -52,10 +52,7 @@ namespace LBM
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
         const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
+        if (device::guard(x, y, z))
         {
             return;
         }
@@ -68,7 +65,7 @@ namespace LBM
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
-                const scalar_t fq = from_pop(d.f[Q * size::plane() + idx3]);
+                const scalar_t fq = from_pop(d.f[Q * size::cells() + idx3]);
                 pop[Q] = fq;
                 rho += fq;
             });
@@ -146,10 +143,7 @@ namespace LBM
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
         const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
+        if (device::guard(x, y, z))
         {
             return;
         }
@@ -175,6 +169,7 @@ namespace LBM
         if constexpr (FlowCase::jet_case())
         {
             omco = static_cast<scalar_t>(1) - device::cubic_sponge(z);
+            // omco = relaxation::omco_ref();
         }
         else
         {

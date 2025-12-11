@@ -102,11 +102,11 @@ namespace LBM
                                                                     d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
                                                                     d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
 
-                        d.f[Q * size::plane() + fluidNode] = to_pop(feq + relaxation::omco_ref() * fneq);
+                        d.f[Q * size::cells() + fluidNode] = to_pop(feq + relaxation::omco_ref() * fneq);
                     }
                 });
 
-            d.g[5 * size::plane() + idx3_zp1] = Phase::VelocitySet::w<5>() * (static_cast<scalar_t>(1) + Phase::VelocitySet::as2() * uz);
+            d.g[5 * size::cells() + idx3_zp1] = Phase::VelocitySet::w<5>() * (static_cast<scalar_t>(1) + Phase::VelocitySet::as2() * uz);
         }
 
         __device__ static inline constexpr void applyOutflow(LBMFields d) noexcept
@@ -158,11 +158,11 @@ namespace LBM
                                                                     d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
                                                                     d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
 
-                        d.f[Q * size::plane() + fluidNode] = to_pop(feq + relaxation::omco_ref() * fneq);
+                        d.f[Q * size::cells() + fluidNode] = to_pop(feq + relaxation::omco_zmax() * fneq);
                     }
                 });
 
-            d.g[6 * size::plane() + idx3_zm1] = Phase::VelocitySet::w<6>() * phi * (static_cast<scalar_t>(1) - Phase::VelocitySet::as2() * physics::u_ref);
+            d.g[6 * size::cells() + idx3_zm1] = Phase::VelocitySet::w<6>() * phi * (static_cast<scalar_t>(1) - Phase::VelocitySet::as2() * physics::u_ref);
         }
 
     private:

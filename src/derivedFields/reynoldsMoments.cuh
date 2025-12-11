@@ -83,7 +83,6 @@ namespace LBM
         d.avg_uxux[idx3] = update(d.avg_uxux[idx3], uxux);
         d.avg_uyuy[idx3] = update(d.avg_uyuy[idx3], uyuy);
         d.avg_uzuz[idx3] = update(d.avg_uzuz[idx3], uzuz);
-
         d.avg_uxuy[idx3] = update(d.avg_uxuy[idx3], uxuy);
         d.avg_uxuz[idx3] = update(d.avg_uxuz[idx3], uxuz);
         d.avg_uyuz[idx3] = update(d.avg_uyuz[idx3], uyuz);
@@ -121,6 +120,17 @@ namespace Derived
 #endif
         }
 
+        __host__ static inline void free(LBMFields &d)
+        {
+#if D_REYNOLDS_MOMENTS
+            cudaFree(d.avg_uxux);
+            cudaFree(d.avg_uyuy);
+            cudaFree(d.avg_uzuz);
+            cudaFree(d.avg_uxuy);
+            cudaFree(d.avg_uxuz);
+            cudaFree(d.avg_uyuz);
+#endif
+        }
     }
 }
 

@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    CUDA kernels for phase field calculations
+    CUDA kernels for high-order phase field calculations
 
 Namespace
     phase
@@ -50,10 +50,7 @@ namespace Phase
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
         const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
+        if (device::guard(x, y, z))
         {
             return;
         }
@@ -64,7 +61,7 @@ namespace Phase
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
-                phi += d.g[Q * size::plane() + idx3];
+                phi += d.g[Q * size::cells() + idx3];
             });
 
         d.phi[idx3] = phi;
@@ -76,10 +73,7 @@ namespace Phase
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
         const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
+        if (device::guard(x, y, z))
         {
             return;
         }
@@ -167,10 +161,7 @@ namespace Phase
         const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
         const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
+        if (device::guard(x, y, z))
         {
             return;
         }

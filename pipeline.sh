@@ -19,6 +19,7 @@ detect_sm() {
     fi
     echo "${cc}"
 }
+
 GPU_ARCH="$(detect_sm)"; GPU_ARCH="${GPU_ARCH:-86}"
 
 runPipeline() {

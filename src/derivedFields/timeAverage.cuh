@@ -109,6 +109,14 @@ namespace Derived
 #endif
         }
 
+        __host__ static inline void free(LBMFields &d)
+        {
+#if D_TIMEAVG
+            cudaFree(d.avg_phi);
+            cudaFree(d.avg_uz);
+            cudaFree(d.avg_umag);
+#endif
+        }
     }
 }
 
