@@ -43,7 +43,7 @@ SourceFiles
 #include "cuda/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
-#include "phaseField.cuh"
+#include "phaseFieldPrefetch.cuh"
 #include "derivedFields/registry.cuh"
 #include "lbm.cu"
 
@@ -123,9 +123,9 @@ int main(int argc, char *argv[])
     checkCudaErrorsOutline(cudaDeviceSynchronize());
 
     // Build CUDA Graph
-    cudaGraph_t graph{};
-    cudaGraphExec_t graphExec{};
-    graph::captureGraph<grid3D, block3D, dynamic>(graph, graphExec, fields, queue);
+    // cudaGraph_t graph{};
+    // cudaGraphExec_t graphExec{};
+    // graph::captureGraph<grid3D, block3D, dynamic>(graph, graphExec, fields, queue);
 
     // Start clock
     const auto START_TIME = std::chrono::high_resolution_clock::now();
@@ -134,7 +134,16 @@ int main(int argc, char *argv[])
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
         // Launch captured sequence
-        cudaGraphLaunch(graphExec, queue);
+        // cudaGraphLaunch(graphExec, queue);
+
+        // Phase field
+        Phase::computePhase<<<grid3D, block3D, dynamic, queue>>>(fields);
+        Phase::computeNormals<<<grid3D, block3D, dynamic, queue>>>(fields);
+        Phase::computeForces<<<grid3D, block3D, dynamic, queue>>>(fields);
+
+        // Hydrodynamics
+        LBM::computeMoments<<<grid3D, block3D, dynamic, queue>>>(fields);
+        LBM::streamCollide<<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Flow case specific boundary conditions
         LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
@@ -188,8 +197,8 @@ int main(int argc, char *argv[])
     const auto END_TIME = std::chrono::high_resolution_clock::now();
 
     // Destroy CUDA Graph resources
-    checkCudaErrorsOutline(cudaGraphExecDestroy(graphExec));
-    checkCudaErrorsOutline(cudaGraphDestroy(graph));
+    // checkCudaErrorsOutline(cudaGraphExecDestroy(graphExec));
+    // checkCudaErrorsOutline(cudaGraphDestroy(graph));
 
     // Destroy stream
     checkCudaErrorsOutline(cudaStreamDestroy(queue));
@@ -215,12 +224,6 @@ int main(int argc, char *argv[])
     cudaFree(fields.ffx);
     cudaFree(fields.ffy);
     cudaFree(fields.ffz);
-
-#if DFIELDS
-
-    cudaFree(fields.avg);
-
-#endif
 
     const std::chrono::duration<double> ELAPSED_TIME = END_TIME - START_TIME;
 

@@ -35,12 +35,12 @@ Namespace
     Derived
 
 SourceFiles
-    derivedRegistry.cuh
+    registry.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef DERIVEDREGISTRY_CUH
-#define DERIVEDREGISTRY_CUH
+#ifndef REGISTRY_CUH
+#define REGISTRY_CUH
 
 #include "timeAverage.cuh"
 #include "reynoldsMoments.cuh"
