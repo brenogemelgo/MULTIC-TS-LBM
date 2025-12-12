@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    CUDA kernels for high-order phase field calculations
+    CUDA kernels for high-order gradient (D3Q19/27) phase field
 
 Namespace
     phase
@@ -122,17 +122,17 @@ namespace Phase
             const scalar_t phi_xm1_yp1_zm1 = d.phi[device::global3(x - 1, y + 1, z - 1)];
             const scalar_t phi_xm1_yp1_zp1 = d.phi[device::global3(x - 1, y + 1, z + 1)];
 
-            sgx += LBM::d3q27::w_3() * (phi_xp1_yp1_zp1 - phi_xm1_ym1_zm1 +
+            sgx += LBM::D3Q27::w_3() * (phi_xp1_yp1_zp1 - phi_xm1_ym1_zm1 +
                                         phi_xp1_yp1_zm1 - phi_xm1_ym1_zp1 +
                                         phi_xp1_ym1_zp1 - phi_xm1_yp1_zm1 +
                                         phi_xp1_ym1_zm1 - phi_xm1_yp1_zp1);
 
-            sgy += LBM::d3q27::w_3() * (phi_xp1_yp1_zp1 - phi_xm1_ym1_zm1 +
+            sgy += LBM::D3Q27::w_3() * (phi_xp1_yp1_zp1 - phi_xm1_ym1_zm1 +
                                         phi_xp1_yp1_zm1 - phi_xm1_ym1_zp1 +
                                         phi_xm1_yp1_zm1 - phi_xp1_ym1_zp1 +
                                         phi_xm1_yp1_zp1 - phi_xp1_ym1_zm1);
 
-            sgz += LBM::d3q27::w_3() * (phi_xp1_yp1_zp1 - phi_xm1_ym1_zm1 +
+            sgz += LBM::D3Q27::w_3() * (phi_xp1_yp1_zp1 - phi_xm1_ym1_zm1 +
                                         phi_xm1_ym1_zp1 - phi_xp1_yp1_zm1 +
                                         phi_xp1_ym1_zp1 - phi_xm1_yp1_zm1 +
                                         phi_xm1_yp1_zp1 - phi_xp1_ym1_zm1);
@@ -210,17 +210,17 @@ namespace Phase
             const label_t xm1_yp1_zm1 = device::global3(x - 1, y + 1, z - 1);
             const label_t xm1_yp1_zp1 = device::global3(x - 1, y + 1, z + 1);
 
-            scx += LBM::d3q27::w_3() * (d.normx[xp1_yp1_zp1] - d.normx[xm1_ym1_zm1] +
+            scx += LBM::D3Q27::w_3() * (d.normx[xp1_yp1_zp1] - d.normx[xm1_ym1_zm1] +
                                         d.normx[xp1_yp1_zm1] - d.normx[xm1_ym1_zp1] +
                                         d.normx[xp1_ym1_zp1] - d.normx[xm1_yp1_zm1] +
                                         d.normx[xp1_ym1_zm1] - d.normx[xm1_yp1_zp1]);
 
-            scy += LBM::d3q27::w_3() * (d.normy[xp1_yp1_zp1] - d.normy[xm1_ym1_zm1] +
+            scy += LBM::D3Q27::w_3() * (d.normy[xp1_yp1_zp1] - d.normy[xm1_ym1_zm1] +
                                         d.normy[xp1_yp1_zm1] - d.normy[xm1_ym1_zp1] +
                                         d.normy[xm1_yp1_zm1] - d.normy[xp1_ym1_zp1] +
                                         d.normy[xm1_yp1_zp1] - d.normy[xp1_ym1_zm1]);
 
-            scz += LBM::d3q27::w_3() * (d.normz[xp1_yp1_zp1] - d.normz[xm1_ym1_zm1] +
+            scz += LBM::D3Q27::w_3() * (d.normz[xp1_yp1_zp1] - d.normz[xm1_ym1_zm1] +
                                         d.normz[xm1_ym1_zp1] - d.normz[xp1_yp1_zm1] +
                                         d.normz[xp1_ym1_zp1] - d.normz[xm1_yp1_zm1] +
                                         d.normz[xm1_yp1_zp1] - d.normz[xp1_ym1_zm1]);

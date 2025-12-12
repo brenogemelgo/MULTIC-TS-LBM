@@ -98,6 +98,35 @@ namespace host
         }
     }
 
+    __host__ [[gnu::cold]] static inline void printDiagnostics(const std::string &VELOCITY_SET) noexcept
+    {
+        const std::uint64_t ncells = static_cast<uint64_t>(mesh::nx) * static_cast<uint64_t>(mesh::ny) * static_cast<uint64_t>(mesh::nz);
+
+        const double U = static_cast<double>(physics::u_ref);
+        const double Re = static_cast<double>(physics::reynolds);
+        const double D = static_cast<double>(mesh::diam);
+
+        const double nu = U * D / Re;
+        const double cs2 = static_cast<double>(LBM::VelocitySet::cs2());
+        const double Ma = U / cs2;
+        const double tau = 0.5 + nu / cs2;
+
+        std::printf("\n");
+        std::printf("-----------------------------------------------------------------------------\n");
+        std::printf("SIMULATION INFO\n");
+        std::printf("  Velocity set:       %s\n", VELOCITY_SET.c_str());
+        std::printf("  Reference velocity: %.9g\n", U);
+        std::printf("  Reynolds number:    %.9g\n", Re);
+        std::printf("  Weber number:       %.9g\n", static_cast<double>(physics::weber));
+        std::printf("  Domain size:        NX=%u, NY=%u, NZ=%u\n", mesh::nx, mesh::ny, mesh::nz);
+        std::printf("  Cells:              %llu\n", static_cast<unsigned long long>(ncells));
+        std::printf("  Diameter:           D=%u\n", mesh::diam);
+        std::printf("  Mach number:        %.9g\n", Ma);
+        std::printf("  Tau (est.):         %.9g\n", tau);
+        std::printf("-----------------------------------------------------------------------------\n\n");
+        std::fflush(stdout);
+    }
+
     template <const size_t SIZE = size::cells()>
     __host__ [[gnu::cold]] static inline void copyAndSaveToBinary(
         const scalar_t *d_data,

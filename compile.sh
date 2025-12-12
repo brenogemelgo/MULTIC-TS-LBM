@@ -26,6 +26,9 @@ if [ "$VELOCITY_SET" != "D3Q19" ] && [ "$VELOCITY_SET" != "D3Q27" ]; then
     exit 1
 fi
 
+# Load velocity set into a compile flag macro after validation to avoid issues with classes
+VS_MACRO="VS_${VELOCITY_SET}"
+
 if ! command -v nvcc >/dev/null 2>&1; then
     echo "Error: nvcc not found in PATH."
     exit 1
@@ -62,7 +65,7 @@ nvcc -O3 --restrict \
      --extended-lambda \
      -I"${SRC_DIR}" \
      -std=c++20 "${SRC_DIR}/main.cu" \
-     -D${VELOCITY_SET} -D${FLOW_CASE} \
+     -D${VS_MACRO} -D${FLOW_CASE} \
      -DENABLE_FP16=1 \
      -DBENCHMARK=0 \
      -DD_TIMEAVG=0 \

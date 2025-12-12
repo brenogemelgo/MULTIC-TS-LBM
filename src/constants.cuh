@@ -49,10 +49,10 @@ SourceFiles
 
 namespace LBM
 {
-#if defined(D3Q19)
-    using VelocitySet = d3q19;
-#elif defined(D3Q27)
-    using VelocitySet = d3q27;
+#if defined(VS_D3Q19)
+    using VelocitySet = D3Q19;
+#elif defined(VS_D3Q27)
+    using VelocitySet = D3Q27;
 #endif
 
 #if defined(DROPLET)
@@ -64,7 +64,7 @@ namespace LBM
 
 namespace Phase
 {
-    using VelocitySet = LBM::d3q7;
+    using VelocitySet = LBM::D3Q7;
 }
 
 #define RUN_MODE
@@ -74,7 +74,7 @@ namespace Phase
 #if defined(RUN_MODE)
 
 static constexpr int MACRO_SAVE = 1000;
-static constexpr int NSTEPS = 100000;
+static constexpr int NSTEPS = 10000;
 
 #elif defined(SAMPLE_MODE)
 
@@ -102,7 +102,7 @@ namespace mesh
 
 namespace physics
 {
-    static constexpr scalar_t u_ref = static_cast<scalar_t>(0.05);
+    static constexpr scalar_t u_ref = static_cast<scalar_t>(0.03);
     static constexpr int reynolds = 5000;
     static constexpr int weber = 500;
     static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;

@@ -40,7 +40,6 @@ SourceFiles
 #include "functions/hostFunctions.cuh"
 #include "functions/ioFields.cuh"
 #include "functions/vtkWriter.cuh"
-#include "threadPool/threadPool.cuh"
 #include "cuda/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
@@ -93,13 +92,15 @@ int main(int argc, char *argv[])
     // Make sure everything is initialized
     checkCudaErrorsOutline(cudaDeviceSynchronize());
 
-    // Generate info file (for post-processing regex purposes)
+    // Generate info file and print diagnostics
     host::generateSimulationInfoFile(SIM_DIR, SIM_ID, VELOCITY_SET);
+    host::printDiagnostics(VELOCITY_SET);
 
 #if !BENCHMARK
 
-    // Thread pool for VTS writing (one thread per CPU core minus one)
-    thread::Pool vtk_pool(std::max(2u, std::thread::hardware_concurrency() - 1));
+    // Initialize thread for asynchronous VTS generation
+    std::vector<std::thread> vtk_threads;
+    vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
     // Base fields (always saved)
     constexpr std::array<host::FieldConfig, 3> BASE_FIELDS{{
@@ -150,26 +151,38 @@ int main(int argc, char *argv[])
 
         if (isOutputStep)
         {
-            cudaEvent_t evt;
-            checkCudaErrors(cudaEventCreateWithFlags(&evt, cudaEventDisableTiming));
-            checkCudaErrors(cudaEventRecord(evt, queue));
+            checkCudaErrors(cudaStreamSynchronize(queue));
 
-            const auto fieldsCfg = OUTPUT_FIELDS;
             const auto step_copy = STEP;
-            const auto sim_dir = SIM_DIR;
-            const auto sim_id = SIM_ID;
 
-            vtk_pool.enqueue([evt, fieldsCfg, sim_dir, sim_id, step_copy]()
-                             {checkCudaErrors(cudaEventSynchronize(evt));
-                              checkCudaErrors(cudaEventDestroy(evt));
-                              host::saveConfiguredFields(fieldsCfg, sim_dir, step_copy);
-                              host::writeStructuredGrid(fieldsCfg, sim_dir, sim_id, step_copy); });
+            host::saveConfiguredFields(OUTPUT_FIELDS, SIM_DIR, step_copy);
 
-            std::cout << "Step " << STEP << ": scheduled async VTS\n";
+            vtk_threads.emplace_back(
+                [step_copy,
+                 fieldsCfg = OUTPUT_FIELDS,
+                 sim_dir = SIM_DIR,
+                 sim_id = SIM_ID]
+                {
+                    host::writeStructuredGrid(fieldsCfg, sim_dir, sim_id, step_copy);
+                });
+
+            std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";
         }
 
 #endif
     }
+
+#if !BENCHMARK
+
+    for (auto &t : vtk_threads)
+    {
+        if (t.joinable())
+        {
+            t.join();
+        }
+    }
+
+#endif
 
     // Make sure everything is done on the GPU
     cudaStreamSynchronize(queue);

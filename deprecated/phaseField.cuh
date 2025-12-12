@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    CUDA kernels for low-order phase field calculations
+    CUDA kernels for low-order gradient (D3Q7) phase field
 
 Namespace
     phase

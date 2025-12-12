@@ -142,13 +142,13 @@ namespace LBM
 
                 const scalar_t feq = VelocitySet::f_eq<Q>(d.rho[idx3], uu, cu);
 
-                d.f[device::global4(x, y, z, Q)] = to_pop(feq);
+                d.f[Q * size::cells() + idx3] = to_pop(feq);
             });
 
         device::constexpr_for<0, Phase::VelocitySet::Q()>(
             [&](const auto Q)
             {
-                d.g[device::global4(x, y, z, Q)] = Phase::VelocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
+                d.g[Q * size::cells() + idx3] = Phase::VelocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
             });
     }
 }

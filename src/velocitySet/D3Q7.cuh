@@ -46,10 +46,10 @@ SourceFiles
 
 namespace LBM
 {
-    class d3q7 : private velocitySet
+    class D3Q7 : private velocitySet
     {
     public:
-        __host__ __device__ [[nodiscard]] inline consteval d3q7(){};
+        __host__ __device__ [[nodiscard]] inline consteval D3Q7(){};
 
         __host__ __device__ [[nodiscard]] static inline consteval label_t Q() noexcept
         {
