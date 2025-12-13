@@ -219,7 +219,7 @@ namespace sponge
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t P_gain() noexcept
     {
-        return static_cast<scalar_t>(3);
+        return static_cast<scalar_t>(-3);
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval int sponge_cells() noexcept
@@ -258,39 +258,54 @@ namespace relaxation
         return static_cast<scalar_t>((static_cast<double>(physics::u_ref) * static_cast<double>(mesh::diam)) / static_cast<double>(physics::reynolds));
     }
 
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t tau_ref() noexcept
+    {
+        return static_cast<scalar_t>(0.5) + static_cast<scalar_t>(3) * visc_ref();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t tau_zmin() noexcept
+    {
+        return static_cast<scalar_t>(0.5) + static_cast<scalar_t>(3) * visc_ref();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t tau_zmax() noexcept
+    {
+        return static_cast<scalar_t>(0.5) + static_cast<scalar_t>(3) * visc_ref() * (static_cast<scalar_t>(1) + sponge::K_gain());
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t tau_delta() noexcept
+    {
+        return tau_zmax() - tau_ref();
+    }
+
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_ref() noexcept
     {
-        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(3.0) * static_cast<double>(visc_ref())));
+        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(tau_ref()));
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_zmin() noexcept
     {
-        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(3) * static_cast<double>(visc_ref())));
+        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(tau_zmin()));
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_zmax() noexcept
     {
-        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(3) * static_cast<double>(visc_ref()) * (static_cast<double>(sponge::K_gain()) + static_cast<double>(1))));
+        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(tau_zmax()));
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_ref() noexcept
     {
-        return static_cast<scalar_t>(1) - static_cast<scalar_t>(omega_ref());
+        return static_cast<scalar_t>(1) - omega_ref();
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_zmin() noexcept
     {
-        return static_cast<scalar_t>(1) - static_cast<scalar_t>(omega_ref());
+        return static_cast<scalar_t>(1) - omega_zmin();
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_zmax() noexcept
     {
-        return static_cast<scalar_t>(1) - static_cast<scalar_t>(omega_zmax());
-    }
-
-    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_delta() noexcept
-    {
-        return static_cast<scalar_t>(omega_zmax()) - static_cast<scalar_t>(omega_ref());
+        return static_cast<scalar_t>(1) - omega_zmax();
     }
 
 #elif defined(DROPLET)
@@ -302,12 +317,12 @@ namespace relaxation
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_ref() noexcept
     {
-        return static_cast<scalar_t>(1) - static_cast<scalar_t>(omega_ref());
+        return static_cast<scalar_t>(1) - omega_ref();
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_delta() noexcept
     {
-        return static_cast<scalar_t>(omega_ref()) - static_cast<scalar_t>(omega_ref());
+        return omega_ref() - omega_ref();
     }
 
 #endif

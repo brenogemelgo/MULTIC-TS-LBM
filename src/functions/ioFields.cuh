@@ -67,19 +67,17 @@ namespace host
         Ffy,
         Ffz,
         Avg_phi,
+        Avg_ux,
+        Avg_uy,
         Avg_uz,
-        Avg_umag,
+        Avg_phi2,
+        Avg_ind,
         Avg_uxux,
         Avg_uyuy,
         Avg_uzuz,
         Avg_uxuy,
         Avg_uxuz,
         Avg_uyuz,
-        Umag,
-        K,
-        Q_dyn,
-        Vort,
-        Q_crit
     };
 
     enum class FieldDumpShape : std::uint8_t
@@ -141,10 +139,16 @@ namespace host
 
         case FieldID::Avg_phi:
             return fields.avg_phi;
+        case FieldID::Avg_ux:
+            return fields.avg_ux;
+        case FieldID::Avg_uy:
+            return fields.avg_uy;
         case FieldID::Avg_uz:
             return fields.avg_uz;
-        case FieldID::Avg_umag:
-            return fields.avg_umag;
+        case FieldID::Avg_phi2:
+            return fields.avg_phi2;
+        case FieldID::Avg_ind:
+            return fields.avg_ind;
 
 #endif
 
@@ -162,26 +166,6 @@ namespace host
             return fields.avg_uxuz;
         case FieldID::Avg_uyuz:
             return fields.avg_uyuz;
-
-#endif
-
-#if D_INSTANTANEOUS
-
-        case FieldID::Umag:
-            return fields.umag;
-        case FieldID::K:
-            return fields.k;
-        case FieldID::Q_dyn:
-            return fields.q_dyn;
-
-#endif
-
-#if D_GRADIENTS
-
-        case FieldID::Vort:
-            return fields.vort;
-        case FieldID::Q_crit:
-            return fields.q_crit;
 
 #endif
 

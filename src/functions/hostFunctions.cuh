@@ -100,31 +100,23 @@ namespace host
 
     __host__ [[gnu::cold]] static inline void printDiagnostics(const std::string &VELOCITY_SET) noexcept
     {
-        const std::uint64_t ncells = static_cast<uint64_t>(mesh::nx) * static_cast<uint64_t>(mesh::ny) * static_cast<uint64_t>(mesh::nz);
+        const double nu = static_cast<double>(physics::u_ref) * static_cast<double>(mesh::diam) / static_cast<double>(physics::reynolds);
+        const double Ma = static_cast<double>(physics::u_ref) * static_cast<double>(LBM::VelocitySet::as2());
+        const double tau = static_cast<double>(0.5) + static_cast<double>(nu) * static_cast<double>(LBM::VelocitySet::as2());
 
-        const double U = static_cast<double>(physics::u_ref);
-        const double Re = static_cast<double>(physics::reynolds);
-        const double D = static_cast<double>(mesh::diam);
-
-        const double nu = U * D / Re;
-        const double cs2 = static_cast<double>(LBM::VelocitySet::cs2());
-        const double Ma = U / cs2;
-        const double tau = 0.5 + nu / cs2;
-
-        std::printf("\n");
-        std::printf("-----------------------------------------------------------------------------\n");
-        std::printf("SIMULATION INFO\n");
-        std::printf("  Velocity set:       %s\n", VELOCITY_SET.c_str());
-        std::printf("  Reference velocity: %.9g\n", U);
-        std::printf("  Reynolds number:    %.9g\n", Re);
-        std::printf("  Weber number:       %.9g\n", static_cast<double>(physics::weber));
-        std::printf("  Domain size:        NX=%u, NY=%u, NZ=%u\n", mesh::nx, mesh::ny, mesh::nz);
-        std::printf("  Cells:              %llu\n", static_cast<unsigned long long>(ncells));
-        std::printf("  Diameter:           D=%u\n", mesh::diam);
-        std::printf("  Mach number:        %.9g\n", Ma);
-        std::printf("  Tau (est.):         %.9g\n", tau);
-        std::printf("-----------------------------------------------------------------------------\n\n");
-        std::fflush(stdout);
+        std::cout << "\n---------------------------- SIMULATION METADATA ----------------------------\n"
+                  << "Velocity set:       " << VELOCITY_SET << '\n'
+                  << "Reference velocity: " << physics::u_ref << '\n'
+                  << "Reynolds number:    " << physics::reynolds << '\n'
+                  << "Weber number:       " << physics::weber << '\n'
+                  << "NX:                 " << mesh::nx << '\n'
+                  << "NY:                 " << mesh::ny << '\n'
+                  << "NZ:                 " << mesh::nz << '\n'
+                  << "Diameter:           " << mesh::diam << '\n'
+                  << "Cells:              " << size::cells() << '\n'
+                  << "Mach:               " << Ma << '\n'
+                  << "Tau:                " << tau << '\n'
+                  << "-----------------------------------------------------------------------------\n\n";
     }
 
     template <const size_t SIZE = size::cells()>
@@ -231,8 +223,11 @@ namespace host
 #if D_TIMEAVG
 
         checkCudaErrors(cudaMalloc(&fields.avg_phi, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_ux, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_uy, SIZE));
         checkCudaErrors(cudaMalloc(&fields.avg_uz, SIZE));
-        checkCudaErrors(cudaMalloc(&fields.avg_umag, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_phi2, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.avg_ind, SIZE));
 
 #endif
 
@@ -244,21 +239,6 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.avg_uxuy, SIZE));
         checkCudaErrors(cudaMalloc(&fields.avg_uxuz, SIZE));
         checkCudaErrors(cudaMalloc(&fields.avg_uyuz, SIZE));
-
-#endif
-
-#if D_INSTANTANEOUS
-
-        checkCudaErrors(cudaMalloc(&fields.umag, SIZE));
-        checkCudaErrors(cudaMalloc(&fields.k, SIZE));
-        checkCudaErrors(cudaMalloc(&fields.q_dyn, SIZE));
-
-#endif
-
-#if D_GRADIENTS
-
-        checkCudaErrors(cudaMalloc(&fields.vort, SIZE));
-        checkCudaErrors(cudaMalloc(&fields.q_crit, SIZE));
 
 #endif
 
@@ -285,8 +265,11 @@ namespace host
 #if D_TIMEAVG
 
         checkCudaErrors(cudaMemset(fields.avg_phi, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_ux, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_uy, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.avg_uz, 0, SIZE));
-        checkCudaErrors(cudaMemset(fields.avg_umag, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_phi2, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.avg_ind, 0, SIZE));
 
 #endif
 
@@ -298,21 +281,6 @@ namespace host
         checkCudaErrors(cudaMemset(fields.avg_uxuy, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.avg_uxuz, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.avg_uyuz, 0, SIZE));
-
-#endif
-
-#if D_INSTANTANEOUS
-
-        checkCudaErrors(cudaMemset(fields.umag, 0, SIZE));
-        checkCudaErrors(cudaMemset(fields.k, 0, SIZE));
-        checkCudaErrors(cudaMemset(fields.q_dyn, 0, SIZE));
-
-#endif
-
-#if D_GRADIENTS
-
-        checkCudaErrors(cudaMemset(fields.vort, 0, SIZE));
-        checkCudaErrors(cudaMemset(fields.q_crit, 0, SIZE));
 
 #endif
 

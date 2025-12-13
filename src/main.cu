@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
         LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
 
         // Derived fields
-#if D_TIMEAVG || D_REYNOLDS_MOMENTS || D_INSTANTANEOUS || D_GRADIENTS
+#if D_TIMEAVG || D_REYNOLDS_MOMENTS
         Derived::launchAllDerived<grid3D, block3D, dynamic>(queue, fields, STEP);
 #endif
 

@@ -44,8 +44,6 @@ SourceFiles
 
 #include "timeAverage.cuh"
 #include "reynoldsMoments.cuh"
-#include "instantaneous.cuh"
-#include "gradients.cuh"
 
 namespace Derived
 {
@@ -59,12 +57,6 @@ namespace Derived
 #endif
 #if D_REYNOLDS_MOMENTS
         fields.insert(fields.end(), Reynolds::fields.begin(), Reynolds::fields.end());
-#endif
-#if D_INSTANTANEOUS
-        fields.insert(fields.end(), Instant::fields.begin(), Instant::fields.end());
-#endif
-#if D_GRADIENTS
-        fields.insert(fields.end(), Gradients::fields.begin(), Gradients::fields.end());
 #endif
         return fields;
     }
@@ -81,12 +73,6 @@ namespace Derived
 #if D_REYNOLDS_MOMENTS
         Reynolds::launch<grid, block, dynamic>(queue, d, step);
 #endif
-#if D_INSTANTANEOUS
-        Instant::launch<grid, block, dynamic>(queue, d);
-#endif
-#if D_GRADIENTS
-        Gradients::launch<grid, block, dynamic>(queue, d);
-#endif
     }
 
     __host__ static inline void freeAll(LBMFields &d) noexcept
@@ -96,12 +82,6 @@ namespace Derived
 #endif
 #if D_REYNOLDS_MOMENTS
         Reynolds::free(d);
-#endif
-#if D_INSTANTANEOUS
-        Instant::free(d);
-#endif
-#if D_GRADIENTS
-        Gradients::free(d);
 #endif
     }
 }

@@ -100,7 +100,7 @@ namespace host
         const std::filesystem::path vtsPath = std::filesystem::path(SIM_DIR) / vtsFileName;
 
         std::vector<detail::AppendedArray> arrays;
-        arrays.reserve(fieldsCfg.size() + 1); // N -> fieldsCfg.size()
+        arrays.reserve(fieldsCfg.size() + 1);
 
         uint64_t currentOffset = 0;
         constexpr uint64_t headerSize = sizeof(std::uint32_t);

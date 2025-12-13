@@ -135,9 +135,10 @@ namespace device
         {
             const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
             const scalar_t s = math::min(math::max((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
-            const scalar_t s2 = s * s;
-            const scalar_t ramp = s2 * s;
-            return fmaf(ramp, relaxation::omega_delta(), relaxation::omega_ref());
+            const scalar_t ramp = s * s * s;
+            const scalar_t tau = ramp * relaxation::tau_delta() + relaxation::tau_ref();
+
+            return static_cast<scalar_t>(1) / tau;
         }
         else if constexpr (LBM::FlowCase::droplet_case())
         {

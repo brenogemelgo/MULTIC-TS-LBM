@@ -67,8 +67,9 @@ namespace LBM
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
+        const scalar_t ind = d.ind[idx3];
 
-        const scalar_t umag = math::sqrt(ux * ux + uy * uy + uz * uz);
+        const scalar_t phi2 = phi * phi;
 
         auto update = [t] __device__(scalar_t old_val, scalar_t new_val)
         {
@@ -76,8 +77,11 @@ namespace LBM
         };
 
         d.avg_phi[idx3] = update(d.avg_phi[idx3], phi);
+        d.avg_ux[idx3] = update(d.avg_ux[idx3], ux);
+        d.avg_uy[idx3] = update(d.avg_uy[idx3], uy);
         d.avg_uz[idx3] = update(d.avg_uz[idx3], uz);
-        d.avg_umag[idx3] = update(d.avg_umag[idx3], umag);
+        d.avg_phi2[idx3] = update(d.avg_phi2[idx3], phi2);
+        d.avg_ind[idx3] = update(d.avg_ind[idx3], ind);
     }
 }
 
@@ -92,10 +96,13 @@ namespace Derived
             false;
 #endif
 
-        constexpr std::array<host::FieldConfig, 3> fields{{
+        constexpr std::array<host::FieldConfig, 6> fields{{
             {host::FieldID::Avg_phi, "avg_phi", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_ux, "avg_ux", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_uy, "avg_uy", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::Avg_uz, "avg_uz", host::FieldDumpShape::Grid3D, true},
-            {host::FieldID::Avg_umag, "avg_umag", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_phi2, "avg_phi2", host::FieldDumpShape::Grid3D, true},
+            {host::FieldID::Avg_ind, "avg_ind", host::FieldDumpShape::Grid3D, true},
         }};
 
         template <dim3 grid, dim3 block, size_t dynamic>
@@ -113,8 +120,11 @@ namespace Derived
         {
 #if D_TIMEAVG
             cudaFree(d.avg_phi);
+            cudaFree(d.avg_ux);
+            cudaFree(d.avg_uy);
             cudaFree(d.avg_uz);
-            cudaFree(d.avg_umag);
+            cudaFree(d.avg_phi2);
+            cudaFree(d.avg_ind);
 #endif
         }
     }
