@@ -92,11 +92,11 @@ static constexpr int NSTEPS = 0;
 
 namespace mesh
 {
-    static constexpr label_t res = 64;
+    static constexpr label_t res = 128;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res * 2;
-    static constexpr int diam = 10;
+    static constexpr int diam = 12;
     static constexpr int radius = diam / 2;
 }
 
