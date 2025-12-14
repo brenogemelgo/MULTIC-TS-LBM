@@ -132,7 +132,25 @@ namespace device
         asm volatile("prefetch.global.L2 [%0];" ::"l"(ptr));
     }
 
-    __device__ [[nodiscard]] static inline scalar_t cubic_sponge(const label_t z) noexcept
+    // __device__ [[nodiscard]] static inline scalar_t visc_sponge(const label_t z) noexcept
+    // {
+    //     if constexpr (LBM::FlowCase::jet_case())
+    //     {
+    //         const scalar_t zn = static_cast<scalar_t>(z) * sponge::inv_nz_m1();
+    //         const scalar_t s = math::min(math::max((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
+    //         const scalar_t ramp = s * s * s;
+
+    //         const scalar_t nu_s = relaxation::visc_ref() * math::fma(sponge::K_gain(), ramp, static_cast<scalar_t>(1));
+
+    //         return relaxation::omega_from_nu(nu_s);
+    //     }
+    //     else if constexpr (LBM::FlowCase::droplet_case())
+    //     {
+    //         return 0;
+    //     }
+    // }
+
+    __device__ [[nodiscard]] static inline scalar_t omega_sponge(const label_t z) noexcept
     {
         if constexpr (LBM::FlowCase::jet_case())
         {
@@ -140,9 +158,7 @@ namespace device
             const scalar_t s = math::min(math::max((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
             const scalar_t ramp = s * s * s;
 
-            const scalar_t nu_s = relaxation::visc_ref() * math::fma(K, ramp, static_cast<scalar_t>(1));
-
-            return omega_from_nu(nu_s);
+            return math::fma(ramp, relaxation::omega_delta(), relaxation::omega_ref());
         }
         else if constexpr (LBM::FlowCase::droplet_case())
         {

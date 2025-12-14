@@ -244,11 +244,6 @@ namespace sponge
         return static_cast<scalar_t>(100);
     }
 
-    __host__ __device__ [[nodiscard]] static inline consteval scalar_t P_gain() noexcept
-    {
-        return static_cast<scalar_t>(-3);
-    }
-
     __host__ __device__ [[nodiscard]] static inline consteval int sponge_cells() noexcept
     {
         return static_cast<int>(mesh::nz / 12);
@@ -287,7 +282,7 @@ namespace relaxation
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_from_nu(const scalar_t nu) noexcept
     {
-        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(3.0) * static_cast<double>(nu)));
+        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(3) * static_cast<double>(nu)));
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_ref() noexcept
@@ -303,6 +298,11 @@ namespace relaxation
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_zmax() noexcept
     {
         return omega_from_nu(visc_ref() * (static_cast<scalar_t>(1) + sponge::K_gain()));
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_delta() noexcept
+    {
+        return omega_zmax() - omega_zmin();
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_ref() noexcept

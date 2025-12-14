@@ -108,6 +108,7 @@ namespace LBM
         scalar_t pxy = static_cast<scalar_t>(0), pxz = static_cast<scalar_t>(0), pyz = static_cast<scalar_t>(0);
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
+
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
@@ -168,7 +169,7 @@ namespace LBM
 
         if constexpr (FlowCase::jet_case())
         {
-            omco = static_cast<scalar_t>(1) - device::cubic_sponge(z);
+            omco = static_cast<scalar_t>(1) - device::omega_sponge(z);
         }
         else
         {
@@ -176,6 +177,7 @@ namespace LBM
         }
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
+
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
