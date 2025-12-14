@@ -322,9 +322,29 @@ namespace relaxation
 
 #elif defined(DROPLET)
 
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_from_nu(const scalar_t nu) noexcept
+    {
+        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(LBM::VelocitySet::as2()) * static_cast<double>(nu)));
+    }
+
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_ref() noexcept
     {
-        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(3) * static_cast<double>(physics::visc_ref)));
+        return omega_from_nu(physics::visc_ref);
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_zmin() noexcept
+    {
+        return omega_ref();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_zmax() noexcept
+    {
+        return omega_ref();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_delta() noexcept
+    {
+        return omega_zmax() - omega_zmin();
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_ref() noexcept
@@ -332,9 +352,14 @@ namespace relaxation
         return static_cast<scalar_t>(1) - omega_ref();
     }
 
-    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_delta() noexcept
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_zmin() noexcept
     {
-        return omega_ref() - omega_ref();
+        return static_cast<scalar_t>(1) - omega_zmin();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_zmax() noexcept
+    {
+        return static_cast<scalar_t>(1) - omega_zmax();
     }
 
 #endif

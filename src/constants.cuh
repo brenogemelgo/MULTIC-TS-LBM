@@ -67,8 +67,8 @@ namespace Phase
     using VelocitySet = LBM::D3Q7;
 }
 
-#define RUN_MODE
-// #define SAMPLE_MODE
+// #define RUN_MODE
+#define SAMPLE_MODE
 // #define PROFILE_MODE
 
 #if defined(RUN_MODE)
@@ -79,7 +79,7 @@ static constexpr int NSTEPS = 100000;
 #elif defined(SAMPLE_MODE)
 
 static constexpr int MACRO_SAVE = 100;
-static constexpr int NSTEPS = 1000;
+static constexpr int NSTEPS = 10000;
 
 #elif defined(PROFILE_MODE)
 
@@ -106,14 +106,16 @@ namespace physics
     static constexpr int reynolds = 5000;
     static constexpr int weber = 500;
     static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;
-    static constexpr scalar_t gamma = static_cast<scalar_t>(1);
+
+    static constexpr scalar_t width = static_cast<scalar_t>(1);
+    static constexpr scalar_t gamma = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(width));
 }
 
 #elif defined(DROPLET)
 
 namespace mesh
 {
-    static constexpr label_t res = 128;
+    static constexpr label_t res = 64;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res;
@@ -128,7 +130,9 @@ namespace physics
     static constexpr int reynolds = 0;
     static constexpr int weber = 0;
     static constexpr scalar_t sigma = static_cast<scalar_t>(0.1);
-    static constexpr scalar_t gamma = static_cast<scalar_t>(1);
+
+    static constexpr scalar_t width = static_cast<scalar_t>(2);
+    static constexpr scalar_t gamma = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(width));
 
     static constexpr scalar_t tau = static_cast<scalar_t>(0.55);
     static constexpr scalar_t visc_ref = (tau - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();

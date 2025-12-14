@@ -64,6 +64,8 @@ SourceFiles
 #include <future>
 #include <queue>
 #include <condition_variable>
+#include <math.h>
+#include <stdlib.h>
 
 namespace block
 {
