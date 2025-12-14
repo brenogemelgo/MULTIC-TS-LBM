@@ -196,39 +196,6 @@ namespace LBM
             return (static_cast<scalar_t>(seed) + static_cast<scalar_t>(0.5)) * inv2_32;
         }
 
-        // __device__ static inline void box_muller_z1z2(
-        //     scalar_t rrx,
-        //     scalar_t rry,
-        //     scalar_t &z1,
-        //     scalar_t &z2) noexcept
-        // {
-        //     rrx = math::max(rrx, static_cast<scalar_t>(1e-12));
-        //     const scalar_t r = math::sqrt(-static_cast<scalar_t>(2) * math::log(rrx));
-        //     const scalar_t theta = math::two_pi() * rry;
-        //     scalar_t s, c;
-        //     math::sincos(theta, &s, &c);
-        //     z1 = r * c;
-        //     z2 = r * s;
-        // }
-
-        // template <label_t NOISE_PERIOD = 10>
-        // __device__ [[nodiscard]] static inline constexpr scalar_t white_noise_z1z2(
-        //     const label_t x,
-        //     const label_t y,
-        //     const label_t STEP) noexcept
-        // {
-        //     const label_t call_idx = STEP / NOISE_PERIOD;
-        //     const label_t pair_idx = call_idx >> 1;
-        //     const bool use_second = (call_idx & 1) != 0;
-        //     const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (pair_idx * 0xC2B2AE35u);
-        //     const scalar_t rrx = uniform01(hash32(base));
-        //     const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
-        //     scalar_t z1, z2;
-        //     box_muller(rrx, rry, z1, z2);
-
-        //     return use_second ? z2 : z1;
-        // }
-
         __device__ [[nodiscard]] static inline scalar_t box_muller(
             scalar_t rrx,
             const scalar_t rry) noexcept
@@ -239,20 +206,6 @@ namespace LBM
 
             return r * math::cos(theta);
         }
-
-        // template <label_t NOISE_PERIOD = 10>
-        // __device__ [[nodiscard]] static inline constexpr scalar_t white_noise(
-        //     const label_t x,
-        //     const label_t y,
-        //     const label_t STEP) noexcept
-        // {
-        //     const label_t t = STEP / NOISE_PERIOD;
-        //     const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (t * 0xC2B2AE35u);
-        //     const scalar_t rrx = uniform01(hash32(base));
-        //     const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
-
-        //     return box_muller(rrx, rry);
-        // }
 
         template <label_t NOISE_PERIOD = 10, uint32_t SALT = 0u>
         __device__ [[nodiscard]] static inline constexpr scalar_t white_noise(
