@@ -148,7 +148,11 @@ namespace LBM
         device::constexpr_for<0, Phase::VelocitySet::Q()>(
             [&](const auto Q)
             {
-                d.g[Q * size::cells() + idx3] = Phase::VelocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
+                const label_t xx = x + static_cast<label_t>(Phase::VelocitySet::cx<Q>());
+                const label_t yy = y + static_cast<label_t>(Phase::VelocitySet::cy<Q>());
+                const label_t zz = z + static_cast<label_t>(Phase::VelocitySet::cz<Q>());
+
+                d.g[device::global4(xx, yy, zz, Q)] = Phase::VelocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
             });
     }
 }

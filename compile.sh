@@ -68,8 +68,8 @@ nvcc -O3 --restrict \
      -D${VS_MACRO} -D${FLOW_CASE} \
      -DENABLE_FP16=1 \
      -DBENCHMARK=0 \
-     -DD_TIMEAVG=0 \
-     -DD_REYNOLDS_MOMENTS=0 \
+     -DTIME_AVERAGE=0 \
+     -DREYNOLDS_MOMENTS=0 \
      -o "${EXECUTABLE}"
 
 echo "Compilation completed successfully: ${EXECUTABLE}"

@@ -106,9 +106,9 @@ int main(int argc, char *argv[])
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
     // Base fields (always saved)
-    constexpr std::array<host::FieldConfig, 3> BASE_FIELDS{{
-        {host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
-        {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
+    constexpr std::array<host::FieldConfig, 1> BASE_FIELDS{{
+        // {host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
+        // {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
         {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true},
     }};
 
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
         LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
 
         // Derived fields
-#if D_TIMEAVG || D_REYNOLDS_MOMENTS
+#if TIME_AVERAGE || REYNOLDS_MOMENTS
         Derived::launchAllDerived<grid3D, block3D, dynamic>(queue, fields, STEP);
 #endif
 

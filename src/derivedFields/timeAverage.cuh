@@ -44,7 +44,7 @@ SourceFiles
 
 #include "functions/ioFields.cuh"
 
-#if D_TIMEAVG
+#if TIME_AVERAGE
 
 namespace LBM
 {
@@ -67,9 +67,6 @@ namespace LBM
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
-        const scalar_t ind = d.ind[idx3];
-
-        const scalar_t phi2 = phi * phi;
 
         auto update = [t] __device__(scalar_t old_val, scalar_t new_val)
         {
@@ -80,8 +77,6 @@ namespace LBM
         d.avg_ux[idx3] = update(d.avg_ux[idx3], ux);
         d.avg_uy[idx3] = update(d.avg_uy[idx3], uy);
         d.avg_uz[idx3] = update(d.avg_uz[idx3], uz);
-        d.avg_phi2[idx3] = update(d.avg_phi2[idx3], phi2);
-        d.avg_ind[idx3] = update(d.avg_ind[idx3], ind);
     }
 }
 
@@ -89,13 +84,11 @@ namespace Derived
 {
     namespace TimeAvg
     {
-        constexpr std::array<host::FieldConfig, 6> fields{{
+        constexpr std::array<host::FieldConfig, 4> fields{{
             {host::FieldID::Avg_phi, "avg_phi", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::Avg_ux, "avg_ux", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::Avg_uy, "avg_uy", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::Avg_uz, "avg_uz", host::FieldDumpShape::Grid3D, true},
-            {host::FieldID::Avg_phi2, "avg_phi2", host::FieldDumpShape::Grid3D, true},
-            {host::FieldID::Avg_ind, "avg_ind", host::FieldDumpShape::Grid3D, true},
         }};
 
         template <dim3 grid, dim3 block, size_t dynamic>
@@ -104,20 +97,18 @@ namespace Derived
             LBMFields d,
             const label_t t) noexcept
         {
-#if D_TIMEAVG
+#if TIME_AVERAGE
             LBM::timeAverage<<<grid, block, dynamic, queue>>>(d, t + 1);
 #endif
         }
 
         __host__ static inline void free(LBMFields &d)
         {
-#if D_TIMEAVG
+#if TIME_AVERAGE
             cudaFree(d.avg_phi);
             cudaFree(d.avg_ux);
             cudaFree(d.avg_uy);
             cudaFree(d.avg_uz);
-            cudaFree(d.avg_phi2);
-            cudaFree(d.avg_ind);
 #endif
         }
     }

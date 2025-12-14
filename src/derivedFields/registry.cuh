@@ -51,11 +51,11 @@ namespace Derived
     __host__ [[nodiscard]] static inline std::vector<host::FieldConfig> makeOutputFields()
     {
         std::vector<host::FieldConfig> fields;
-        fields.reserve(6 + 6); // rough upper bound
-#if D_TIMEAVG
+        fields.reserve(4 + 6); // 4 time averages + 6 reynolds moments
+#if TIME_AVERAGE
         fields.insert(fields.end(), TimeAvg::fields.begin(), TimeAvg::fields.end());
 #endif
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
         fields.insert(fields.end(), Reynolds::fields.begin(), Reynolds::fields.end());
 #endif
 
@@ -68,20 +68,20 @@ namespace Derived
         LBMFields d,
         const label_t step) noexcept
     {
-#if D_TIMEAVG
+#if TIME_AVERAGE
         TimeAvg::launch<grid, block, dynamic>(queue, d, step);
 #endif
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
         Reynolds::launch<grid, block, dynamic>(queue, d, step);
 #endif
     }
 
     __host__ static inline void freeAll(LBMFields &d) noexcept
     {
-#if D_TIMEAVG
+#if TIME_AVERAGE
         TimeAvg::free(d);
 #endif
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
         Reynolds::free(d);
 #endif
     }

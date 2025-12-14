@@ -70,8 +70,6 @@ namespace host
         Avg_ux,
         Avg_uy,
         Avg_uz,
-        Avg_phi2,
-        Avg_ind,
         Avg_uxux,
         Avg_uyuy,
         Avg_uzuz,
@@ -135,7 +133,7 @@ namespace host
         case FieldID::Ffz:
             return fields.ffz;
 
-#if D_TIMEAVG
+#if TIME_AVERAGE
 
         case FieldID::Avg_phi:
             return fields.avg_phi;
@@ -145,14 +143,10 @@ namespace host
             return fields.avg_uy;
         case FieldID::Avg_uz:
             return fields.avg_uz;
-        case FieldID::Avg_phi2:
-            return fields.avg_phi2;
-        case FieldID::Avg_ind:
-            return fields.avg_ind;
 
 #endif
 
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
 
         case FieldID::Avg_uxux:
             return fields.avg_uxux;

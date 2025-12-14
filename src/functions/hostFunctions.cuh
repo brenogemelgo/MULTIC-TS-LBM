@@ -228,18 +228,16 @@ namespace host
         checkCudaErrors(cudaMalloc(&fields.f, F_DIST_SIZE));
         checkCudaErrors(cudaMalloc(&fields.g, G_DIST_SIZE));
 
-#if D_TIMEAVG
+#if TIME_AVERAGE
 
         checkCudaErrors(cudaMalloc(&fields.avg_phi, SIZE));
         checkCudaErrors(cudaMalloc(&fields.avg_ux, SIZE));
         checkCudaErrors(cudaMalloc(&fields.avg_uy, SIZE));
         checkCudaErrors(cudaMalloc(&fields.avg_uz, SIZE));
-        checkCudaErrors(cudaMalloc(&fields.avg_phi2, SIZE));
-        checkCudaErrors(cudaMalloc(&fields.avg_ind, SIZE));
 
 #endif
 
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
 
         checkCudaErrors(cudaMalloc(&fields.avg_uxux, SIZE));
         checkCudaErrors(cudaMalloc(&fields.avg_uyuy, SIZE));
@@ -270,18 +268,16 @@ namespace host
         checkCudaErrors(cudaMemset(fields.f, 0, F_DIST_SIZE));
         checkCudaErrors(cudaMemset(fields.g, 0, G_DIST_SIZE));
 
-#if D_TIMEAVG
+#if TIME_AVERAGE
 
         checkCudaErrors(cudaMemset(fields.avg_phi, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.avg_ux, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.avg_uy, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.avg_uz, 0, SIZE));
-        checkCudaErrors(cudaMemset(fields.avg_phi2, 0, SIZE));
-        checkCudaErrors(cudaMemset(fields.avg_ind, 0, SIZE));
 
 #endif
 
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
 
         checkCudaErrors(cudaMemset(fields.avg_uxux, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.avg_uyuy, 0, SIZE));

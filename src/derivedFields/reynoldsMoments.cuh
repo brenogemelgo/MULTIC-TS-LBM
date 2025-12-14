@@ -44,7 +44,7 @@ SourceFiles
 
 #include "functions/ioFields.cuh"
 
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
 
 namespace LBM
 {
@@ -108,14 +108,14 @@ namespace Derived
             LBMFields d,
             const label_t t) noexcept
         {
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
             LBM::reynoldsMomentsAverage<<<grid, block, dynamic, queue>>>(d, t + 1);
 #endif
         }
 
         __host__ static inline void free(LBMFields &d)
         {
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
             cudaFree(d.avg_uxux);
             cudaFree(d.avg_uyuy);
             cudaFree(d.avg_uzuz);

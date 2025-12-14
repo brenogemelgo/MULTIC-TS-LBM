@@ -73,13 +73,16 @@ namespace LBM
             const label_t idx3_bnd = device::global3(x, y, 0);
             const label_t idx3_zp1 = device::global3(x, y, 1);
 
-            const scalar_t z1 = white_noise<10>(x, y, t);
+            const scalar_t sigma_u = static_cast<scalar_t>(0.08) * physics::u_ref;
+
+            const scalar_t zx = white_noise<10, 0xA341316Cu>(x, y, t);
+            const scalar_t zy = white_noise<10, 0xC8013EA4u>(x, y, t);
 
             const scalar_t rho = static_cast<scalar_t>(1);
             const scalar_t phi = static_cast<scalar_t>(1);
-            const scalar_t ux = static_cast<scalar_t>(0);
-            const scalar_t uy = static_cast<scalar_t>(0);
-            const scalar_t uz = physics::u_ref + static_cast<scalar_t>(0.004) * z1;
+            const scalar_t ux = sigma_u * zx;
+            const scalar_t uy = sigma_u * zy;
+            const scalar_t uz = physics::u_ref;
 
             d.rho[idx3_bnd] = rho;
             d.phi[idx3_bnd] = phi;
@@ -175,7 +178,7 @@ namespace LBM
         }
 
     private:
-        __device__ [[nodiscard]] static inline constexpr uint32_t hash32(label_t x) noexcept
+        __device__ [[nodiscard]] static inline constexpr uint32_t hash32(uint32_t x) noexcept
         {
             x ^= x >> 16;
             x *= 0x7FEB352Du;
@@ -237,14 +240,29 @@ namespace LBM
             return r * math::cos(theta);
         }
 
-        template <label_t NOISE_PERIOD = 10>
+        // template <label_t NOISE_PERIOD = 10>
+        // __device__ [[nodiscard]] static inline constexpr scalar_t white_noise(
+        //     const label_t x,
+        //     const label_t y,
+        //     const label_t STEP) noexcept
+        // {
+        //     const label_t t = STEP / NOISE_PERIOD;
+        //     const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (t * 0xC2B2AE35u);
+        //     const scalar_t rrx = uniform01(hash32(base));
+        //     const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
+
+        //     return box_muller(rrx, rry);
+        // }
+
+        template <label_t NOISE_PERIOD = 10, uint32_t SALT = 0u>
         __device__ [[nodiscard]] static inline constexpr scalar_t white_noise(
             const label_t x,
             const label_t y,
             const label_t STEP) noexcept
         {
             const label_t t = STEP / NOISE_PERIOD;
-            const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (t * 0xC2B2AE35u);
+            const uint32_t base = (0x9E3779B9u ^ SALT) ^ static_cast<uint32_t>(x) ^ (static_cast<uint32_t>(y) * 0x85EBCA6Bu) ^ (static_cast<uint32_t>(t) * 0xC2B2AE35u);
+
             const scalar_t rrx = uniform01(hash32(base));
             const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
 

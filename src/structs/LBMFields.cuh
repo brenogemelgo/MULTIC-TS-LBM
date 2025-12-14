@@ -64,18 +64,16 @@ struct LBMFields
     pop_t *f;
     scalar_t *g;
 
-#if D_TIMEAVG
+#if TIME_AVERAGE
 
     scalar_t *avg_phi; // phi time average
     scalar_t *avg_ux;  // x velocity time average
     scalar_t *avg_uy;  // y velocity time average
     scalar_t *avg_uz;  // z velocity time average
-    scalar_t *avg_phi2;
-    scalar_t *avg_ind;
 
 #endif
 
-#if D_REYNOLDS_MOMENTS
+#if REYNOLDS_MOMENTS
 
     scalar_t *avg_uxux; // xx
     scalar_t *avg_uyuy; // yy

@@ -282,7 +282,7 @@ namespace relaxation
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_from_nu(const scalar_t nu) noexcept
     {
-        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(3) * static_cast<double>(nu)));
+        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(LBM::VelocitySet::as2()) * static_cast<double>(nu)));
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_ref() noexcept
