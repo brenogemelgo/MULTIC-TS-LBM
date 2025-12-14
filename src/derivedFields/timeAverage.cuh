@@ -89,13 +89,6 @@ namespace Derived
 {
     namespace TimeAvg
     {
-        constexpr bool enabled =
-#if D_TIMEAVG
-            true;
-#else
-            false;
-#endif
-
         constexpr std::array<host::FieldConfig, 6> fields{{
             {host::FieldID::Avg_phi, "avg_phi", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::Avg_ux, "avg_ux", host::FieldDumpShape::Grid3D, true},

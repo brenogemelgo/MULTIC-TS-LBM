@@ -73,17 +73,21 @@ namespace LBM
             const label_t idx3_bnd = device::global3(x, y, 0);
             const label_t idx3_zp1 = device::global3(x, y, 1);
 
-            // const scalar_t z = gaussian_noise<1>(x, y, t);
-            // const scalar_t uz = physics::u_ref + static_cast<scalar_t>(0.004) * z;
-            const scalar_t uz = physics::u_ref;
+            const scalar_t z1 = white_noise<10>(x, y, t);
 
-            d.rho[idx3_bnd] = static_cast<scalar_t>(1);
-            d.phi[idx3_bnd] = static_cast<scalar_t>(1);
-            d.ux[idx3_bnd] = static_cast<scalar_t>(0);
-            d.uy[idx3_bnd] = static_cast<scalar_t>(0);
+            const scalar_t rho = static_cast<scalar_t>(1);
+            const scalar_t phi = static_cast<scalar_t>(1);
+            const scalar_t ux = static_cast<scalar_t>(0);
+            const scalar_t uy = static_cast<scalar_t>(0);
+            const scalar_t uz = physics::u_ref + static_cast<scalar_t>(0.004) * z1;
+
+            d.rho[idx3_bnd] = rho;
+            d.phi[idx3_bnd] = phi;
+            d.ux[idx3_bnd] = ux;
+            d.uy[idx3_bnd] = uy;
             d.uz[idx3_bnd] = uz;
 
-            const scalar_t P = static_cast<scalar_t>(1) + VelocitySet::as2() * uz + VelocitySet::as2() * uz * uz;
+            const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
             device::constexpr_for<0, VelocitySet::Q()>(
                 [&](const auto Q)
@@ -96,17 +100,22 @@ namespace LBM
                         const label_t fluidNode = device::global3(xx, yy, 1);
 
                         constexpr scalar_t w = VelocitySet::w<Q>();
+                        constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::cx<Q>());
+                        constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::cy<Q>());
+                        constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::cz<Q>());
 
-                        const scalar_t feq = w * P - w;
+                        const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
+
+                        const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                         const scalar_t fneq = VelocitySet::f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
                                                                     d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
                                                                     d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
 
-                        d.f[Q * size::cells() + fluidNode] = to_pop(feq + relaxation::omco_ref() * fneq);
+                        d.f[Q * size::cells() + fluidNode] = to_pop(feq + relaxation::omco_zmin() * fneq);
                     }
                 });
 
-            d.g[5 * size::cells() + idx3_zp1] = Phase::VelocitySet::w<5>() * (static_cast<scalar_t>(1) + Phase::VelocitySet::as2() * uz);
+            d.g[5 * size::cells() + idx3_zp1] = Phase::VelocitySet::w<5>() * phi * (static_cast<scalar_t>(1) + Phase::VelocitySet::as2() * uz);
         }
 
         __device__ static inline constexpr void applyOutflow(LBMFields d) noexcept
@@ -173,45 +182,73 @@ namespace LBM
             x ^= x >> 15;
             x *= 0x846CA68Bu;
             x ^= x >> 16;
+
             return x;
         }
 
         __device__ [[nodiscard]] static inline constexpr scalar_t uniform01(const uint32_t seed) noexcept
         {
             const scalar_t inv2_32 = static_cast<scalar_t>(2.3283064365386963e-10);
+
             return (static_cast<scalar_t>(seed) + static_cast<scalar_t>(0.5)) * inv2_32;
         }
 
-        __device__ static inline void box_muller(
+        // __device__ static inline void box_muller_z1z2(
+        //     scalar_t rrx,
+        //     scalar_t rry,
+        //     scalar_t &z1,
+        //     scalar_t &z2) noexcept
+        // {
+        //     rrx = math::max(rrx, static_cast<scalar_t>(1e-12));
+        //     const scalar_t r = math::sqrt(-static_cast<scalar_t>(2) * math::log(rrx));
+        //     const scalar_t theta = math::two_pi() * rry;
+        //     scalar_t s, c;
+        //     math::sincos(theta, &s, &c);
+        //     z1 = r * c;
+        //     z2 = r * s;
+        // }
+
+        // template <label_t NOISE_PERIOD = 10>
+        // __device__ [[nodiscard]] static inline constexpr scalar_t white_noise_z1z2(
+        //     const label_t x,
+        //     const label_t y,
+        //     const label_t STEP) noexcept
+        // {
+        //     const label_t call_idx = STEP / NOISE_PERIOD;
+        //     const label_t pair_idx = call_idx >> 1;
+        //     const bool use_second = (call_idx & 1) != 0;
+        //     const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (pair_idx * 0xC2B2AE35u);
+        //     const scalar_t rrx = uniform01(hash32(base));
+        //     const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
+        //     scalar_t z1, z2;
+        //     box_muller(rrx, rry, z1, z2);
+
+        //     return use_second ? z2 : z1;
+        // }
+
+        __device__ [[nodiscard]] static inline scalar_t box_muller(
             scalar_t rrx,
-            scalar_t rry,
-            scalar_t &z1,
-            scalar_t &z2) noexcept
+            const scalar_t rry) noexcept
         {
             rrx = math::max(rrx, static_cast<scalar_t>(1e-12));
             const scalar_t r = math::sqrt(-static_cast<scalar_t>(2) * math::log(rrx));
             const scalar_t theta = math::two_pi() * rry;
-            scalar_t s, c;
-            math::sincos(theta, &s, &c);
-            z1 = r * c;
-            z2 = r * s;
+
+            return r * math::cos(theta);
         }
 
         template <label_t NOISE_PERIOD = 10>
-        __device__ [[nodiscard]] static inline constexpr scalar_t gaussian_noise(
+        __device__ [[nodiscard]] static inline constexpr scalar_t white_noise(
             const label_t x,
             const label_t y,
             const label_t STEP) noexcept
         {
-            const label_t call_idx = STEP / NOISE_PERIOD;
-            const label_t pair_idx = call_idx >> 1;
-            const bool use_second = (call_idx & 1) != 0;
-            const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (pair_idx * 0xC2B2AE35u);
+            const label_t t = STEP / NOISE_PERIOD;
+            const label_t base = 0x9E3779B9u ^ x ^ (y * 0x85EBCA6Bu) ^ (t * 0xC2B2AE35u);
             const scalar_t rrx = uniform01(hash32(base));
             const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
-            scalar_t z1, z2;
-            box_muller(rrx, rry, z1, z2);
-            return use_second ? z2 : z1;
+
+            return box_muller(rrx, rry);
         }
     };
 }

@@ -91,7 +91,7 @@ namespace host
         FieldID id;
         const char *name;
         FieldDumpShape shape;
-        bool includeInVTS;
+        bool includeInPost;
     };
 
     __host__ [[nodiscard]] static inline scalar_t *getDeviceFieldPointer(const FieldID id) noexcept

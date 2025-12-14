@@ -39,7 +39,8 @@ SourceFiles
 #include "functions/deviceFunctions.cuh"
 #include "functions/hostFunctions.cuh"
 #include "functions/ioFields.cuh"
-#include "functions/vtkWriter.cuh"
+#include "functions/vtsWriter.cuh"
+#include "functions/vtiWriter.cuh"
 #include "cuda/CUDAGraph.cuh"
 #include "initialConditions.cu"
 #include "boundaryConditions.cuh"
@@ -52,8 +53,10 @@ int main(int argc, char *argv[])
     if (argc < 4)
     {
         std::cerr << "Error: Usage: " << argv[0] << " <flow case> <velocity set> <ID>\n";
+
         return 1;
     }
+
     const std::string FLOW_CASE = argv[1];
     const std::string VELOCITY_SET = argv[2];
     const std::string SIM_ID = argv[3];
@@ -118,6 +121,12 @@ int main(int argc, char *argv[])
     OUTPUT_FIELDS.insert(OUTPUT_FIELDS.end(), BASE_FIELDS.begin(), BASE_FIELDS.end());
     OUTPUT_FIELDS.insert(OUTPUT_FIELDS.end(), DERIVED_FIELDS.begin(), DERIVED_FIELDS.end());
 
+    // Ensure post-processing only targets full 3D fields
+    for (auto &cfg : OUTPUT_FIELDS)
+    {
+        cfg.includeInPost = (cfg.shape == host::FieldDumpShape::Grid3D);
+    }
+
 #endif
 
     // Warmup (optional)
@@ -160,10 +169,9 @@ int main(int argc, char *argv[])
             vtk_threads.emplace_back(
                 [step_copy,
                  fieldsCfg = OUTPUT_FIELDS,
-                 sim_dir = SIM_DIR,
-                 sim_id = SIM_ID]
+                 sim_dir = SIM_DIR]
                 {
-                    host::writeStructuredGrid(fieldsCfg, sim_dir, sim_id, step_copy);
+                    host::writeImageData(fieldsCfg, sim_dir, step_copy);
                 });
 
             std::cout << "Step " << STEP << ": bins in " << SIM_DIR << "\n";

@@ -169,7 +169,6 @@ namespace LBM
         if constexpr (FlowCase::jet_case())
         {
             omco = static_cast<scalar_t>(1) - device::cubic_sponge(z);
-            // omco = relaxation::omco_ref();
         }
         else
         {

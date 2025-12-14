@@ -74,6 +74,7 @@ namespace host
             if (!file.is_open())
             {
                 std::cerr << "Error opening file: " << INFO_PATH.string() << std::endl;
+
                 return;
             }
 
@@ -90,6 +91,7 @@ namespace host
                  << "-----------------------------------------------------------------------------\n";
 
             file.close();
+
             std::cout << "Simulation information file created in: " << INFO_PATH.string() << std::endl;
         }
         catch (const std::exception &e)
@@ -126,22 +128,24 @@ namespace host
         const label_t STEP,
         const std::string &VAR_NAME)
     {
-        std::error_code EC;
-        std::filesystem::create_directories(std::filesystem::path(SIM_DIR), EC);
+        static thread_local std::vector<scalar_t> host_data;
+        if (host_data.size() != SIZE)
+        {
+            host_data.resize(SIZE);
+        }
 
-        std::vector<scalar_t> host_data(SIZE);
         checkCudaErrors(cudaMemcpy(host_data.data(), d_data, SIZE * sizeof(scalar_t), cudaMemcpyDeviceToHost));
 
         std::ostringstream STEP_SAVE;
         STEP_SAVE << std::setw(6) << std::setfill('0') << STEP;
         const std::string filename = VAR_NAME + STEP_SAVE.str() + ".bin";
-
         const std::filesystem::path OUT_PATH = std::filesystem::path(SIM_DIR) / filename;
 
-        std::ofstream file(OUT_PATH, std::ios::binary);
+        std::ofstream file(OUT_PATH, std::ios::binary | std::ios::trunc);
         if (!file)
         {
             std::cerr << "Error opening file " << OUT_PATH.string() << " for writing." << std::endl;
+
             return;
         }
 
@@ -156,14 +160,18 @@ namespace host
         {
             char *end = nullptr;
             long v = std::strtol(env, &end, 10);
+
             if (end != env && v >= 0)
+            {
                 dev = static_cast<int>(v);
+            }
         }
 
         cudaError_t err = cudaSetDevice(dev);
         if (err != cudaSuccess)
         {
             std::fprintf(stderr, "cudaSetDevice(%d) failed: %s\n", dev, cudaGetErrorString(err));
+
             return -1;
         }
 

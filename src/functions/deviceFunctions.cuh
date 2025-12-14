@@ -84,6 +84,7 @@ namespace device
         {
             return 1;
         }
+
         return xx;
     }
 
@@ -97,6 +98,7 @@ namespace device
         {
             return 1;
         }
+
         return yy;
     }
 
@@ -110,6 +112,7 @@ namespace device
         {
             return 1;
         }
+
         return zz;
     }
 
@@ -137,7 +140,9 @@ namespace device
             const scalar_t s = math::min(math::max((zn - sponge::z_start()) * sponge::inv_sponge(), static_cast<scalar_t>(0)), static_cast<scalar_t>(1));
             const scalar_t ramp = s * s * s;
 
-            return math::fma(ramp, relaxation::omega_delta(), relaxation::omega_ref());
+            const scalar_t nu_s = relaxation::visc_ref() * math::fma(K, ramp, static_cast<scalar_t>(1));
+
+            return omega_from_nu(nu_s);
         }
         else if constexpr (LBM::FlowCase::droplet_case())
         {

@@ -29,61 +29,48 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Derived fields registry
+    Post-processing common structs
 
 Namespace
-    Derived
+    host
 
 SourceFiles
-    registry.cuh
+    postCommon.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef REGISTRY_CUH
-#define REGISTRY_CUH
+#ifndef POSTCOMMON_CUH
+#define POSTCOMMON_CUH
 
-#include "timeAverage.cuh"
-#include "reynoldsMoments.cuh"
+#include "functions/globalFunctions.cuh"
 
-namespace Derived
+namespace host
 {
-
-    __host__ [[nodiscard]] static inline std::vector<host::FieldConfig> makeOutputFields()
+    namespace detail
     {
-        std::vector<host::FieldConfig> fields;
-        fields.reserve(6 + 6); // rough upper bound
-#if D_TIMEAVG
-        fields.insert(fields.end(), TimeAvg::fields.begin(), TimeAvg::fields.end());
-#endif
-#if D_REYNOLDS_MOMENTS
-        fields.insert(fields.end(), Reynolds::fields.begin(), Reynolds::fields.end());
-#endif
+        template <typename T>
+        struct vtkScalarTypeName;
 
-        return fields;
-    }
+        template <>
+        struct vtkScalarTypeName<float>
+        {
+            static constexpr const char *value() noexcept { return "Float32"; }
+        };
 
-    template <dim3 grid, dim3 block, size_t dynamic>
-    __host__ static inline void launchAllDerived(
-        cudaStream_t queue,
-        LBMFields d,
-        const label_t step) noexcept
-    {
-#if D_TIMEAVG
-        TimeAvg::launch<grid, block, dynamic>(queue, d, step);
-#endif
-#if D_REYNOLDS_MOMENTS
-        Reynolds::launch<grid, block, dynamic>(queue, d, step);
-#endif
-    }
+        template <>
+        struct vtkScalarTypeName<double>
+        {
+            static constexpr const char *value() noexcept { return "Float64"; }
+        };
 
-    __host__ static inline void freeAll(LBMFields &d) noexcept
-    {
-#if D_TIMEAVG
-        TimeAvg::free(d);
-#endif
-#if D_REYNOLDS_MOMENTS
-        Reynolds::free(d);
-#endif
+        struct AppendedArray
+        {
+            std::string name;
+            std::filesystem::path path;
+            std::uint64_t nbytes;
+            std::uint64_t offset;
+            bool isPoints;
+        };
     }
 }
 

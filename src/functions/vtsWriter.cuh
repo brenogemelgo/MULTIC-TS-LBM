@@ -29,61 +29,27 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    VTK writer function
+    VTS (StructuredGrid) writer function
 
 Namespace
     host
 
 SourceFiles
-    vtkWriter.cuh
+    vtsWriter.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef VTKWRITER_CUH
-#define VTKWRITER_CUH
+#ifndef VTSWRITER_CUH
+#define VTSWRITER_CUH
 
-#include "globalFunctions.cuh"
+#include "include/postCommon.cuh"
 
 namespace host
 {
-    namespace detail
-    {
-        template <typename T>
-        struct vtkScalarTypeName;
-
-        template <>
-        struct vtkScalarTypeName<float>
-        {
-            static constexpr const char *value() noexcept
-            {
-                return "Float32";
-            }
-        };
-
-        template <>
-        struct vtkScalarTypeName<double>
-        {
-            static constexpr const char *value() noexcept
-            {
-                return "Float64";
-            }
-        };
-
-        struct AppendedArray
-        {
-            std::string name;
-            std::filesystem::path path;
-            uint64_t nbytes;
-            uint64_t offset;
-            bool isPoints;
-        };
-    }
-
     template <typename Container>
     __host__ static inline void writeStructuredGrid(
         const Container &fieldsCfg,
         const std::string &SIM_DIR,
-        const std::string &SIM_ID,
         const label_t STEP)
     {
         const uint64_t NX = static_cast<uint64_t>(mesh::nx);
@@ -111,7 +77,7 @@ namespace host
         {
             for (const auto &cfg : fieldsCfg)
             {
-                if (!cfg.includeInVTS ||
+                if (!cfg.includeInPost ||
                     cfg.shape != FieldDumpShape::Grid3D)
                 {
                     continue;
@@ -125,18 +91,15 @@ namespace host
                     static_cast<uint64_t>(std::filesystem::file_size(binPath, ec_fs));
                 if (ec_fs)
                 {
-                    std::cerr << "VTS writer: could not get size for "
-                              << binPath.string() << " (" << ec_fs.message()
-                              << "), skipping variable " << cfg.name << ".\n";
+                    std::cerr << "VTS writer: could not get size for " << binPath.string() << " (" << ec_fs.message() << "), skipping variable " << cfg.name << ".\n";
+
                     continue;
                 }
 
                 if (fs != cellBytes)
                 {
-                    std::cerr << "VTS writer: file " << binPath.string()
-                              << " has size " << fs << " bytes, expected "
-                              << cellBytes << " for full 3D field. "
-                              << "Skipping variable " << cfg.name << ".\n";
+                    std::cerr << "VTS writer: file " << binPath.string() << " has size " << fs << " bytes, expected " << cellBytes << " for full 3D field. " << "Skipping variable " << cfg.name << ".\n";
+
                     continue;
                 }
 
@@ -154,8 +117,8 @@ namespace host
 
             if (!hasFieldArrays)
             {
-                std::cerr << "VTS writer: no valid 3D fields to write for step "
-                          << STEP << ", aborting VTS.\n";
+                std::cerr << "VTS writer: no valid 3D fields to write for step " << STEP << ", aborting VTS.\n";
+
                 return;
             }
 
@@ -174,8 +137,8 @@ namespace host
             std::ofstream vts(vtsPath, std::ios::binary | std::ios::trunc);
             if (!vts)
             {
-                std::cerr << "Error opening VTS file "
-                          << vtsPath.string() << " for writing.\n";
+                std::cerr << "Error opening VTS file " << vtsPath.string() << " for writing.\n";
+
                 return;
             }
 
@@ -230,21 +193,19 @@ namespace host
                     std::ifstream in(arr.path, std::ios::binary);
                     if (!in)
                     {
-                        std::cerr << "Error opening binary field file "
-                                  << arr.path.string()
-                                  << " when writing VTS. Writing zeros instead.\n";
+                        std::cerr << "Error opening binary field file " << arr.path.string() << " when writing VTS. Writing zeros instead.\n";
                         std::vector<char> zeros(arr.nbytes, 0);
-                        vts.write(zeros.data(),
-                                  static_cast<std::streamsize>(zeros.size()));
+                        vts.write(zeros.data(), static_cast<std::streamsize>(zeros.size()));
+
                         continue;
                     }
 
                     std::vector<char> buffer(1 << 20);
                     while (in)
                     {
-                        in.read(buffer.data(),
-                                static_cast<std::streamsize>(buffer.size()));
+                        in.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
                         const std::streamsize got = in.gcount();
+
                         if (got > 0)
                         {
                             vts.write(buffer.data(), got);

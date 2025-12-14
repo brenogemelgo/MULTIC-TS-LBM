@@ -93,13 +93,6 @@ namespace Derived
 {
     namespace Reynolds
     {
-        constexpr bool enabled =
-#if D_REYNOLDS_MOMENTS
-            true;
-#else
-            false;
-#endif
-
         constexpr std::array<host::FieldConfig, 6> fields{{
             {host::FieldID::Avg_uxux, "avg_uxux", host::FieldDumpShape::Grid3D, true},
             {host::FieldID::Avg_uyuy, "avg_uyuy", host::FieldDumpShape::Grid3D, true},
