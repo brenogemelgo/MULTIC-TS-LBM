@@ -125,11 +125,6 @@ namespace math
         return static_cast<scalar_t>(2) * static_cast<scalar_t>(CUDART_PI_F);
     }
 
-    __host__ __device__ [[nodiscard]] static inline consteval scalar_t oos() noexcept
-    {
-        return static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(6));
-    }
-
     __host__ __device__ [[nodiscard]] static inline scalar_t sqrt(const scalar_t x) noexcept
     {
         if constexpr (std::is_same_v<scalar_t, float>)
@@ -233,6 +228,18 @@ namespace math
         else
         {
             return ::fma(a, b, c);
+        }
+    }
+
+    __host__ __device__ [[nodiscard]] static inline scalar_t abs(const scalar_t x) noexcept
+    {
+        if constexpr (std::is_same_v<scalar_t, float>)
+        {
+            return ::fabsf(x);
+        }
+        else
+        {
+            return ::fabs(x);
         }
     }
 }

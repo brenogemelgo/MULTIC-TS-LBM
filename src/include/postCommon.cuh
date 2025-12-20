@@ -49,16 +49,16 @@ namespace host
     namespace detail
     {
         template <typename T>
-        struct vtkScalarTypeName;
+        struct vtScalarTypeName;
 
         template <>
-        struct vtkScalarTypeName<float>
+        struct vtScalarTypeName<float>
         {
             static constexpr const char *value() noexcept { return "Float32"; }
         };
 
         template <>
-        struct vtkScalarTypeName<double>
+        struct vtScalarTypeName<double>
         {
             static constexpr const char *value() noexcept { return "Float64"; }
         };

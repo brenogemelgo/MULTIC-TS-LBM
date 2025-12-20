@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Droplet velocity set class declaration
+    Droplet flow case class declaration
 
 Namespace
     LBM

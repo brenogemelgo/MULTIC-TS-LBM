@@ -109,6 +109,9 @@ namespace LBM
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
+        // Zeroth moment of the non-equilibrium distribution function (diagnostic variable)
+        // scalar_t fneq0 = static_cast<scalar_t>(0);
+
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
@@ -122,6 +125,9 @@ namespace LBM
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
                 const scalar_t fneq = pop[Q] - feq + force;
 
+                // Compute zeroth moment of fneq
+                // fneq0 += fneq;
+
                 pxx += fneq * cx * cx;
                 pyy += fneq * cy * cy;
                 pzz += fneq * cz * cz;
@@ -129,6 +135,14 @@ namespace LBM
                 pxz += fneq * cx * cz;
                 pyz += fneq * cy * cz;
             });
+
+        // const scalar_t iso = VelocitySet::cs2() * fneq0;
+        // if (math::abs(iso) > static_cast<scalar_t>(1e-6) * rho)
+        // {
+        //     printf("iso correction = %.3e (m0 = %.3e)\n",
+        //            static_cast<double>(iso),
+        //            static_cast<double>(fneq0));
+        // }
 
         d.pxx[idx3] = pxx;
         d.pyy[idx3] = pyy;

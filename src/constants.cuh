@@ -67,14 +67,14 @@ namespace Phase
     using VelocitySet = LBM::D3Q7;
 }
 
-// #define RUN_MODE
-#define SAMPLE_MODE
+#define RUN_MODE
+// #define SAMPLE_MODE
 // #define PROFILE_MODE
 
 #if defined(RUN_MODE)
 
 static constexpr int MACRO_SAVE = 1000;
-static constexpr int NSTEPS = 100000;
+static constexpr int NSTEPS = 300000;
 
 #elif defined(SAMPLE_MODE)
 

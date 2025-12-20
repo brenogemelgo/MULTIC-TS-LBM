@@ -29,7 +29,7 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    Jet velocity set class declaration
+    Jet flow case class declaration
 
 Namespace
     LBM
