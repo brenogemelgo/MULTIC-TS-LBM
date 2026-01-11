@@ -102,13 +102,13 @@ namespace mesh
 
 namespace physics
 {
-    static constexpr scalar_t u_ref = static_cast<scalar_t>(0.05);
+    static constexpr scalar_t u_inf = static_cast<scalar_t>(0.05);
     static constexpr int reynolds = 5000;
     static constexpr int weber = 500;
-    static constexpr scalar_t sigma = (u_ref * u_ref * mesh::diam) / weber;
+    static constexpr scalar_t sigma = (u_inf * u_inf * mesh::diam) / weber;
 
     static constexpr scalar_t width = static_cast<scalar_t>(1);
-    static constexpr scalar_t gamma = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(width));
+    static constexpr scalar_t gamma = static_cast<scalar_t>(1);
 }
 
 #elif defined(DROPLET)
@@ -126,7 +126,7 @@ namespace mesh
 namespace physics
 {
 
-    static constexpr scalar_t u_ref = static_cast<scalar_t>(0);
+    static constexpr scalar_t u_inf = static_cast<scalar_t>(0);
     static constexpr int reynolds = 0;
     static constexpr int weber = 0;
     static constexpr scalar_t sigma = static_cast<scalar_t>(0.1);

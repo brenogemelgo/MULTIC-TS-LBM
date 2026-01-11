@@ -42,6 +42,97 @@ SourceFiles
 #ifndef BOUNDARYCONDITIONS_CUH
 #define BOUNDARYCONDITIONS_CUH
 
+// Remove once done
+#include <cuda_runtime.h>
+#include <cmath>
+#include <cstdio>
+
+/* ============================
+   Debug configuration
+   ============================ */
+
+#ifndef INFLOW_DEBUG
+#define INFLOW_DEBUG 0
+#endif
+
+/* ============================
+   Inlet debug statistics
+   ============================ */
+
+#if INFLOW_DEBUG
+
+struct InletStats
+{
+    unsigned int n;
+    float sumUx, sumUy;
+    float sumUx2;
+
+    unsigned int nCore, nRim;
+    float sumUx2Core, sumUx2Rim;
+};
+
+__device__ InletStats g_inletStats;
+
+__global__ void resetInletStats()
+{
+    if (threadIdx.x || blockIdx.x)
+        return;
+
+    g_inletStats.n = 0u;
+    g_inletStats.sumUx = g_inletStats.sumUy = 0.0f;
+    g_inletStats.sumUx2 = 0.0f;
+
+    g_inletStats.nCore = g_inletStats.nRim = 0u;
+    g_inletStats.sumUx2Core = g_inletStats.sumUx2Rim = 0.0f;
+}
+
+__global__ void printInletStats(const int t)
+{
+    if (threadIdx.x || blockIdx.x)
+        return;
+    if ((t % NOISE_PERIOD) != 0)
+        return;
+
+    const float n = (float)g_inletStats.n;
+    if (n == 0.0f)
+        return;
+
+    const float meanUx = g_inletStats.sumUx / n;
+    const float meanUy = g_inletStats.sumUy / n;
+    const float rmsUx = sqrtf(g_inletStats.sumUx2 / n);
+
+    const float rmsUxCore =
+        (g_inletStats.nCore > 0u) ? sqrtf(g_inletStats.sumUx2Core / (float)g_inletStats.nCore) : 0.0f;
+
+    const float rmsUxRim =
+        (g_inletStats.nRim > 0u) ? sqrtf(g_inletStats.sumUx2Rim / (float)g_inletStats.nRim) : 0.0f;
+
+    const float sigma_u = 0.08f * (float)physics::u_inf;
+    const float rmsZxRim = (sigma_u > 0.0f) ? (rmsUxRim / sigma_u) : 0.0f;
+
+    printf(
+        "[inflow] t=%d n=%u core=%u rim=%u  meanUx=%e meanUy=%e  "
+        "rmsUx=%e  rmsUx(core)=%.3e  rmsUx(rim)=%.3e  sigma_u=%e  rmsZxRim=%f\n",
+        t, g_inletStats.n, g_inletStats.nCore, g_inletStats.nRim,
+        meanUx, meanUy, rmsUx, rmsUxCore, rmsUxRim, sigma_u, rmsZxRim);
+}
+
+#endif // INFLOW_DEBUG
+
+/* ============================
+   Utility
+   ============================ */
+
+template <typename T>
+__device__ __forceinline__ T clampT(T x, T lo, T hi)
+{
+    return x < lo ? lo : (x > hi ? hi : x);
+}
+
+/* ============================
+   Boundary conditions
+   ============================ */
+
 namespace LBM
 {
     class BoundaryConditions
@@ -73,16 +164,42 @@ namespace LBM
             const label_t idx3_bnd = device::global3(x, y, 0);
             const label_t idx3_zp1 = device::global3(x, y, 1);
 
-            const scalar_t sigma_u = static_cast<scalar_t>(0.08) * physics::u_ref;
+            const scalar_t zx = white_noise<0xA341316Cu>(x, y, t);
+            const scalar_t zy = white_noise<0xC8013EA4u>(x, y, t);
 
-            const scalar_t zx = white_noise<10, 0xA341316Cu>(x, y, t);
-            const scalar_t zy = white_noise<10, 0xC8013EA4u>(x, y, t);
+            const scalar_t R = math::sqrt(geometry::R2());
+            const scalar_t r = math::sqrt(r2);
+            constexpr scalar_t delta = static_cast<scalar_t>(2.0);
+
+            scalar_t w = (r - (R - delta)) / delta;
+            w = clampT(w, static_cast<scalar_t>(0), static_cast<scalar_t>(1));
+
+            const scalar_t sigma_u = static_cast<scalar_t>(0.08) * physics::u_inf;
 
             const scalar_t rho = static_cast<scalar_t>(1);
             const scalar_t phi = static_cast<scalar_t>(1);
-            const scalar_t ux = sigma_u * zx;
-            const scalar_t uy = sigma_u * zy;
-            const scalar_t uz = physics::u_ref;
+            const scalar_t ux = sigma_u * w * zx;
+            const scalar_t uy = sigma_u * w * zy;
+            const scalar_t uz = physics::u_inf;
+
+#if INFLOW_DEBUG
+            atomicAdd(&g_inletStats.n, 1u);
+            atomicAdd(&g_inletStats.sumUx, (float)ux);
+            atomicAdd(&g_inletStats.sumUy, (float)uy);
+            atomicAdd(&g_inletStats.sumUx2, (float)(ux * ux));
+
+            const scalar_t R2_core = static_cast<scalar_t>(0.25) * geometry::R2();
+            if (r2 < R2_core)
+            {
+                atomicAdd(&g_inletStats.nCore, 1u);
+                atomicAdd(&g_inletStats.sumUx2Core, (float)(ux * ux));
+            }
+            else if (w > static_cast<scalar_t>(0))
+            {
+                atomicAdd(&g_inletStats.nRim, 1u);
+                atomicAdd(&g_inletStats.sumUx2Rim, (float)(ux * ux));
+            }
+#endif
 
             d.rho[idx3_bnd] = rho;
             d.phi[idx3_bnd] = phi;
@@ -174,7 +291,7 @@ namespace LBM
                     }
                 });
 
-            d.g[6 * size::cells() + idx3_zm1] = Phase::VelocitySet::w<6>() * phi * (static_cast<scalar_t>(1) - Phase::VelocitySet::as2() * physics::u_ref);
+            d.g[6 * size::cells() + idx3_zm1] = Phase::VelocitySet::w<6>() * phi * (static_cast<scalar_t>(1) - Phase::VelocitySet::as2() * physics::u_inf);
         }
 
     private:
@@ -191,7 +308,7 @@ namespace LBM
 
         __device__ [[nodiscard]] static inline constexpr scalar_t uniform01(const uint32_t seed) noexcept
         {
-            const scalar_t inv2_32 = static_cast<scalar_t>(2.3283064365386963e-10);
+            constexpr scalar_t inv2_32 = static_cast<scalar_t>(2.3283064365386963e-10);
 
             return (static_cast<scalar_t>(seed) + static_cast<scalar_t>(0.5)) * inv2_32;
         }
@@ -207,13 +324,14 @@ namespace LBM
             return r * math::cos(theta);
         }
 
-        template <label_t NOISE_PERIOD = 10, uint32_t SALT = 0u>
+        template <uint32_t SALT = 0u>
         __device__ [[nodiscard]] static inline constexpr scalar_t white_noise(
             const label_t x,
             const label_t y,
             const label_t STEP) noexcept
         {
-            const label_t t = STEP / NOISE_PERIOD;
+            // const label_t t = STEP / static_cast<label_t>(10);
+            const label_t t = STEP; // white-in-time. uncomment above to call each denominator steps
             const uint32_t base = (0x9E3779B9u ^ SALT) ^ static_cast<uint32_t>(x) ^ (static_cast<uint32_t>(y) * 0x85EBCA6Bu) ^ (static_cast<uint32_t>(t) * 0xC2B2AE35u);
 
             const scalar_t rrx = uniform01(hash32(base));

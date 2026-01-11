@@ -284,7 +284,7 @@ namespace relaxation
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t visc_ref() noexcept
     {
-        return static_cast<scalar_t>((static_cast<double>(physics::u_ref) * static_cast<double>(mesh::diam)) / static_cast<double>(physics::reynolds));
+        return static_cast<scalar_t>((static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam)) / static_cast<double>(physics::reynolds));
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_from_nu(const scalar_t nu) noexcept

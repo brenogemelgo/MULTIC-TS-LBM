@@ -106,10 +106,10 @@ int main(int argc, char *argv[])
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
     // Base fields (always saved)
-    constexpr std::array<host::FieldConfig, 1> BASE_FIELDS{{
+    constexpr std::array<host::FieldConfig, 2> BASE_FIELDS{{
         // {host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true},
         {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
-        // {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true},
+        {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true},
     }};
 
     // Derived fields from modules (possibly empty)
@@ -143,11 +143,20 @@ int main(int argc, char *argv[])
     // Time loop
     for (label_t STEP = 0; STEP <= NSTEPS; ++STEP)
     {
+        // Reset stats
+        // resetInletStats<<<1, 1, 0, queue>>>();
+
         // Launch captured sequence
         cudaGraphLaunch(graphExec, queue);
 
         // Flow case specific boundary conditions
         LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
+
+        // Print after BC
+        // printInletStats<<<1, 1, 0, queue>>>(STEP);
+
+        // Ensure debug output is complete before host logic
+        cudaStreamSynchronize(queue);
 
         // Derived fields
 #if TIME_AVERAGE || REYNOLDS_MOMENTS

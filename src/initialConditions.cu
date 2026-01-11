@@ -85,7 +85,7 @@ namespace LBM
         const label_t idx3_in = device::global3(x, y, 0);
 
         d.phi[idx3_in] = static_cast<scalar_t>(1);
-        d.uz[idx3_in] = physics::u_ref;
+        d.uz[idx3_in] = physics::u_inf;
     }
 
     __global__ void setDroplet(LBMFields d)
