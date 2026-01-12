@@ -70,6 +70,7 @@ nvcc -O3 --restrict \
      -DBENCHMARK=0 \
      -DTIME_AVERAGE=0 \
      -DREYNOLDS_MOMENTS=0 \
+     -DVORTICITY_FIELDS=0 \
      -o "${EXECUTABLE}"
 
 echo "Compilation completed successfully: ${EXECUTABLE}"

@@ -74,7 +74,7 @@ namespace Phase
 #if defined(RUN_MODE)
 
 static constexpr int MACRO_SAVE = 1000;
-static constexpr int NSTEPS = 300000;
+static constexpr int NSTEPS = 100000;
 
 #elif defined(SAMPLE_MODE)
 
@@ -103,9 +103,17 @@ namespace mesh
 namespace physics
 {
     static constexpr scalar_t u_inf = static_cast<scalar_t>(0.05);
-    static constexpr int reynolds = 5000;
+
+    static constexpr int reynolds_zero = 1400;
+    static constexpr int reynolds_one = 450;
+
     static constexpr int weber = 500;
-    static constexpr scalar_t sigma = (u_inf * u_inf * mesh::diam) / weber;
+
+    static constexpr scalar_t rho_zero = 1;       // phi = 0
+    static constexpr scalar_t rho_one = 0.852;    // phi = 1
+    static constexpr scalar_t rho_ref = rho_zero; // ambient phase
+
+    static constexpr scalar_t sigma = rho_ref * (u_inf * u_inf * mesh::diam) / weber;
 
     static constexpr scalar_t width = static_cast<scalar_t>(1);
     static constexpr scalar_t gamma = static_cast<scalar_t>(1);
@@ -127,15 +135,26 @@ namespace physics
 {
 
     static constexpr scalar_t u_inf = static_cast<scalar_t>(0);
+
     static constexpr int reynolds = 0;
     static constexpr int weber = 0;
+
+    static constexpr scalar_t rho_zero = 1;       // phi = 0
+    static constexpr scalar_t rho_one = 0.852;    // phi = 1
+    static constexpr scalar_t rho_ref = rho_zero; // ambient phase
+
     static constexpr scalar_t sigma = static_cast<scalar_t>(0.1);
 
     static constexpr scalar_t width = static_cast<scalar_t>(2);
     static constexpr scalar_t gamma = static_cast<scalar_t>(static_cast<double>(1) / static_cast<double>(width));
 
-    static constexpr scalar_t tau = static_cast<scalar_t>(0.55);
-    static constexpr scalar_t visc_ref = (tau - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
+    static constexpr scalar_t tau_zero = static_cast<scalar_t>(0.55); // phi = 0
+    static constexpr scalar_t tau_one = static_cast<scalar_t>(0.55);  // phi = 1
+    static constexpr scalar_t tau_ref = tau_zero;                     // ambient phase
+
+    static constexpr scalar_t visc_zero = (tau_zero - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
+    static constexpr scalar_t visc_one = (tau_one - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
+    static constexpr scalar_t visc_ref = (tau_ref - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
 }
 
 #endif

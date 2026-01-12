@@ -44,6 +44,7 @@ SourceFiles
 
 #include "timeAverage.cuh"
 #include "reynoldsMoments.cuh"
+#include "vorticityFields.cuh"
 
 namespace Derived
 {
@@ -51,12 +52,15 @@ namespace Derived
     __host__ [[nodiscard]] static inline std::vector<host::FieldConfig> makeOutputFields()
     {
         std::vector<host::FieldConfig> fields;
-        fields.reserve(4 + 6); // 4 time averages + 6 reynolds moments
+        fields.reserve(4 + 6 + 4); // 4 time averages + 6 reynolds moments + 4 vorticity fields
 #if TIME_AVERAGE
         fields.insert(fields.end(), TimeAvg::fields.begin(), TimeAvg::fields.end());
 #endif
 #if REYNOLDS_MOMENTS
         fields.insert(fields.end(), Reynolds::fields.begin(), Reynolds::fields.end());
+#endif
+#if VORTICITY_FIELDS
+        fields.insert(fields.end(), Vorticity::fields.begin(), Vorticity::fields.end());
 #endif
 
         return fields;
@@ -74,6 +78,9 @@ namespace Derived
 #if REYNOLDS_MOMENTS
         Reynolds::launch<grid, block, dynamic>(queue, d, step);
 #endif
+#if VORTICITY_FIELDS
+        Vorticity::launch<grid, block, dynamic>(queue, d);
+#endif
     }
 
     __host__ static inline void freeAll(LBMFields &d) noexcept
@@ -83,6 +90,9 @@ namespace Derived
 #endif
 #if REYNOLDS_MOMENTS
         Reynolds::free(d);
+#endif
+#if VORTICITY_FIELDS
+        Vorticity::free(d);
 #endif
     }
 }

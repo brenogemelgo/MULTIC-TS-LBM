@@ -82,7 +82,7 @@ namespace host
                  << "ID:                 " << SIM_ID << '\n'
                  << "Velocity set:       " << VELOCITY_SET << '\n'
                  << "Reference velocity: " << physics::u_inf << '\n'
-                 << "Reynolds number:    " << physics::reynolds << '\n'
+                 << "Reynolds number:    " << physics::reynolds_zero << '\n'
                  << "Weber number:       " << physics::weber << "\n\n"
                  << "Domain size:        NX=" << mesh::nx << ", NY=" << mesh::ny << ", NZ=" << mesh::nz << '\n'
                  << "Diameter:           D=" << mesh::diam << '\n'
@@ -102,14 +102,14 @@ namespace host
 
     __host__ [[gnu::cold]] static inline void printDiagnostics(const std::string &VELOCITY_SET) noexcept
     {
-        const double nu = static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam) / static_cast<double>(physics::reynolds);
+        const double nu = static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam) / static_cast<double>(physics::reynolds_zero);
         const double Ma = static_cast<double>(physics::u_inf) * static_cast<double>(LBM::VelocitySet::as2());
         const double tau = static_cast<double>(0.5) + static_cast<double>(nu) * static_cast<double>(LBM::VelocitySet::as2());
 
         std::cout << "\n---------------------------- SIMULATION METADATA ----------------------------\n"
                   << "Velocity set:       " << VELOCITY_SET << '\n'
                   << "Reference velocity: " << physics::u_inf << '\n'
-                  << "Reynolds number:    " << physics::reynolds << '\n'
+                  << "Reynolds number:    " << physics::reynolds_zero << '\n'
                   << "Weber number:       " << physics::weber << '\n'
                   << "NX:                 " << mesh::nx << '\n'
                   << "NY:                 " << mesh::ny << '\n'
@@ -207,6 +207,7 @@ namespace host
         static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(LBM::VelocitySet::Q()), "F_DIST_SIZE overflow");
         static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(Phase::VelocitySet::Q()), "G_DIST_SIZE overflow");
 
+        checkCudaErrors(cudaMalloc(&fields.p, SIZE));
         checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ux, SIZE));
         checkCudaErrors(cudaMalloc(&fields.uy, SIZE));
@@ -248,6 +249,17 @@ namespace host
 
 #endif
 
+#if VORTICITY_FIELDS
+
+        checkCudaErrors(cudaMalloc(&fields.vort_x, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.vort_y, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.vort_z, SIZE));
+        checkCudaErrors(cudaMalloc(&fields.vort_mag, SIZE));
+
+#endif
+
+        checkCudaErrors(cudaMemset(fields.p, 0, SIZE));
+        checkCudaErrors(cudaMemset(fields.rho, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.ux, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.uy, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.uz, 0, SIZE));

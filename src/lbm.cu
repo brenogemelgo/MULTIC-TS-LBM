@@ -59,7 +59,7 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        scalar_t rho = static_cast<scalar_t>(0);
+        scalar_t p = static_cast<scalar_t>(0);
         scalar_t pop[VelocitySet::Q()];
 
         device::constexpr_for<0, VelocitySet::Q()>(
@@ -67,17 +67,14 @@ namespace LBM
             {
                 const scalar_t fq = from_pop(d.f[Q * size::cells() + idx3]);
                 pop[Q] = fq;
-                rho += fq;
+                p += fq;
             });
 
-        rho += static_cast<scalar_t>(1);
-        d.rho[idx3] = rho;
+        d.p[idx3] = p;
 
         const scalar_t ffx = d.ffx[idx3];
         const scalar_t ffy = d.ffy[idx3];
         const scalar_t ffz = d.ffz[idx3];
-
-        const scalar_t invRho = static_cast<scalar_t>(1) / rho;
 
         scalar_t ux = static_cast<scalar_t>(0);
         scalar_t uy = static_cast<scalar_t>(0);
@@ -85,16 +82,20 @@ namespace LBM
 
         if constexpr (VelocitySet::Q() == 19)
         {
-            ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
-            uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
-            uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
+            ux = pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16];
+            uy = pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18];
+            uz = pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17];
         }
         else if constexpr (VelocitySet::Q() == 27)
         {
-            ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
-            uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
-            uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
+            ux = pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25];
+            uy = pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26];
+            uz = pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26];
         }
+
+        const scalar_t phi = d.phi[idx3];
+        d.rho[idx3] = (static_cast<scalar_t>(1) - phi) * physics::rho_zero + phi * physics::rho_one;
+        const scalar_t invRho = static_cast<scalar_t>(1) / d.rho[idx3];
 
         ux += ffx * static_cast<scalar_t>(0.5) * invRho;
         uy += ffy * static_cast<scalar_t>(0.5) * invRho;
@@ -121,7 +122,7 @@ namespace LBM
 
                 const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
+                const scalar_t feq = VelocitySet::f_eq<Q>(p, uu, cu);
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
                 const scalar_t fneq = pop[Q] - feq + force;
 
@@ -137,7 +138,7 @@ namespace LBM
             });
 
         // const scalar_t iso = VelocitySet::cs2() * fneq0;
-        // if (math::abs(iso) > static_cast<scalar_t>(1e-6) * rho)
+        // if (math::abs(iso) > static_cast<scalar_t>(1e-6) * p)
         // {
         //     printf("iso correction = %.3e (m0 = %.3e)\n",
         //            static_cast<double>(iso),
@@ -165,6 +166,7 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
+        const scalar_t p = d.p[idx3];
         const scalar_t rho = d.rho[idx3];
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
@@ -180,14 +182,23 @@ namespace LBM
         const scalar_t ffz = d.ffz[idx3];
 
         scalar_t omco;
+        const scalar_t phi = d.phi[idx3];
 
         if constexpr (FlowCase::jet_case())
         {
-            omco = static_cast<scalar_t>(1) - device::omega_sponge(z);
+            const scalar_t tau_phi = (static_cast<scalar_t>(1) - phi) * relaxation::tau_zero() + phi * relaxation::tau_one();
+            const scalar_t r = device::sponge_ramp(z);
+            const scalar_t tau_eff = tau_phi + r * (relaxation::tau_zmax(phi) - tau_phi);
+            const scalar_t omega = static_cast<scalar_t>(1) / tau_eff;
+
+            omco = static_cast<scalar_t>(1) - omega;
         }
-        else
+        else if constexpr (FlowCase::droplet_case())
         {
-            omco = relaxation::omco_ref();
+            const scalar_t tau_phi = (static_cast<scalar_t>(1) - phi) * relaxation::tau_zero() + phi * relaxation::tau_one();
+            const scalar_t omega = static_cast<scalar_t>(1) / tau_phi;
+
+            omco = static_cast<scalar_t>(1) - omega;
         }
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
@@ -201,7 +212,7 @@ namespace LBM
 
                 const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
+                const scalar_t feq = VelocitySet::f_eq<Q>(p, uu, cu);
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
                 const scalar_t fneq = VelocitySet::f_neq<Q>(pxx, pyy, pzz, pxy, pxz, pyz, ux, uy, uz);
 
@@ -225,7 +236,6 @@ namespace LBM
                 d.f[device::global4(xx, yy, zz, Q)] = to_pop(feq + omco * fneq + force);
             });
 
-        const scalar_t phi = d.phi[idx3];
         const scalar_t normx = d.normx[idx3];
         const scalar_t normy = d.normy[idx3];
         const scalar_t normz = d.normz[idx3];

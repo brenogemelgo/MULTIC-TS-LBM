@@ -48,6 +48,7 @@ namespace host
 {
     enum class FieldID : std::uint8_t
     {
+        P,
         Rho,
         Ux,
         Uy,
@@ -76,6 +77,10 @@ namespace host
         Avg_uxuy,
         Avg_uxuz,
         Avg_uyuz,
+        Vort_x,
+        Vort_y,
+        Vort_z,
+        Vort_mag
     };
 
     enum class FieldDumpShape : std::uint8_t
@@ -96,6 +101,8 @@ namespace host
     {
         switch (id)
         {
+        case FieldID::P:
+            return fields.p;
         case FieldID::Rho:
             return fields.rho;
         case FieldID::Ux:
@@ -160,6 +167,19 @@ namespace host
             return fields.avg_uxuz;
         case FieldID::Avg_uyuz:
             return fields.avg_uyuz;
+
+#endif
+
+#if VORTICITY_FIELDS
+
+        case FieldID::Vort_x:
+            return fields.vort_x;
+        case FieldID::Vort_y:
+            return fields.vort_y;
+        case FieldID::Vort_z:
+            return fields.vort_z;
+        case FieldID::Vort_mag:
+            return fields.vort_mag;
 
 #endif
 

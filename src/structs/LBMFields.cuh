@@ -41,6 +41,7 @@ SourceFiles
 
 struct LBMFields
 {
+    scalar_t *p;
     scalar_t *rho;
     scalar_t *ux;
     scalar_t *uy;
@@ -81,6 +82,15 @@ struct LBMFields
     scalar_t *avg_uxuy; // xy
     scalar_t *avg_uxuz; // xz
     scalar_t *avg_uyuz; // yz
+
+#endif
+
+#if VORTICITY_FIELDS
+
+    scalar_t *vort_x;
+    scalar_t *vort_y;
+    scalar_t *vort_z;
+    scalar_t *vort_mag;
 
 #endif
 };
