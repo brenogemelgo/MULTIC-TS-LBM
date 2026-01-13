@@ -49,7 +49,7 @@ namespace LBM
     public:
         __host__ __device__ [[nodiscard]] inline consteval BoundaryConditions(){};
 
-        __device__ static inline constexpr void applyInflow(
+        __device__ static inline void applyInflow(
             LBMFields d,
             const label_t t) noexcept
         {
@@ -79,13 +79,13 @@ namespace LBM
             const scalar_t zy = white_noise<0xC8013EA4u>(x, y, t);
 
             const scalar_t p = static_cast<scalar_t>(0);
-            const scalar_t phi = static_cast<scalar_t>(1);
+            const scalar_t phi = d.phi[idx3_bnd];
             const scalar_t ux = sigma_u * zx;
             const scalar_t uy = sigma_u * zy;
             const scalar_t uz = physics::u_inf;
 
             d.p[idx3_bnd] = p;
-            d.phi[idx3_bnd] = phi;
+            // d.phi[idx3_bnd] = phi;
             d.ux[idx3_bnd] = ux;
             d.uy[idx3_bnd] = uy;
             d.uz[idx3_bnd] = uz;
@@ -121,7 +121,7 @@ namespace LBM
             d.g[5 * size::cells() + idx3_zp1] = Phase::VelocitySet::w<5>() * phi * (static_cast<scalar_t>(1) + Phase::VelocitySet::as2() * uz);
         }
 
-        __device__ static inline constexpr void applyOutflow(LBMFields d) noexcept
+        __device__ static inline void applyOutflow(LBMFields d) noexcept
         {
             const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
             const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -213,8 +213,8 @@ namespace LBM
             const label_t y,
             const label_t STEP) noexcept
         {
-            // const label_t t = STEP / static_cast<label_t>(10);
-            const label_t t = STEP; // white-in-time. uncomment above to call each denominator steps
+            const label_t t = STEP / static_cast<label_t>(10);
+            // const label_t t = STEP; // white-in-time. uncomment above to call each denominator steps
             const uint32_t base = (0x9E3779B9u ^ SALT) ^ static_cast<uint32_t>(x) ^ (static_cast<uint32_t>(y) * 0x85EBCA6Bu) ^ (static_cast<uint32_t>(t) * 0xC2B2AE35u);
 
             const scalar_t rrx = uniform01(hash32(base));

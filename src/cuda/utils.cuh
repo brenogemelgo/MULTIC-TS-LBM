@@ -69,9 +69,9 @@ SourceFiles
 
 namespace block
 {
-    static constexpr unsigned nx = 32u;
-    static constexpr unsigned ny = 4u;
-    static constexpr unsigned nz = 4u;
+    static constexpr unsigned nx = 32;
+    static constexpr unsigned ny = 4;
+    static constexpr unsigned nz = 4;
 
     static constexpr int pad = 1;
     static constexpr int tile_nx = static_cast<int>(nx) + 2 * pad;

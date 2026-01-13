@@ -79,15 +79,15 @@ namespace host
             }
 
             file << "---------------------------- SIMULATION METADATA ----------------------------\n"
-                 << "ID:                 " << SIM_ID << '\n'
-                 << "Velocity set:       " << VELOCITY_SET << '\n'
-                 << "Reference velocity: " << physics::u_inf << '\n'
-                 << "Reynolds number:    " << physics::reynolds_zero << '\n'
-                 << "Weber number:       " << physics::weber << "\n\n"
+                 << "ID:                  " << SIM_ID << '\n'
+                 << "Velocity set:        " << VELOCITY_SET << '\n'
+                 << "Reference velocity:  " << physics::u_inf << '\n'
+                 << "Oil Reynolds number: " << physics::reynolds_oil << '\n'
+                 << "Weber number:        " << physics::weber << "\n\n"
                  << "Domain size:        NX=" << mesh::nx << ", NY=" << mesh::ny << ", NZ=" << mesh::nz << '\n'
                  << "Diameter:           D=" << mesh::diam << '\n'
-                 << "Timesteps:          " << NSTEPS << '\n'
-                 << "Output interval:    " << MACRO_SAVE << "\n\n"
+                 << "Timesteps:           " << NSTEPS << '\n'
+                 << "Output interval:     " << MACRO_SAVE << "\n\n"
                  << "-----------------------------------------------------------------------------\n";
 
             file.close();
@@ -102,22 +102,22 @@ namespace host
 
     __host__ [[gnu::cold]] static inline void printDiagnostics(const std::string &VELOCITY_SET) noexcept
     {
-        const double nu = static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam) / static_cast<double>(physics::reynolds_zero);
+        const double nu = static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam) / static_cast<double>(physics::reynolds_oil);
         const double Ma = static_cast<double>(physics::u_inf) * static_cast<double>(LBM::VelocitySet::as2());
         const double tau = static_cast<double>(0.5) + static_cast<double>(nu) * static_cast<double>(LBM::VelocitySet::as2());
 
         std::cout << "\n---------------------------- SIMULATION METADATA ----------------------------\n"
-                  << "Velocity set:       " << VELOCITY_SET << '\n'
-                  << "Reference velocity: " << physics::u_inf << '\n'
-                  << "Reynolds number:    " << physics::reynolds_zero << '\n'
-                  << "Weber number:       " << physics::weber << '\n'
-                  << "NX:                 " << mesh::nx << '\n'
-                  << "NY:                 " << mesh::ny << '\n'
-                  << "NZ:                 " << mesh::nz << '\n'
-                  << "Diameter:           " << mesh::diam << '\n'
-                  << "Cells:              " << size::cells() << '\n'
-                  << "Mach:               " << Ma << '\n'
-                  << "Tau:                " << tau << '\n'
+                  << "Velocity set:        " << VELOCITY_SET << '\n'
+                  << "Reference velocity:  " << physics::u_inf << '\n'
+                  << "Oil Reynolds number: " << physics::reynolds_oil << '\n'
+                  << "Weber number:        " << physics::weber << '\n'
+                  << "NX:                  " << mesh::nx << '\n'
+                  << "NY:                  " << mesh::ny << '\n'
+                  << "NZ:                  " << mesh::nz << '\n'
+                  << "Diameter:            " << mesh::diam << '\n'
+                  << "Cells:               " << size::cells() << '\n'
+                  << "Mach:                " << Ma << '\n'
+                  << "Oil relaxation time: " << tau << '\n'
                   << "-----------------------------------------------------------------------------\n\n";
     }
 

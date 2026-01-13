@@ -43,6 +43,7 @@ SourceFiles
 #define CUDAGRAPH_CUH
 
 #include "phaseField.cuh"
+#include "include/LBMIncludes.cuh"
 
 namespace graph
 {

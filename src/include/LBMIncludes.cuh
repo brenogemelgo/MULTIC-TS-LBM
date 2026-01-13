@@ -47,7 +47,6 @@ namespace LBM
     // Initial conditions
     __global__ void setFields(LBMFields d);
     __global__ void setJet(LBMFields d);
-    __global__ void setDroplet(LBMFields d);
     __global__ void setDistros(LBMFields d);
 
     // Moments and core routines

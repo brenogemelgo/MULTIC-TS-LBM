@@ -94,7 +94,7 @@ namespace LBM
         }
 
         const scalar_t phi = d.phi[idx3];
-        d.rho[idx3] = (static_cast<scalar_t>(1) - phi) * physics::rho_zero + phi * physics::rho_one;
+        d.rho[idx3] = (static_cast<scalar_t>(1) - phi) * physics::rho_water + phi * physics::rho_oil;
         const scalar_t invRho = static_cast<scalar_t>(1) / d.rho[idx3];
 
         ux += ffx * static_cast<scalar_t>(0.5) * invRho;
@@ -167,7 +167,6 @@ namespace LBM
         const label_t idx3 = device::global3(x, y, z);
 
         const scalar_t p = d.p[idx3];
-        const scalar_t rho = d.rho[idx3];
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
@@ -184,22 +183,12 @@ namespace LBM
         scalar_t omco;
         const scalar_t phi = d.phi[idx3];
 
-        if constexpr (FlowCase::jet_case())
-        {
-            const scalar_t tau_phi = (static_cast<scalar_t>(1) - phi) * relaxation::tau_zero() + phi * relaxation::tau_one();
-            const scalar_t r = device::sponge_ramp(z);
-            const scalar_t tau_eff = tau_phi + r * (relaxation::tau_zmax(phi) - tau_phi);
-            const scalar_t omega = static_cast<scalar_t>(1) / tau_eff;
+        const scalar_t tau_phi = (static_cast<scalar_t>(1) - phi) * relaxation::tau_water() + phi * relaxation::tau_oil();
+        const scalar_t r = device::sponge_ramp(z);
+        const scalar_t tau_eff = tau_phi + r * (relaxation::tau_zmax(phi) - tau_phi);
+        const scalar_t omega = static_cast<scalar_t>(1) / tau_eff;
 
-            omco = static_cast<scalar_t>(1) - omega;
-        }
-        else if constexpr (FlowCase::droplet_case())
-        {
-            const scalar_t tau_phi = (static_cast<scalar_t>(1) - phi) * relaxation::tau_zero() + phi * relaxation::tau_one();
-            const scalar_t omega = static_cast<scalar_t>(1) / tau_phi;
-
-            omco = static_cast<scalar_t>(1) - omega;
-        }
+        omco = static_cast<scalar_t>(1) - omega;
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
@@ -221,17 +210,8 @@ namespace LBM
                 label_t zz = z + static_cast<label_t>(VelocitySet::cz<Q>());
 
                 // Periodic wrapping
-                if constexpr (FlowCase::jet_case())
-                {
-                    xx = device::wrapX(xx);
-                    yy = device::wrapY(yy);
-                }
-                else if constexpr (FlowCase::droplet_case())
-                {
-                    xx = device::wrapX(xx);
-                    yy = device::wrapY(yy);
-                    zz = device::wrapZ(zz);
-                }
+                xx = device::wrapX(xx);
+                yy = device::wrapY(yy);
 
                 d.f[device::global4(xx, yy, zz, Q)] = to_pop(feq + omco * fneq + force);
             });
@@ -252,17 +232,8 @@ namespace LBM
                 label_t zz = z + static_cast<label_t>(Phase::VelocitySet::cz<Q>());
 
                 // Periodic wrapping
-                if constexpr (FlowCase::jet_case())
-                {
-                    xx = device::wrapX(xx);
-                    yy = device::wrapY(yy);
-                }
-                else if constexpr (FlowCase::droplet_case())
-                {
-                    xx = device::wrapX(xx);
-                    yy = device::wrapY(yy);
-                    zz = device::wrapZ(zz);
-                }
+                xx = device::wrapX(xx);
+                yy = device::wrapY(yy);
 
                 d.g[device::global4(xx, yy, zz, Q)] = geq + hi;
             });
