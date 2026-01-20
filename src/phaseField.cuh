@@ -228,6 +228,14 @@ namespace Phase
 
         const scalar_t curvature = LBM::VelocitySet::as2() * (scx + scy + scz);
 
+        // const scalar_t indicator = std::abs(phi - static_cast<scalar_t>(0.5));
+        // const scalar_t expontential_indicator = std::exp(-std::abs(phi - static_cast<scalar_t>(0.5)));
+
+        // // This is arbitrary
+        // constexpr const scalar_t sigma = static_cast<scalar_t>(1);
+
+        // const scalar_t Gaussian_indicator = std::exp(-std::pow(std::abs(phi - static_cast<scalar_t>(0.5)), 2) / sigma);
+
         const scalar_t stCurv = -physics::sigma * curvature * d.ind[idx3];
         d.ffx[idx3] = stCurv * d.normx[idx3];
         d.ffy[idx3] = stCurv * d.normy[idx3];
