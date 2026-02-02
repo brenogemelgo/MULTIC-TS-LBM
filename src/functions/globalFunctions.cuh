@@ -268,7 +268,7 @@ namespace relaxation
 {
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t visc_water() noexcept
     {
-        return static_cast<scalar_t>(2.1e-4);
+        return static_cast<scalar_t>(1.71e-4);
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t visc_oil() noexcept

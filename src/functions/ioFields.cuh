@@ -48,7 +48,6 @@ namespace host
 {
     enum class FieldID : std::uint8_t
     {
-        P,
         Rho,
         Ux,
         Uy,
@@ -101,8 +100,6 @@ namespace host
     {
         switch (id)
         {
-        case FieldID::P:
-            return fields.p;
         case FieldID::Rho:
             return fields.rho;
         case FieldID::Ux:

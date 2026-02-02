@@ -60,8 +60,8 @@ namespace Phase
     using VelocitySet = LBM::D3Q7;
 }
 
-#define RUN_MODE
-// #define SAMPLE_MODE
+// #define RUN_MODE
+#define SAMPLE_MODE
 // #define PROFILE_MODE
 
 #if defined(RUN_MODE)
@@ -87,26 +87,27 @@ namespace mesh
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
     static constexpr label_t nz = res * 4;
-    static constexpr int diam = 16;
+    static constexpr int diam = 20;
     static constexpr int radius = diam / 2;
 }
 
 namespace physics
 {
-    static constexpr scalar_t u_inf = static_cast<scalar_t>(0.05);
+    static constexpr scalar_t u_inf = static_cast<scalar_t>(0.054);
 
     // static constexpr int reynolds_water = 1400; // deprecated: set at globalFunctions by viscosity
-    static constexpr scalar_t reynolds_oil = static_cast<scalar_t>(9.7e2);
+    static constexpr scalar_t reynolds_oil = static_cast<scalar_t>(1019);
 
-    static constexpr scalar_t weber = static_cast<scalar_t>(3.5e5);
+    static constexpr scalar_t weber = static_cast<scalar_t>(385);
 
-    static constexpr scalar_t rho_water = 1;     // phi = 0
-    static constexpr scalar_t rho_oil = 0.832;   // phi = 1
-    static constexpr scalar_t rho_ref = rho_oil; // reference density (oil due to diameter)
-    static constexpr scalar_t sigma = rho_ref * (u_inf * u_inf * mesh::diam) / static_cast<scalar_t>(weber);
+    static constexpr scalar_t sigma = (u_inf * u_inf * mesh::diam) / static_cast<scalar_t>(weber);
 
-    static constexpr scalar_t width = static_cast<scalar_t>(3);                                // prefer odd values due to grid symmetry
-    static constexpr scalar_t gamma = static_cast<scalar_t>(3) / static_cast<scalar_t>(width); // gamma = 1 gives approximately ~2 lu of interface width
+    static constexpr scalar_t interface_width = static_cast<scalar_t>(4); // continuum interface width. discretization may change it a little
+
+    static constexpr scalar_t tau_g = static_cast<scalar_t>(1);                                            // phase field relaxation time
+    static constexpr scalar_t diff_int = Phase::VelocitySet::cs2() * (tau_g - static_cast<scalar_t>(0.5)); // interfacial diffusivity
+    static constexpr scalar_t kappa = static_cast<scalar_t>(4) * diff_int / interface_width;               // sharpening parameter
+    static constexpr scalar_t gamma = kappa / Phase::VelocitySet::cs2();
 }
 
 #endif

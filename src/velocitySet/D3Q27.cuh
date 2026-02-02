@@ -162,11 +162,11 @@ namespace LBM
 
         template <label_t Q>
         __host__ __device__ [[nodiscard]] static inline constexpr scalar_t f_eq(
-            const scalar_t p,
+            const scalar_t rho,
             const scalar_t uu,
             const scalar_t cu) noexcept
         {
-            return w<Q>() * (p - uu + cu + static_cast<scalar_t>(0.5) * cu * cu + oos() * cu * cu * cu - uu * cu);
+            return w<Q>() * rho * (static_cast<scalar_t>(1) - uu + cu + static_cast<scalar_t>(0.5) * cu * cu + oos() * cu * cu * cu - uu * cu) - w<Q>();
         }
 
         template <label_t Q>

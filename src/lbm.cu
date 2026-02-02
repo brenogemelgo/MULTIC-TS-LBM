@@ -59,7 +59,7 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        scalar_t p = static_cast<scalar_t>(0);
+        scalar_t rho = static_cast<scalar_t>(0);
         scalar_t pop[VelocitySet::Q()];
 
         device::constexpr_for<0, VelocitySet::Q()>(
@@ -67,14 +67,17 @@ namespace LBM
             {
                 const scalar_t fq = from_pop(d.f[Q * size::cells() + idx3]);
                 pop[Q] = fq;
-                p += fq;
+                rho += fq;
             });
 
-        d.p[idx3] = p;
+        rho += static_cast<scalar_t>(1);
+        d.rho[idx3] = rho;
 
         const scalar_t ffx = d.ffx[idx3];
         const scalar_t ffy = d.ffy[idx3];
         const scalar_t ffz = d.ffz[idx3];
+
+        const scalar_t invRho = static_cast<scalar_t>(1) / rho;
 
         scalar_t ux = static_cast<scalar_t>(0);
         scalar_t uy = static_cast<scalar_t>(0);
@@ -82,20 +85,16 @@ namespace LBM
 
         if constexpr (VelocitySet::Q() == 19)
         {
-            ux = pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16];
-            uy = pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18];
-            uz = pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17];
+            ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
+            uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
+            uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
         }
         else if constexpr (VelocitySet::Q() == 27)
         {
-            ux = pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25];
-            uy = pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26];
-            uz = pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26];
+            ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
+            uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
+            uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17] + pop[19] - pop[20] + pop[22] - pop[21] + pop[23] - pop[24] + pop[25] - pop[26]);
         }
-
-        const scalar_t phi = d.phi[idx3];
-        d.rho[idx3] = (static_cast<scalar_t>(1) - phi) * physics::rho_water + phi * physics::rho_oil;
-        const scalar_t invRho = static_cast<scalar_t>(1) / d.rho[idx3];
 
         ux += ffx * static_cast<scalar_t>(0.5) * invRho;
         uy += ffy * static_cast<scalar_t>(0.5) * invRho;
@@ -110,9 +109,6 @@ namespace LBM
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
-        // Zeroth moment of the non-equilibrium distribution function (diagnostic variable)
-        // scalar_t fneq0 = static_cast<scalar_t>(0);
-
         device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
@@ -122,12 +118,9 @@ namespace LBM
 
                 const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = VelocitySet::f_eq<Q>(p, uu, cu);
+                const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
                 const scalar_t fneq = pop[Q] - feq + force;
-
-                // Compute zeroth moment of fneq
-                // fneq0 += fneq;
 
                 pxx += fneq * cx * cx;
                 pyy += fneq * cy * cy;
@@ -137,13 +130,10 @@ namespace LBM
                 pyz += fneq * cy * cz;
             });
 
-        // const scalar_t iso = VelocitySet::cs2() * fneq0;
-        // if (math::abs(iso) > static_cast<scalar_t>(1e-6) * p)
-        // {
-        //     printf("iso correction = %.3e (m0 = %.3e)\n",
-        //            static_cast<double>(iso),
-        //            static_cast<double>(fneq0));
-        // }
+        const scalar_t trace = pxx + pyy + pzz;
+        pxx -= VelocitySet::cs2() * trace;
+        pyy -= VelocitySet::cs2() * trace;
+        pzz -= VelocitySet::cs2() * trace;
 
         d.pxx[idx3] = pxx;
         d.pyy[idx3] = pyy;
@@ -166,7 +156,7 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t p = d.p[idx3];
+        const scalar_t rho = d.rho[idx3];
         const scalar_t ux = d.ux[idx3];
         const scalar_t uy = d.uy[idx3];
         const scalar_t uz = d.uz[idx3];
@@ -201,7 +191,7 @@ namespace LBM
 
                 const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = VelocitySet::f_eq<Q>(p, uu, cu);
+                const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                 const scalar_t force = VelocitySet::force<Q>(cu, ux, uy, uz, ffx, ffy, ffz);
                 const scalar_t fneq = VelocitySet::f_neq<Q>(pxx, pyy, pzz, pxy, pxz, pyz, ux, uy, uz);
 

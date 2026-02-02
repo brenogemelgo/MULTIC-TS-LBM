@@ -207,7 +207,6 @@ namespace host
         static_assert(F_DIST_SIZE / sizeof(pop_t) == NCELLS * size_t(LBM::VelocitySet::Q()), "F_DIST_SIZE overflow");
         static_assert(G_DIST_SIZE / sizeof(scalar_t) == NCELLS * size_t(Phase::VelocitySet::Q()), "G_DIST_SIZE overflow");
 
-        checkCudaErrors(cudaMalloc(&fields.p, SIZE));
         checkCudaErrors(cudaMalloc(&fields.rho, SIZE));
         checkCudaErrors(cudaMalloc(&fields.ux, SIZE));
         checkCudaErrors(cudaMalloc(&fields.uy, SIZE));
@@ -258,7 +257,6 @@ namespace host
 
 #endif
 
-        checkCudaErrors(cudaMemset(fields.p, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.rho, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.ux, 0, SIZE));
         checkCudaErrors(cudaMemset(fields.uy, 0, SIZE));

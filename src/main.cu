@@ -106,11 +106,8 @@ int main(int argc, char *argv[])
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
     // Base fields (always saved)
-    constexpr std::array<host::FieldConfig, 1> BASE_FIELDS{{
-        // {host::FieldID::P, "p", host::FieldDumpShape::Grid3D, true},
-        {host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true}
-        // {host::FieldID::Uz, "uz", host::FieldDumpShape::Grid3D, true},
-    }};
+    constexpr std::array<host::FieldConfig, 1> BASE_FIELDS{
+        {{host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true}}};
 
     // Derived fields from modules (possibly empty)
     const auto DERIVED_FIELDS = Derived::makeOutputFields();
@@ -210,7 +207,6 @@ int main(int argc, char *argv[])
     // Free device memory
     cudaFree(fields.f);
     cudaFree(fields.g);
-    cudaFree(fields.p);
     cudaFree(fields.rho);
     cudaFree(fields.ux);
     cudaFree(fields.uy);

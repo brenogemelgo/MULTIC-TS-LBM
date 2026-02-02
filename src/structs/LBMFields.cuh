@@ -41,7 +41,6 @@ SourceFiles
 
 struct LBMFields
 {
-    scalar_t *p;
     scalar_t *rho;
     scalar_t *ux;
     scalar_t *uy;

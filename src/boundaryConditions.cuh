@@ -78,14 +78,14 @@ namespace LBM
             const scalar_t zx = white_noise<0xA341316Cu>(x, y, t);
             const scalar_t zy = white_noise<0xC8013EA4u>(x, y, t);
 
-            const scalar_t p = static_cast<scalar_t>(0);
-            const scalar_t phi = d.phi[idx3_bnd];
+            const scalar_t rho = static_cast<scalar_t>(1);
+            const scalar_t phi = static_cast<scalar_t>(1);
             const scalar_t ux = sigma_u * zx;
             const scalar_t uy = sigma_u * zy;
             const scalar_t uz = physics::u_inf;
 
-            d.p[idx3_bnd] = p;
-            // d.phi[idx3_bnd] = phi;
+            d.rho[idx3_bnd] = rho;
+            d.phi[idx3_bnd] = phi;
             d.ux[idx3_bnd] = ux;
             d.uy[idx3_bnd] = uy;
             d.uz[idx3_bnd] = uz;
@@ -109,7 +109,7 @@ namespace LBM
 
                         const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                        const scalar_t feq = VelocitySet::f_eq<Q>(p, uu, cu);
+                        const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                         const scalar_t fneq = VelocitySet::f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
                                                                     d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
                                                                     d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
@@ -134,13 +134,13 @@ namespace LBM
             const label_t idx3_bnd = device::global3(x, y, mesh::nz - 1);
             const label_t idx3_zm1 = device::global3(x, y, mesh::nz - 2);
 
-            d.p[idx3_bnd] = d.p[idx3_zm1];
+            d.rho[idx3_bnd] = d.rho[idx3_zm1];
             d.phi[idx3_bnd] = d.phi[idx3_zm1];
             d.ux[idx3_bnd] = d.ux[idx3_zm1];
             d.uy[idx3_bnd] = d.uy[idx3_zm1];
             d.uz[idx3_bnd] = d.uz[idx3_zm1];
 
-            const scalar_t p = d.p[idx3_bnd];
+            const scalar_t rho = d.rho[idx3_bnd];
             const scalar_t phi = d.phi[idx3_bnd];
             const scalar_t ux = d.ux[idx3_bnd];
             const scalar_t uy = d.uy[idx3_bnd];
@@ -165,7 +165,7 @@ namespace LBM
 
                         const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                        const scalar_t feq = VelocitySet::f_eq<Q>(p, uu, cu);
+                        const scalar_t feq = VelocitySet::f_eq<Q>(rho, uu, cu);
                         const scalar_t fneq = VelocitySet::f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
                                                                     d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
                                                                     d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
@@ -221,142 +221,6 @@ namespace LBM
             const scalar_t rry = uniform01(hash32(base ^ 0x68BC21EBu));
 
             return box_muller(rrx, rry);
-        }
-
-        __device__ static inline int clamp_int(
-            const int v,
-            const int lo,
-            const int hi) noexcept
-        {
-            return (v < lo) ? lo : ((v > hi) ? hi : v);
-        }
-
-        __device__ static inline scalar_t window_r2(const scalar_t r2) noexcept
-        {
-            const scalar_t invR2 = static_cast<scalar_t>(1) / geometry::R2();
-            const scalar_t s2 = r2 * invR2;
-
-            const scalar_t one_minus = (s2 < static_cast<scalar_t>(1)) ? (static_cast<scalar_t>(1) - s2) : static_cast<scalar_t>(0);
-
-            return one_minus * one_minus;
-        }
-
-        template <uint32_t Seed>
-        __device__ static inline scalar_t ou_noise_2d(
-            const int x,
-            const int y,
-            const label_t t) noexcept
-        {
-            constexpr scalar_t alpha = static_cast<scalar_t>(0.80);
-            constexpr scalar_t beta = static_cast<scalar_t>(0.60);
-
-            const label_t tm1 = (t > 0) ? (t - 1) : t;
-
-            const scalar_t n0 = white_noise<Seed>(static_cast<label_t>(x), static_cast<label_t>(y), t);
-            const scalar_t n1 = white_noise<Seed ^ 0x9E3779B9u>(static_cast<label_t>(x), static_cast<label_t>(y), tm1);
-
-            return alpha * n1 + beta * n0;
-        }
-
-        __device__ static inline void coeffs_9tap(
-            scalar_t &a0,
-            scalar_t &a1, scalar_t &a2,
-            scalar_t &a3,
-            scalar_t &a4) noexcept
-        {
-            a0 = static_cast<scalar_t>(0.1531393568);
-            a1 = static_cast<scalar_t>(0.1449280831);
-            a2 = static_cast<scalar_t>(0.1226769711);
-            a3 = static_cast<scalar_t>(0.0929521065);
-            a4 = static_cast<scalar_t>(0.0628731615);
-        }
-
-        __device__ static inline scalar_t a_of_abs_9(
-            const int kabs,
-            const scalar_t a0,
-            const scalar_t a1,
-            const scalar_t a2,
-            const scalar_t a3,
-            const scalar_t a4) noexcept
-        {
-            return (kabs == 0) ? a0 : (kabs == 1) ? a1
-                                  : (kabs == 2)   ? a2
-                                  : (kabs == 3)   ? a3
-                                                  : a4;
-        }
-
-        __device__ static inline scalar_t b_of_j_9(
-            const int j,
-            const scalar_t a0,
-            const scalar_t a1,
-            const scalar_t a2,
-            const scalar_t a3,
-            const scalar_t a4) noexcept
-        {
-            if (j == 0)
-                return static_cast<scalar_t>(0);
-
-            const int aj = (j < 0) ? -j : j;
-
-            scalar_t bj = static_cast<scalar_t>(0);
-
-            if (aj == 1)
-                bj = static_cast<scalar_t>(0.5) * (a0 - a2);
-            else if (aj == 2)
-                bj = static_cast<scalar_t>(0.5) * (a1 - a3);
-            else if (aj == 3)
-                bj = static_cast<scalar_t>(0.5) * (a2 - a4);
-            else /* aj == 4 */
-                bj = static_cast<scalar_t>(0.5) * (a3 - static_cast<scalar_t>(0));
-
-            return (j > 0) ? bj : -bj;
-        }
-
-        template <uint32_t Seed>
-        __device__ static inline void synthetic_uv_hat_9x9(const int x,
-                                                           const int y,
-                                                           const label_t t,
-                                                           scalar_t &ux_hat,
-                                                           scalar_t &uy_hat) noexcept
-        {
-            scalar_t a0, a1, a2, a3, a4;
-            coeffs_9tap(a0, a1, a2, a3, a4);
-
-            ux_hat = static_cast<scalar_t>(0);
-            uy_hat = static_cast<scalar_t>(0);
-
-            const int x0 = 0;
-            const int y0 = 0;
-            const int x1 = static_cast<int>(mesh::nx) - 1;
-            const int y1 = static_cast<int>(mesh::ny) - 1;
-
-#pragma unroll
-            for (int i = -4; i <= 4; ++i)
-            {
-                const int xi = clamp_int(x + i, x0, x1);
-                const int iabs = (i < 0) ? -i : i;
-
-                const scalar_t ai = a_of_abs_9(iabs, a0, a1, a2, a3, a4);
-                const scalar_t bi = b_of_j_9(i, a0, a1, a2, a3, a4);
-
-#pragma unroll
-                for (int j = -4; j <= 4; ++j)
-                {
-                    const int yj = clamp_int(y + j, y0, y1);
-                    const int jabs = (j < 0) ? -j : j;
-
-                    const scalar_t aj = a_of_abs_9(jabs, a0, a1, a2, a3, a4);
-                    const scalar_t bj = b_of_j_9(j, a0, a1, a2, a3, a4);
-
-                    const scalar_t xi_noise = ou_noise_2d<Seed>(xi, yj, t);
-
-                    // ux_hat = dpsi/dy
-                    ux_hat += ai * bj * xi_noise;
-
-                    // uy_hat = -dpsi/dx
-                    uy_hat -= bi * aj * xi_noise;
-                }
-            }
         }
     };
 }

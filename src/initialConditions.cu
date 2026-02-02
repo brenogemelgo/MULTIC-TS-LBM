@@ -67,15 +67,7 @@ namespace LBM
 
         const label_t idx3_in = device::global3(x, y, 0);
 
-        // constexpr scalar_t A = static_cast<scalar_t>(2.197224577);
-        // constexpr scalar_t inv_sqrt2 = static_cast<scalar_t>(0.7071067811865475);
-
-        // const scalar_t xi = physics::width * inv_sqrt2 / A;
-
-        // const scalar_t r = math::sqrt(r2);
-        // d.phi[idx3_in] = static_cast<scalar_t>(0.5) + static_cast<scalar_t>(0.5) * math::tanh((mesh::radius - r) / (math::sqrt(static_cast<scalar_t>(2)) * xi));
         d.phi[idx3_in] = static_cast<scalar_t>(1);
-
         d.uz[idx3_in] = physics::u_inf;
     }
 
@@ -92,9 +84,7 @@ namespace LBM
 
         const label_t idx3 = device::global3(x, y, z);
 
-        const scalar_t phi = d.phi[idx3];
-
-        d.rho[idx3] = (static_cast<scalar_t>(1) - phi) * physics::rho_water + phi * physics::rho_oil;
+        d.rho[idx3] = static_cast<scalar_t>(1);
     }
 
     __global__ void setDistros(LBMFields d)
@@ -124,7 +114,7 @@ namespace LBM
 
                 const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = VelocitySet::f_eq<Q>(d.p[idx3], uu, cu);
+                const scalar_t feq = VelocitySet::f_eq<Q>(d.rho[idx3], uu, cu);
 
                 d.f[Q * size::cells() + idx3] = to_pop(feq);
             });
