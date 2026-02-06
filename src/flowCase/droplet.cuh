@@ -29,34 +29,58 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    General includes
+    Droplet flow case class declaration
 
 Namespace
     LBM
 
 SourceFiles
-    LBMIncludes.cuh
+    droplet.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef LBMINCLUDES_CUH
-#define LBMINCLUDES_CUH
+#ifndef DROPLET_CUH
+#define DROPLET_CUH
+
+#include "flowCase.cuh"
 
 namespace LBM
 {
-    // Initial conditions
-    __global__ void setInitialDensity(LBMFields d);
-    __global__ void setDroplet(LBMFields d);
-    __global__ void setJet(LBMFields d);
-    __global__ void setDistros(LBMFields d);
+    class droplet : private flowCase
+    {
+    public:
+        __host__ __device__ [[nodiscard]] inline consteval droplet(){};
 
-    // Moments and core routines
-    __global__ void computeMoments(LBMFields d);
-    __global__ void streamCollide(LBMFields d);
+        __host__ __device__ [[nodiscard]] static inline consteval bool droplet_case() noexcept
+        {
+            return true;
+        }
 
-    // Boundary conditions
-    __global__ void callInflow(LBMFields d, const label_t t);
-    __global__ void callOutflow(LBMFields d);
+        __host__ __device__ [[nodiscard]] static inline consteval bool jet_case() noexcept
+        {
+            return false;
+        }
+
+        template <dim3 grid, dim3 block, size_t dynamic>
+        __host__ static inline void initialConditions(
+            const LBMFields &fields,
+            const cudaStream_t queue)
+        {
+            setDroplet<<<grid, block, dynamic, queue>>>(fields);
+        }
+
+        template <dim3 grid, dim3 block, size_t dynamic>
+        __host__ static inline void boundaryConditions(
+            const LBMFields &fields,
+            const cudaStream_t queue,
+            const label_t STEP)
+        {
+            // Full periodicity with wrap in streaming
+        }
+
+    private:
+        // No private methods
+    };
 }
 
 #endif

@@ -29,34 +29,32 @@ License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Description
-    General includes
+    Header file for the flow case classes
 
 Namespace
     LBM
 
 SourceFiles
-    LBMIncludes.cuh
+    flowCase.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef LBMINCLUDES_CUH
-#define LBMINCLUDES_CUH
+#ifndef FLOWCASE_CUH
+#define FLOWCASE_CUH
+
+#include "cuda/utils.cuh"
+#include "include/LBMIncludes.cuh"
 
 namespace LBM
 {
-    // Initial conditions
-    __global__ void setInitialDensity(LBMFields d);
-    __global__ void setDroplet(LBMFields d);
-    __global__ void setJet(LBMFields d);
-    __global__ void setDistros(LBMFields d);
-
-    // Moments and core routines
-    __global__ void computeMoments(LBMFields d);
-    __global__ void streamCollide(LBMFields d);
-
-    // Boundary conditions
-    __global__ void callInflow(LBMFields d, const label_t t);
-    __global__ void callOutflow(LBMFields d);
+    class flowCase
+    {
+    public:
+        __host__ __device__ [[nodiscard]] inline consteval flowCase() noexcept {};
+    };
 }
+
+#include "droplet.cuh"
+#include "jet.cuh"
 
 #endif

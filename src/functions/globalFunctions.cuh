@@ -266,9 +266,17 @@ namespace sponge
 
 namespace relaxation
 {
+
+#if defined(JET)
+
+    // __host__ __device__ [[nodiscard]] static inline consteval scalar_t visc_water() noexcept
+    // {
+    //     return static_cast<scalar_t>(1.71e-4);
+    // }
+
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t visc_water() noexcept
     {
-        return static_cast<scalar_t>(1.71e-4);
+        return static_cast<scalar_t>((static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam)) / static_cast<double>(physics::reynolds_water));
     }
 
     __host__ __device__ [[nodiscard]] static inline consteval scalar_t visc_oil() noexcept
@@ -326,19 +334,19 @@ namespace relaxation
         return omega_oil();
     }
 
-    __host__ __device__ [[nodiscard]] static inline scalar_t omega_zmax(const scalar_t phi) noexcept
+    __host__ __device__ [[nodiscard]] static inline constexpr scalar_t omega_zmax(const scalar_t phi) noexcept
     {
         const scalar_t visc_local = (static_cast<scalar_t>(1) - phi) * visc_water() + phi * visc_oil();
 
         return omega_from_nu(visc_local * (static_cast<scalar_t>(1) + sponge::K_gain()));
     }
 
-    __host__ __device__ [[nodiscard]] static inline scalar_t omega_delta(const scalar_t phi) noexcept
+    __host__ __device__ [[nodiscard]] static inline constexpr scalar_t omega_delta(const scalar_t phi) noexcept
     {
         return omega_zmax(phi) - omega_zmin();
     }
 
-    __host__ __device__ [[nodiscard]] static inline scalar_t tau_zmax(const scalar_t phi) noexcept
+    __host__ __device__ [[nodiscard]] static inline constexpr scalar_t tau_zmax(const scalar_t phi) noexcept
     {
         const scalar_t visc_local = (static_cast<scalar_t>(1) - phi) * visc_water() + phi * visc_oil();
         const scalar_t visc_sp = visc_local * (static_cast<scalar_t>(1) + sponge::K_gain());
@@ -356,10 +364,74 @@ namespace relaxation
         return static_cast<scalar_t>(1) - omega_zmin();
     }
 
-    __host__ __device__ [[nodiscard]] static inline scalar_t omco_zmax(const scalar_t phi) noexcept
+    __host__ __device__ [[nodiscard]] static inline constexpr scalar_t omco_zmax(const scalar_t phi) noexcept
     {
         return static_cast<scalar_t>(1) - omega_zmax(phi);
     }
+
+#elif defined(DROPLET)
+
+    // __host__ __device__ [[nodiscard]] static inline consteval scalar_t visc_water() noexcept
+    // {
+    //     return static_cast<scalar_t>(1.71e-4);
+    // }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t tau_water() noexcept
+    {
+        return static_cast<scalar_t>(0);
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t tau_oil() noexcept
+    {
+        return static_cast<scalar_t>(0);
+    }
+
+    __host__ __device__ [[nodiscard]] static inline constexpr scalar_t tau_zmax(const scalar_t phi) noexcept
+    {
+        return static_cast<scalar_t>(0);
+    }
+
+    __host__ __device__ [[nodiscard]] static inline constexpr scalar_t omega_from_nu(const scalar_t nu) noexcept
+    {
+        return static_cast<scalar_t>(static_cast<double>(1) / (static_cast<double>(0.5) + static_cast<double>(LBM::VelocitySet::as2()) * static_cast<double>(nu)));
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_ref() noexcept
+    {
+        return omega_from_nu(physics::visc_ref);
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_zmin() noexcept
+    {
+        return omega_ref();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_zmax() noexcept
+    {
+        return omega_ref();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omega_delta() noexcept
+    {
+        return omega_zmax() - omega_zmin();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_ref() noexcept
+    {
+        return static_cast<scalar_t>(1) - omega_ref();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline consteval scalar_t omco_zmin() noexcept
+    {
+        return static_cast<scalar_t>(1) - omega_zmin();
+    }
+
+    __host__ __device__ [[nodiscard]] static inline constexpr scalar_t omco_zmax(const scalar_t phi) noexcept
+    {
+        return static_cast<scalar_t>(1) - omega_zmax();
+    }
+
+#endif
 }
 
 #endif

@@ -71,6 +71,33 @@ namespace LBM
         d.uz[idx3_in] = physics::u_inf;
     }
 
+    __global__ void setDroplet(LBMFields d)
+    {
+        const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
+        const label_t y = threadIdx.y + blockIdx.y * blockDim.y;
+        const label_t z = threadIdx.z + blockIdx.z * blockDim.z;
+
+        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
+            x == 0 || x == mesh::nx - 1 ||
+            y == 0 || y == mesh::ny - 1 ||
+            z == 0 || z == mesh::nz - 1)
+        {
+            return;
+        }
+
+        const label_t idx3 = device::global3(x, y, z);
+
+        const scalar_t dx = (static_cast<scalar_t>(x) - geometry::center_x()) / static_cast<scalar_t>(2);
+        const scalar_t dy = static_cast<scalar_t>(y) - geometry::center_y();
+        const scalar_t dz = static_cast<scalar_t>(z) - geometry::center_z();
+        const scalar_t L2 = math::sqrt(dx * dx + dy * dy + dz * dz);
+
+        const scalar_t arg = static_cast<scalar_t>((static_cast<double>(mesh::radius) - static_cast<double>(L2)) / static_cast<double>(physics::interface_width));
+        const scalar_t phi = static_cast<scalar_t>(0.5) + static_cast<scalar_t>(0.5) * math::tanh(static_cast<scalar_t>(2) * arg);
+
+        d.phi[idx3] = phi;
+    }
+
     __global__ void setInitialDensity(LBMFields d)
     {
         const label_t x = threadIdx.x + blockIdx.x * blockDim.x;

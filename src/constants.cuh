@@ -45,6 +45,7 @@ SourceFiles
 #include "structs/LBMFields.cuh"
 #include "functions/constexprFor.cuh"
 #include "velocitySet/velocitySet.cuh"
+#include "flowCase/flowCase.cuh"
 
 namespace LBM
 {
@@ -52,6 +53,12 @@ namespace LBM
     using VelocitySet = D3Q19;
 #elif defined(VS_D3Q27)
     using VelocitySet = D3Q27;
+#endif
+
+#if defined(DROPLET)
+    using FlowCase = droplet;
+#elif defined(JET)
+    using FlowCase = jet;
 #endif
 }
 
@@ -72,7 +79,7 @@ static constexpr int NSTEPS = 200000;
 #elif defined(SAMPLE_MODE)
 
 static constexpr int MACRO_SAVE = 100;
-static constexpr int NSTEPS = 1000;
+static constexpr int NSTEPS = 100000;
 
 #elif defined(PROFILE_MODE)
 
@@ -81,24 +88,26 @@ static constexpr int NSTEPS = 0;
 
 #endif
 
+#if defined(JET)
+
 namespace mesh
 {
-    static constexpr label_t res = 200;
+    static constexpr label_t res = 128;
     static constexpr label_t nx = res;
     static constexpr label_t ny = res;
-    static constexpr label_t nz = res * 4;
+    static constexpr label_t nz = res * 2;
     static constexpr int diam = 20;
     static constexpr int radius = diam / 2;
 }
 
 namespace physics
 {
-    static constexpr scalar_t u_inf = static_cast<scalar_t>(0.054);
+    static constexpr scalar_t u_inf = static_cast<scalar_t>(0.05);
 
-    // static constexpr int reynolds_water = 1400; // deprecated: set at globalFunctions by viscosity
-    static constexpr scalar_t reynolds_oil = static_cast<scalar_t>(1019);
+    static constexpr scalar_t reynolds_water = static_cast<scalar_t>(5000);
+    static constexpr scalar_t reynolds_oil = static_cast<scalar_t>(5000);
 
-    static constexpr scalar_t weber = static_cast<scalar_t>(385);
+    static constexpr scalar_t weber = static_cast<scalar_t>(500);
 
     static constexpr scalar_t sigma = (u_inf * u_inf * mesh::diam) / static_cast<scalar_t>(weber);
 
@@ -109,5 +118,39 @@ namespace physics
     static constexpr scalar_t kappa = static_cast<scalar_t>(4) * diff_int / interface_width;               // sharpening parameter
     static constexpr scalar_t gamma = kappa / Phase::VelocitySet::cs2();
 }
+
+#elif defined(DROPLET)
+
+namespace mesh
+{
+    static constexpr label_t res = 256;
+    static constexpr label_t nx = res;
+    static constexpr label_t ny = res;
+    static constexpr label_t nz = res;
+    static constexpr int radius = 35;
+    static constexpr int diam = 2 * radius;
+}
+
+namespace physics
+{
+
+    static constexpr scalar_t u_inf = static_cast<scalar_t>(0);
+    static constexpr int reynolds_water = 0;
+    static constexpr int reynolds_oil = 0;
+    static constexpr int weber = 0;
+    static constexpr scalar_t sigma = static_cast<scalar_t>(0.03);
+
+    static constexpr scalar_t interface_width = static_cast<scalar_t>(4); // continuum interface width. discretization may change it a little
+
+    static constexpr scalar_t tau_g = static_cast<scalar_t>(1);                                            // phase field relaxation time
+    static constexpr scalar_t diff_int = Phase::VelocitySet::cs2() * (tau_g - static_cast<scalar_t>(0.5)); // interfacial diffusivity
+    static constexpr scalar_t kappa = static_cast<scalar_t>(4) * diff_int / interface_width;               // sharpening parameter
+    static constexpr scalar_t gamma = kappa / Phase::VelocitySet::cs2();
+
+    static constexpr scalar_t tau = static_cast<scalar_t>(0.55);
+    static constexpr scalar_t visc_ref = (tau - static_cast<scalar_t>(0.5)) / LBM::VelocitySet::as2();
+}
+
+#endif
 
 #endif

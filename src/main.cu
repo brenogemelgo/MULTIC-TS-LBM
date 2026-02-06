@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
     checkCudaErrorsOutline(cudaStreamCreate(&queue));
 
     // Initial conditions
-    LBM::setJet<<<grid3D, block3D, dynamic>>>(fields);
     LBM::setInitialDensity<<<grid3D, block3D, dynamic, queue>>>(fields);
+    LBM::FlowCase::initialConditions<grid3D, block3D, dynamic>(fields, queue);
     LBM::setDistros<<<grid3D, block3D, dynamic, queue>>>(fields);
 
     // Make sure everything is initialized
@@ -106,8 +106,9 @@ int main(int argc, char *argv[])
     vtk_threads.reserve(NSTEPS / MACRO_SAVE + 2);
 
     // Base fields (always saved)
-    constexpr std::array<host::FieldConfig, 1> BASE_FIELDS{
-        {{host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true}}};
+    constexpr std::array<host::FieldConfig, 2> BASE_FIELDS{
+        {{host::FieldID::Phi, "phi", host::FieldDumpShape::Grid3D, true},
+         {host::FieldID::Rho, "rho", host::FieldDumpShape::Grid3D, true}}};
 
     // Derived fields from modules (possibly empty)
     const auto DERIVED_FIELDS = Derived::makeOutputFields();
@@ -143,9 +144,8 @@ int main(int argc, char *argv[])
         // Launch captured sequence
         cudaGraphLaunch(graphExec, queue);
 
-        // Boundary conditions
-        LBM::callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
-        LBM::callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+        // Flow case specific boundary conditions
+        LBM::FlowCase::boundaryConditions<gridZ, blockZ, dynamic>(fields, queue, STEP);
 
         // Ensure debug output is complete before host logic
         cudaStreamSynchronize(queue);
