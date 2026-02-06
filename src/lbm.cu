@@ -238,12 +238,13 @@ namespace LBM
                 label_t zz = z + static_cast<label_t>(Phase::VelocitySet::cz<Q>());
 
                 /// Periodic wrapping
-                if constexpr (FlowCase::jet_case())
-                {
-                    xx = device::wrapX(xx);
-                    yy = device::wrapY(yy);
-                }
-                else if constexpr (FlowCase::droplet_case())
+                // if constexpr (FlowCase::jet_case())
+                // {
+                //     xx = device::wrapX(xx);
+                //     yy = device::wrapY(yy);
+                // }
+                // else
+                if constexpr (FlowCase::droplet_case())
                 {
                     xx = device::wrapX(xx);
                     yy = device::wrapY(yy);
@@ -262,6 +263,16 @@ namespace LBM
     __global__ void callOutflow(LBMFields d)
     {
         BoundaryConditions::applyOutflow(d);
+    }
+
+    __global__ void callPeriodicX(LBMFields d)
+    {
+        BoundaryConditions::periodicX(d);
+    }
+
+    __global__ void callPeriodicY(LBMFields d)
+    {
+        BoundaryConditions::periodicY(d);
     }
 }
 

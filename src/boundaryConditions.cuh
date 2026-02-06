@@ -177,6 +177,118 @@ namespace LBM
             d.g[6 * size::cells() + idx3_zm1] = Phase::VelocitySet::w<6>() * phi * (static_cast<scalar_t>(1) - Phase::VelocitySet::as2() * physics::u_inf);
         }
 
+        __device__ static inline void periodicX(LBMFields d)
+        {
+            const label_t y = threadIdx.x + blockIdx.x * blockDim.x;
+            const label_t z = threadIdx.y + blockIdx.y * blockDim.y;
+
+            if (y <= 0 || y >= mesh::ny - 1 || z <= 0 || z >= mesh::nz - 1)
+            {
+                return;
+            }
+
+            const label_t bL = device::global3(1, y, z);
+            const label_t bR = device::global3(mesh::nx - 2, y, z);
+
+            device::constexpr_for<0, VelocitySet::Q()>(
+                [&](const auto Q)
+                {
+                    if constexpr (VelocitySet::cx<Q>() > 0)
+                    {
+                        d.f[Q * size::cells() + bL] = d.f[Q * size::cells() + bR];
+                    }
+                    if constexpr (VelocitySet::cx<Q>() < 0)
+                    {
+                        d.f[Q * size::cells() + bR] = d.f[Q * size::cells() + bL];
+                    }
+                });
+
+            device::constexpr_for<0, Phase::VelocitySet::Q()>(
+                [&](const auto Q)
+                {
+                    if constexpr (Phase::VelocitySet::cx<Q>() > 0)
+                    {
+                        d.g[Q * size::cells() + bL] = d.g[Q * size::cells() + bR];
+                    }
+                    if constexpr (Phase::VelocitySet::cx<Q>() < 0)
+                    {
+                        d.g[Q * size::cells() + bR] = d.g[Q * size::cells() + bL];
+                    }
+                });
+
+            // Copy to ghost layer (periodic wrapping)
+            const label_t gL = device::global3(0, y, z);
+            const label_t gR = device::global3(mesh::nx - 1, y, z);
+
+            d.phi[gL] = d.phi[bR];
+            d.phi[gR] = d.phi[bL];
+
+            d.ux[gL] = d.ux[bR];
+            d.ux[gR] = d.ux[bL];
+
+            d.uy[gL] = d.uy[bR];
+            d.uy[gR] = d.uy[bL];
+
+            d.uz[gL] = d.uz[bR];
+            d.uz[gR] = d.uz[bL];
+        }
+
+        __device__ static inline void periodicY(LBMFields d)
+        {
+            const label_t x = threadIdx.x + blockIdx.x * blockDim.x;
+            const label_t z = threadIdx.y + blockIdx.y * blockDim.y;
+
+            if (x <= 0 || x >= mesh::nx - 1 || z <= 0 || z >= mesh::nz - 1)
+            {
+                return;
+            }
+
+            const label_t bB = device::global3(x, 1, z);
+            const label_t bT = device::global3(x, mesh::ny - 2, z);
+
+            device::constexpr_for<0, VelocitySet::Q()>(
+                [&](const auto Q)
+                {
+                    if constexpr (VelocitySet::cy<Q>() > 0)
+                    {
+                        d.f[Q * size::cells() + bB] = d.f[Q * size::cells() + bT];
+                    }
+                    if constexpr (VelocitySet::cy<Q>() < 0)
+                    {
+                        d.f[Q * size::cells() + bT] = d.f[Q * size::cells() + bB];
+                    }
+                });
+
+            device::constexpr_for<0, Phase::VelocitySet::Q()>(
+                [&](const auto Q)
+                {
+                    if constexpr (Phase::VelocitySet::cy<Q>() > 0)
+                    {
+                        d.g[Q * size::cells() + bB] = d.g[Q * size::cells() + bT];
+                    }
+                    if constexpr (Phase::VelocitySet::cy<Q>() < 0)
+                    {
+                        d.g[Q * size::cells() + bT] = d.g[Q * size::cells() + bB];
+                    }
+                });
+
+            // Copy to ghost layer (periodic wrapping)
+            const label_t gB = device::global3(x, 0, z);
+            const label_t gT = device::global3(x, mesh::ny - 1, z);
+
+            d.phi[gB] = d.phi[bT];
+            d.phi[gT] = d.phi[bB];
+
+            d.ux[gB] = d.ux[bT];
+            d.ux[gT] = d.ux[bB];
+
+            d.uy[gB] = d.uy[bT];
+            d.uy[gT] = d.uy[bB];
+
+            d.uz[gB] = d.uz[bT];
+            d.uz[gT] = d.uz[bB];
+        }
+
     private:
         __device__ [[nodiscard]] static inline constexpr uint32_t hash32(uint32_t x) noexcept
         {

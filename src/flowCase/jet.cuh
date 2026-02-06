@@ -69,14 +69,16 @@ namespace LBM
             setJet<<<grid, block, dynamic, queue>>>(fields);
         }
 
-        template <dim3 grid, dim3 block, size_t dynamic>
+        template <dim3 gridX, dim3 blockX, dim3 gridY, dim3 blockY, dim3 gridZ, dim3 blockZ, size_t dynamic>
         __host__ static inline void boundaryConditions(
             const LBMFields &fields,
             const cudaStream_t queue,
             const label_t STEP)
         {
-            callInflow<<<grid, block, dynamic, queue>>>(fields, STEP);
-            callOutflow<<<grid, block, dynamic, queue>>>(fields);
+            callInflow<<<gridZ, blockZ, dynamic, queue>>>(fields, STEP);
+            callOutflow<<<gridZ, blockZ, dynamic, queue>>>(fields);
+            callPeriodicX<<<gridX, blockX, dynamic, queue>>>(fields);
+            callPeriodicY<<<gridY, blockY, dynamic, queue>>>(fields);
         }
 
     private:
