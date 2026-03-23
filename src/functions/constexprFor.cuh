@@ -24,7 +24,6 @@ SourceFiles
 #define CONSTEXPRFOR_CUH
 
 #include <utility>
-
 #include "cuda/precision.cuh"
 
 template <typename T, T v>

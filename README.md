@@ -7,11 +7,6 @@
 - CUDA toolkit with `nvcc`
 - C++20-capable host compiler
 
-## Build
-```bash
-make
-```
-
 ## Install
 ```bash
 make install
@@ -62,14 +57,3 @@ L_char = 10
 nTimeSteps = 100000
 saveInterval = 1000
 ```
-
-## Notes
-- `FLOW_CASE` is no longer a build-time argument.
-- Stencil specialization remains compile-time (runtime startup dispatch to templated solver).
-- BC/IC remain hardcoded per case and are selected via runtime `caseName`.
-- `constants.cuh` is deprecated as a compatibility shim; new code should include `config/PhaseVelocitySet.cuh`, `runtime/RuntimeState.cuh`, and `functions/constexprFor.cuh` directly.
-- `pipeline.sh` is deprecated and exits with guidance.
-- `compile.sh` is a legacy wrapper to `make`.
-
-## Refactor Design Note
-See `docs/runtime_case_refactor.md` for architecture, migration, and verification notes.
