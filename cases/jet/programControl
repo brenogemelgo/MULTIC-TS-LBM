@@ -1,0 +1,8 @@
+caseName = jet
+ReA = 5000
+ReB = 5000
+We = 500
+u_inf = 0.05
+L_char = 5
+nTimeSteps = 100000
+saveInterval = 1000

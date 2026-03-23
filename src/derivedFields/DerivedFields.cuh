@@ -169,31 +169,31 @@ namespace derived
 #endif
         }
 
-        template <dim3 grid, dim3 block, size_t dynamic>
-        __host__ inline void launch(cudaStream_t queue, LBMFields d, const label_t step) const noexcept
+        
+        __host__ inline void launch(cudaStream_t queue, const dim3 &grid, const dim3 &block, const size_t dynamic, LBMFields d, const label_t step) const noexcept
         {
 #if TIME_AVERAGE
             if (anyEnabled(average::fields))
             {
-                average::launch<grid, block, dynamic>(queue, d, step);
+                average::launch(queue, grid, block, dynamic, d, step);
             }
 #endif
 #if REYNOLDS_MOMENTS
             if (anyEnabled(reynolds::fields))
             {
-                reynolds::launch<grid, block, dynamic>(queue, d, step);
+                reynolds::launch(queue, grid, block, dynamic, d, step);
             }
 #endif
 #if VORTICITY_FIELDS
             if (anyEnabled(vorticity::fields))
             {
-                vorticity::launch<grid, block, dynamic>(queue, d);
+                vorticity::launch(queue, grid, block, dynamic, d);
             }
 #endif
 #if PASSIVE_SCALAR
             if (anyEnabled(passive::fields))
             {
-                passive::launch<grid, block, dynamic>(queue, d);
+                passive::launch(queue, grid, block, dynamic, d);
             }
 #endif
         }

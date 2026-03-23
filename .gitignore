@@ -1,2 +1,9 @@
 bin/*
 !bin/.gitkeep
+
+build/
+
+cases/*/output/*
+!cases/*/output/.gitkeep
+
+docs/

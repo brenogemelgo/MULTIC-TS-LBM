@@ -9,9 +9,6 @@
 
 /*---------------------------------------------------------------------------*\
 
-Copyright (C) 2023 UDESC Geoenergia Lab
-Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
-
 Description
     Vorticity component and magnitude computation via centered velocity gradients
 
@@ -40,7 +37,7 @@ namespace lbm
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
         const label_t z = threadIdx.z + block::nz() * blockIdx.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
+        if (x >= mesh::nx() || y >= mesh::ny() || z >= mesh::nz())
         {
             return;
         }
@@ -57,9 +54,9 @@ namespace lbm
         scalar_t wz = static_cast<scalar_t>(0);
 
         // Interior only
-        if (x > 0 && x < mesh::nx - 1 &&
-            y > 0 && y < mesh::ny - 1 &&
-            z > 0 && z < mesh::nz - 1)
+        if (x > 0 && x < mesh::nx() - 1 &&
+            y > 0 && y < mesh::ny() - 1 &&
+            z > 0 && z < mesh::nz() - 1)
         {
             const label_t idx_xp = device::global3(x + 1, y, z);
             const label_t idx_xm = device::global3(x - 1, y, z);
@@ -116,9 +113,11 @@ namespace derived
             {host::FieldID::Vort_mag, "vort_mag", host::FieldDumpShape::Grid3D, true},
         });
 
-        template <dim3 grid, dim3 block, size_t dynamic>
         __host__ static inline void launch(
             cudaStream_t queue,
+            const dim3 &grid,
+            const dim3 &block,
+            const size_t dynamic,
             LBMFields d) noexcept
         {
             lbm::vorticityCompute<<<grid, block, dynamic, queue>>>(d);

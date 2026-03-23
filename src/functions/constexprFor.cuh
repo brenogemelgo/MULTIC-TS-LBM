@@ -23,6 +23,10 @@ SourceFiles
 #ifndef CONSTEXPRFOR_CUH
 #define CONSTEXPRFOR_CUH
 
+#include <utility>
+
+#include "cuda/precision.cuh"
+
 template <typename T, T v>
 struct IntegralConstant
 {

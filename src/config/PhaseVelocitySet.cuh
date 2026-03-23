@@ -10,27 +10,24 @@
 /*---------------------------------------------------------------------------*\
 
 Description
-    Deprecated compatibility shim. Use focused headers directly:
-      - runtime/RuntimeState.cuh
-      - functions/constexprFor.cuh
-      - config/PhaseVelocitySet.cuh
+    Compile-time phase velocity-set selection and stencil compatibility checks
 
 SourceFiles
-    constants.cuh
+    PhaseVelocitySet.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef CONSTANTS_CUH
-#define CONSTANTS_CUH
+#ifndef PHASEVELOCITYSET_CUH
+#define PHASEVELOCITYSET_CUH
 
-#if !defined(PHASEFIELDLBM_SUPPRESS_DEPRECATED_CONSTANTS_HEADER)
-#if defined(__GNUC__) || defined(__clang__)
-#pragma message("constants.cuh is deprecated; include runtime/RuntimeState.cuh, functions/constexprFor.cuh, and config/PhaseVelocitySet.cuh directly.")
-#endif
-#endif
+#include "velocitySet/VelocitySet.cuh"
 
-#include "runtime/RuntimeState.cuh"
-#include "functions/constexprFor.cuh"
-#include "config/PhaseVelocitySet.cuh"
+namespace phase
+{
+    using velocitySet = lbm::D3Q7;
+}
+
+static_assert(lbm::D3Q19::max_abs_c() == phase::velocitySet::max_abs_c(), "Hydrodynamic and phase velocity sets must have identical stencil radius.");
+static_assert(lbm::D3Q27::max_abs_c() == phase::velocitySet::max_abs_c(), "Hydrodynamic and phase velocity sets must have identical stencil radius.");
 
 #endif

@@ -9,35 +9,40 @@
 
 /*---------------------------------------------------------------------------*\
 
-Copyright (C) 2023 UDESC Geoenergia Lab
-Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
-
 Description
-    Base interface for compile-time flow case definitions
-
-Namespace
-    lbm
+    Runtime case object factory
 
 SourceFiles
-    FlowCase.cuh
+    CaseFactory.cuh
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FLOWCASE_CUH
-#define FLOWCASE_CUH
+#ifndef CASEFACTORY_CUH
+#define CASEFACTORY_CUH
 
-#include "LBMIncludes.cuh"
+#include "CaseBase.cuh"
+#include "JetCase.cuh"
+#include "DropletCase.cuh"
 
-namespace lbm
+namespace cases
 {
-    class FlowCase
+    __host__ [[nodiscard]] static inline std::unique_ptr<Case> createCase(const std::string &caseName)
     {
-    public:
-        __device__ __host__ [[nodiscard]] inline consteval FlowCase() noexcept {};
-    };
-}
+        const std::string lowered = runtime::toLower(caseName);
 
-#include "Droplet.cuh"
-#include "Jet.cuh"
+        if (lowered == "jet")
+        {
+            return std::make_unique<JetCase>();
+        }
+        if (lowered == "droplet")
+        {
+            return std::make_unique<DropletCase>();
+        }
+
+        throw std::runtime_error(
+            "Unsupported caseName in programControl: '" + caseName +
+            "'. Supported values: jet, droplet.");
+    }
+}
 
 #endif

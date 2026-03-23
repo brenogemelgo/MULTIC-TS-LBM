@@ -9,9 +9,6 @@
 
 /*---------------------------------------------------------------------------*\
 
-Copyright (C) 2023 UDESC Geoenergia Lab
-Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
-
 Description
    Host-side I/O, diagnostics, and utility routines for simulation setup and data output
 
@@ -27,60 +24,60 @@ SourceFiles
 #define HOSTFUNCTIONS_CUH
 
 #include "globalFunctions.cuh"
+#include "config/PhaseVelocitySet.cuh"
+#include "runtime/RuntimeConfig.cuh"
 
 namespace host
 {
-    __host__ [[nodiscard]] static inline std::string createSimulationDirectory(
-        const std::string &FLOW_CASE,
-        const std::string &VELOCITY_SET,
-        const std::string &SIM_ID)
+    __host__ [[nodiscard]] static inline std::string ensureOutputDirectory(const std::filesystem::path &outputDir)
     {
-        std::filesystem::path BASE_DIR = std::filesystem::current_path();
+        std::error_code ec;
+        std::filesystem::create_directories(outputDir, ec);
+        if (ec)
+        {
+            throw std::runtime_error("Could not create output directory: " + outputDir.string() + " (" + ec.message() + ")");
+        }
 
-        std::filesystem::path SIM_DIR = BASE_DIR / "bin" / FLOW_CASE / VELOCITY_SET / SIM_ID;
-
-        std::error_code EC;
-        std::filesystem::create_directories(SIM_DIR, EC);
-
-        return SIM_DIR.string() + std::string(1, std::filesystem::path::preferred_separator);
+        return outputDir.string() + std::string(1, std::filesystem::path::preferred_separator);
     }
 
     __host__ [[gnu::cold]] static inline void generateSimulationInfoFile(
-        const std::string &SIM_DIR,
-        const std::string &SIM_ID,
-        const std::string &VELOCITY_SET)
+        const std::string &simDir,
+        const std::string &simId,
+        const std::string &velocitySet,
+        const runtime::RuntimeConfig &cfg)
     {
-        std::filesystem::path INFO_PATH = std::filesystem::path(SIM_DIR) / (SIM_ID + "_info.txt");
+        std::filesystem::path infoPath = std::filesystem::path(simDir) / (simId + "_info.txt");
 
         try
         {
-            std::ofstream file(INFO_PATH, std::ios::out | std::ios::trunc);
+            std::ofstream file(infoPath, std::ios::out | std::ios::trunc);
             if (!file.is_open())
             {
-                std::cerr << "Error opening file: " << INFO_PATH.string() << std::endl;
-
+                std::cerr << "Error opening file: " << infoPath.string() << std::endl;
                 return;
             }
 
             file << "---------------------------- SIMULATION METADATA ----------------------------\n"
-                 << "ID:                    " << SIM_ID << '\n'
-                 << "Velocity set:          " << VELOCITY_SET << '\n'
-                 << "Reference velocity:    " << physics::u_inf << '\n'
-                 << "Dispersed phase Re:    " << physics::reynolds_oil << '\n'
-                 << "Continuous phase Re:   " << physics::reynolds_water << '\n'
-                 << "Weber number:          " << physics::weber << '\n'
-                 << "Surface tension:       " << physics::sigma << '\n'
-                 << "NX:                    " << mesh::nx << '\n'
-                 << "NY:                    " << mesh::ny << '\n'
-                 << "NZ:                    " << mesh::nz << '\n'
-                 << "Diameter:              " << mesh::diam << '\n'
-                 << "Timesteps:             " << NSTEPS << '\n'
-                 << "Output interval:       " << MACRO_SAVE << '\n'
+                 << "ID:                    " << simId << '\n'
+                 << "Case name:             " << cfg.control.caseName << '\n'
+                 << "Velocity set:          " << velocitySet << '\n'
+                 << "Reference velocity:    " << physics::u_inf() << '\n'
+                 << "Dispersed phase Re:    " << physics::reynolds_oil() << '\n'
+                 << "Continuous phase Re:   " << physics::reynolds_water() << '\n'
+                 << "Weber number:          " << physics::weber() << '\n'
+                 << "Surface tension:       " << physics::sigma() << '\n'
+                 << "NX:                    " << mesh::nx() << '\n'
+                 << "NY:                    " << mesh::ny() << '\n'
+                 << "NZ:                    " << mesh::nz() << '\n'
+                 << "Diameter:              " << mesh::diam() << '\n'
+                 << "Timesteps:             " << control::nTimeSteps() << '\n'
+                 << "Output interval:       " << control::saveInterval() << '\n'
                  << "-----------------------------------------------------------------------------\n";
 
             file.close();
 
-            std::cout << "Simulation information file created in: " << INFO_PATH.string() << std::endl;
+            std::cout << "Simulation information file created in: " << infoPath.string() << std::endl;
         }
         catch (const std::exception &e)
         {
@@ -88,25 +85,26 @@ namespace host
         }
     }
 
-    __host__ [[gnu::cold]] static inline void printDiagnostics(const std::string &VELOCITY_SET) noexcept
+    __host__ [[gnu::cold]] static inline void printDiagnostics(const std::string &velocitySet) noexcept
     {
-        const double Ma = static_cast<double>(physics::u_inf) * static_cast<double>(lbm::velocitySet::as2());
-        const double nu_d = static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam) / static_cast<double>(physics::reynolds_oil);
-        const double nu_c = static_cast<double>(physics::u_inf) * static_cast<double>(mesh::diam) / static_cast<double>(physics::reynolds_water);
-        const double tau_d = static_cast<double>(0.5) + static_cast<double>(nu_d) * static_cast<double>(lbm::velocitySet::as2());
-        const double tau_c = static_cast<double>(0.5) + static_cast<double>(nu_c) * static_cast<double>(lbm::velocitySet::as2());
+        const scalar_t tauRef = static_cast<scalar_t>(1) / relaxation::omega_ref();
+
+        const scalar_t tau_d = (runtime::constants().tau_oil > static_cast<scalar_t>(0)) ? runtime::constants().tau_oil : tauRef;
+        const scalar_t tau_c = (runtime::constants().tau_water > static_cast<scalar_t>(0)) ? runtime::constants().tau_water : tauRef;
+
+        const double Ma = static_cast<double>(physics::u_inf()) * static_cast<double>(3);
 
         std::cout << "\n---------------------------- SIMULATION METADATA ----------------------------\n"
-                  << "Velocity set:          " << VELOCITY_SET << '\n'
-                  << "Reference velocity:    " << physics::u_inf << '\n'
-                  << "Dispersed phase Re:    " << physics::reynolds_oil << '\n'
-                  << "Continuous phase Re:   " << physics::reynolds_water << '\n'
-                  << "Weber number:          " << physics::weber << '\n'
-                  << "Surface tension:       " << physics::sigma << '\n'
-                  << "NX:                    " << mesh::nx << '\n'
-                  << "NY:                    " << mesh::ny << '\n'
-                  << "NZ:                    " << mesh::nz << '\n'
-                  << "Diameter:              " << mesh::diam << '\n'
+                  << "Velocity set:          " << velocitySet << '\n'
+                  << "Reference velocity:    " << physics::u_inf() << '\n'
+                  << "Dispersed phase Re:    " << physics::reynolds_oil() << '\n'
+                  << "Continuous phase Re:   " << physics::reynolds_water() << '\n'
+                  << "Weber number:          " << physics::weber() << '\n'
+                  << "Surface tension:       " << physics::sigma() << '\n'
+                  << "NX:                    " << mesh::nx() << '\n'
+                  << "NY:                    " << mesh::ny() << '\n'
+                  << "NZ:                    " << mesh::nz() << '\n'
+                  << "Diameter:              " << mesh::diam() << '\n'
                   << "Total domain size:     " << size::cells() << '\n'
                   << "Mach:                  " << Ma << '\n'
                   << "Dispersed phase tau:   " << tau_d << '\n'
@@ -114,20 +112,8 @@ namespace host
                   << "-----------------------------------------------------------------------------\n\n";
     }
 
-    __host__ [[nodiscard]] [[gnu::cold]] static inline int setDeviceFromEnv() noexcept
+    __host__ [[nodiscard]] [[gnu::cold]] static inline int setDevice(const int dev) noexcept
     {
-        int dev = 0;
-        if (const char *env = std::getenv("GPU_INDEX"))
-        {
-            char *end = nullptr;
-            long v = std::strtol(env, &end, 10);
-
-            if (end != env && v >= 0)
-            {
-                dev = static_cast<int>(v);
-            }
-        }
-
         cudaError_t err = cudaSetDevice(dev);
         if (err != cudaSuccess)
         {
@@ -156,17 +142,18 @@ namespace host
         return (a + b - 1u) / b;
     }
 
-    __host__ [[nodiscard]] static inline constexpr size_t bytesScalar() noexcept
+    __host__ [[nodiscard]] static inline size_t bytesScalar() noexcept
     {
         return static_cast<size_t>(size::cells()) * sizeof(scalar_t);
     }
 
-    __host__ [[nodiscard]] static inline constexpr size_t bytesF() noexcept
+    template <typename HydroVS>
+    __host__ [[nodiscard]] static inline size_t bytesF() noexcept
     {
-        return static_cast<size_t>(size::cells()) * static_cast<size_t>(lbm::velocitySet::Q()) * sizeof(pop_t);
+        return static_cast<size_t>(size::cells()) * static_cast<size_t>(HydroVS::Q()) * sizeof(pop_t);
     }
 
-    __host__ [[nodiscard]] static inline constexpr size_t bytesG() noexcept
+    __host__ [[nodiscard]] static inline size_t bytesG() noexcept
     {
         return static_cast<size_t>(size::cells()) * static_cast<size_t>(phase::velocitySet::Q()) * sizeof(scalar_t);
     }

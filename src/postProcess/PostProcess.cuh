@@ -110,9 +110,9 @@ namespace host
                 std::uint64_t offset = 0;
             };
 
-            const std::uint64_t NX = static_cast<std::uint64_t>(mesh::nx);
-            const std::uint64_t NY = static_cast<std::uint64_t>(mesh::ny);
-            const std::uint64_t NZ = static_cast<std::uint64_t>(mesh::nz);
+            const std::uint64_t NX = static_cast<std::uint64_t>(mesh::nx());
+            const std::uint64_t NY = static_cast<std::uint64_t>(mesh::ny());
+            const std::uint64_t NZ = static_cast<std::uint64_t>(mesh::nz());
 
             const std::uint64_t NNODES = NX * NY * NZ;
             const std::uint64_t nodeBytes = NNODES * static_cast<std::uint64_t>(sizeof(scalar_t));
@@ -195,15 +195,15 @@ namespace host
             vti << R"(<?xml version="1.0"?>)" << '\n';
             vti << R"(<VTKFile type="ImageData" version="0.1" byte_order="LittleEndian">)" << '\n';
 
-            vti << "  <ImageData WholeExtent=\"0 " << (mesh::nx - 1)
-                << " 0 " << (mesh::ny - 1)
-                << " 0 " << (mesh::nz - 1)
+            vti << "  <ImageData WholeExtent=\"0 " << (mesh::nx() - 1)
+                << " 0 " << (mesh::ny() - 1)
+                << " 0 " << (mesh::nz() - 1)
                 << "\" Origin=\"" << ox << " " << oy << " " << oz
                 << "\" Spacing=\"" << sx << " " << sy << " " << sz << "\">\n";
 
-            vti << "    <Piece Extent=\"0 " << (mesh::nx - 1)
-                << " 0 " << (mesh::ny - 1)
-                << " 0 " << (mesh::nz - 1) << "\">\n";
+            vti << "    <Piece Extent=\"0 " << (mesh::nx() - 1)
+                << " 0 " << (mesh::ny() - 1)
+                << " 0 " << (mesh::nz() - 1) << "\">\n";
 
             vti << "      <PointData Scalars=\"" << arrays.front().name << "\">\n";
             for (const auto &a : arrays)

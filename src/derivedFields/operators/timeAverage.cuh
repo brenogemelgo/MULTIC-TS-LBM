@@ -9,9 +9,6 @@
 
 /*---------------------------------------------------------------------------*\
 
-Copyright (C) 2023 UDESC Geoenergia Lab
-Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
-
 Description
    Time averaging of primary flow and phase fields
 
@@ -42,7 +39,7 @@ namespace lbm
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
         const label_t z = threadIdx.z + block::nz() * blockIdx.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
+        if (x >= mesh::nx() || y >= mesh::ny() || z >= mesh::nz())
         {
             return;
         }
@@ -93,9 +90,11 @@ namespace derived
             {host::FieldID::Avg_uz, "avg_uz", host::FieldDumpShape::Grid3D, true},
         });
 
-        template <dim3 grid, dim3 block, size_t dynamic>
         __host__ static inline void launch(
             cudaStream_t queue,
+            const dim3 &grid,
+            const dim3 &block,
+            const size_t dynamic,
             LBMFields d,
             const label_t t) noexcept
         {

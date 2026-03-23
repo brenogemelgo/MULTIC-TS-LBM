@@ -1,76 +1,75 @@
 # phaseFieldLBM
 
-**phaseFieldLBM** is a **GPU-accelerated**, lattice Boltzmann simulator for multicomponent flows based on a **conservative Allen–Cahn** phase-field formulation. 
-Implemented in CUDA, it supports **D3Q19/D3Q27** for hydrodynamics and **D3Q7** for phase field evolution, enabling accurate interface dynamics and surface tension modeling.
-Available cases: **jet** and **droplet**.
+`phaseFieldLBM` is a CUDA multicomponent lattice Boltzmann solver using a conservative Allen-Cahn phase-field model.
 
----
+## Requirements
+- NVIDIA GPU (Compute Capability >= 6.0)
+- CUDA toolkit with `nvcc`
+- C++20-capable host compiler
 
-## 🖥️ Requirements
-
-- **GPU**: NVIDIA (Compute Capability ≥ 6.0, 4+ GB VRAM recommended)  
-- **CUDA**: Toolkit ≥ 12.0  
-- **Compiler**: C++20-capable (GCC ≥ 11) + `nvcc` (partial C++20 support)
-- **ParaView**: for `.vtr` visualization  
-
----
-
-## 🚀 Run
-
+## Build
 ```bash
-./pipeline.sh <flow_case> <velocity_set> <id>
+make
 ```
 
-* `flow_case`: `JET` | `DROPLET`
-* `velocity_set`: `D3Q19` | `D3Q27`
-* `id`: simulation ID (e.g., `000`)
+## Install
+```bash
+make install
+```
 
-Pipeline: compile → simulate → post-process  
+By default, `make install` installs to `$HOME/.local/bin`.
+For system-wide install, use:
+```bash
+sudo make install PREFIX=/usr/local
+```
 
----
+## Runtime Usage
+Run from inside a case directory containing `latticeMesh` and `programControl`:
+```bash
+phaseFieldLBM -STENCIL <D3Q19|D3Q27> -ID <SIMULATION_ID> -GPU <INDEX>
+```
 
-## ⚡ Benchmark
+Optional startup-only sanity mode:
+```bash
+phaseFieldLBM -STENCIL D3Q27 -ID test01 -GPU 0 --dry-run
+```
 
-Performance is reported in **MLUPS** (Million Lattice Updates Per Second).  
-All benchmarks are performed in **FP32 precision**.  
+## Case Directory Layout
+```text
+cases/
+  jet/
+    latticeMesh
+    programControl
+    output/
+```
 
-| GPU             | D3Q19 (MLUPS) | D3Q27 (MLUPS) |
-|-----------------|---------------|---------------|
-| RTX 3050 (4GB)  | 470           | 410           |
-| RTX 4090 (24GB) | –             | –             |
-| A100 (40GB)     | –             | –             |
+## Input Files
+`latticeMesh`:
+```text
+nx = 64
+ny = 64
+nz = 128
+```
 
-*Important considerations:*  
-- **D3Q19** uses 2nd-order equilibrium/non-equilibrium expansion
-- **D3Q27** uses 3rd-order equilibrium/non-equilibrium expansion
-- The current implementation is **not yet fully optimized**, with several **non-coalesced memory access patterns** that are planned to be improved in future revisions
-- These methodological differences contribute to the observed performance gap, beyond the natural cost of upgrading from **19** to **27** velocity directions
+`programControl`:
+```text
+caseName = jet
+ReA = 5000
+ReB = 5000
+We = 500
+u_inf = 0.05
+L_char = 10
+nTimeSteps = 100000
+saveInterval = 1000
+```
 
----
+## Notes
+- `FLOW_CASE` is no longer a build-time argument.
+- Stencil specialization remains compile-time (runtime startup dispatch to templated solver).
+- BC/IC remain hardcoded per case and are selected via runtime `caseName`.
+- `constants.cuh` is deprecated as a compatibility shim; new code should include `config/PhaseVelocitySet.cuh`, `runtime/RuntimeState.cuh`, and `functions/constexprFor.cuh` directly.
+- `pipeline.sh` is deprecated and exits with guidance.
+- `compile.sh` is a legacy wrapper to `make`.
 
-## 🧠 Project Context
-
-This code was developed as part of an undergraduate research fellowship at the Geoenergia Lab (UDESC – Balneário Camboriú Campus), under the project:
-
-**"Experiment-based physical and numerical modeling of subsea oil jet dispersion (SUBJET)"**, in partnership with **Petrobras, ANP, FITEJ and SINTEF Ocean**.
-
----
-
-## 📄 License
-
-This project is licensed under the terms of the LICENSE file.
-
----
-
-## 📊 Credits
-
-The implementation is strongly based on the article *[A high-performance lattice Boltzmann model for multicomponent turbulent jet simulations](https://arxiv.org/abs/2403.15773)*.
-
----
-
-## 📬 Contact
-
-For feature requests or contributions, feel free to open an issue or fork the project. 
-You may also contact the maintainer via email at:
-
-* breno.gemelgo@edu.udesc.br
+## Refactor Design Note
+See `docs/runtime_case_refactor.md` for architecture, migration, and verification notes.

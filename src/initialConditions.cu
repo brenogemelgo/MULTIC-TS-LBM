@@ -9,9 +9,6 @@
 
 /*---------------------------------------------------------------------------*\
 
-Copyright (C) 2023 UDESC Geoenergia Lab
-Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
-
 Description
     Initial condition kernels for jet and droplet setups, density initialization, and equilibrium distribution assignment
 
@@ -27,6 +24,7 @@ SourceFiles
 #define INITIALCONDITIONS_CUH
 
 #include "LBMIncludes.cuh"
+#include "config/PhaseVelocitySet.cuh"
 
 namespace lbm
 {
@@ -35,7 +33,7 @@ namespace lbm
         const label_t x = threadIdx.x + block::nx() * blockIdx.x;
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
 
-        if (x >= mesh::nx || y >= mesh::ny)
+        if (x >= mesh::nx() || y >= mesh::ny())
         {
             return;
         }
@@ -52,7 +50,7 @@ namespace lbm
         const label_t idx3_in = device::global3(x, y, 0);
 
         d.phi[idx3_in] = static_cast<scalar_t>(1);
-        d.uz[idx3_in] = physics::u_inf;
+        d.uz[idx3_in] = physics::u_inf();
     }
 
     __global__ void setDroplet(LBMFields d)
@@ -61,10 +59,10 @@ namespace lbm
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
         const label_t z = threadIdx.z + block::nz() * blockIdx.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz ||
-            x == 0 || x == mesh::nx - 1 ||
-            y == 0 || y == mesh::ny - 1 ||
-            z == 0 || z == mesh::nz - 1)
+        if (x >= mesh::nx() || y >= mesh::ny() || z >= mesh::nz() ||
+            x == 0 || x == mesh::nx() - 1 ||
+            y == 0 || y == mesh::ny() - 1 ||
+            z == 0 || z == mesh::nz() - 1)
         {
             return;
         }
@@ -76,7 +74,8 @@ namespace lbm
         const scalar_t dz = static_cast<scalar_t>(z) - geometry::center_z();
         const scalar_t L2 = math::sqrt(dx * dx + dy * dy + dz * dz);
 
-        const scalar_t arg = static_cast<scalar_t>((static_cast<double>(mesh::radius) - static_cast<double>(L2)) / static_cast<double>(physics::interface_width));
+        const scalar_t arg = static_cast<scalar_t>((static_cast<double>(mesh::radius()) - static_cast<double>(L2)) /
+                                                   static_cast<double>(physics::interface_width()));
         const scalar_t phi = static_cast<scalar_t>(0.5) + static_cast<scalar_t>(0.5) * math::tanh(static_cast<scalar_t>(2) * arg);
 
         d.phi[idx3] = phi;
@@ -88,7 +87,7 @@ namespace lbm
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
         const label_t z = threadIdx.z + block::nz() * blockIdx.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
+        if (x >= mesh::nx() || y >= mesh::ny() || z >= mesh::nz())
         {
             return;
         }
@@ -98,13 +97,14 @@ namespace lbm
         d.rho[idx3] = static_cast<scalar_t>(1);
     }
 
+    template <typename HydroVS>
     __global__ void setDistros(LBMFields d)
     {
         const label_t x = threadIdx.x + block::nx() * blockIdx.x;
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
         const label_t z = threadIdx.z + block::nz() * blockIdx.z;
 
-        if (x >= mesh::nx || y >= mesh::ny || z >= mesh::nz)
+        if (x >= mesh::nx() || y >= mesh::ny() || z >= mesh::nz())
         {
             return;
         }
@@ -116,16 +116,16 @@ namespace lbm
         const scalar_t uz = d.uz[idx3];
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
-        device::constexpr_for<0, velocitySet::Q()>(
+        device::constexpr_for<0, HydroVS::Q()>(
             [&](const auto Q)
             {
-                constexpr scalar_t cx = static_cast<scalar_t>(velocitySet::cx<Q>());
-                constexpr scalar_t cy = static_cast<scalar_t>(velocitySet::cy<Q>());
-                constexpr scalar_t cz = static_cast<scalar_t>(velocitySet::cz<Q>());
+                constexpr scalar_t cx = static_cast<scalar_t>(HydroVS::template cx<Q>());
+                constexpr scalar_t cy = static_cast<scalar_t>(HydroVS::template cy<Q>());
+                constexpr scalar_t cz = static_cast<scalar_t>(HydroVS::template cz<Q>());
 
-                const scalar_t cu = velocitySet::as2() * (cx * ux + cy * uy + cz * uz);
+                const scalar_t cu = HydroVS::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = velocitySet::f_eq<Q>(d.rho[idx3], uu, cu);
+                const scalar_t feq = HydroVS::template f_eq<Q>(d.rho[idx3], uu, cu);
 
                 d.f[Q * size::cells() + idx3] = to_pop(feq);
             });
@@ -133,7 +133,7 @@ namespace lbm
         device::constexpr_for<0, phase::velocitySet::Q()>(
             [&](const auto Q)
             {
-                d.g[device::global4(x, y, z, Q)] = phase::velocitySet::g_eq<Q>(d.phi[idx3], ux, uy, uz);
+                d.g[device::global4(x, y, z, Q)] = phase::velocitySet::template g_eq<Q>(d.phi[idx3], ux, uy, uz);
             });
     }
 }

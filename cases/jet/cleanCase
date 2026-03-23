@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OUTPUT_DIR="${CASE_DIR}/output"
+
+mkdir -p "${OUTPUT_DIR}"
+find "${OUTPUT_DIR}" -mindepth 1 -maxdepth 1 ! -name '.gitkeep' -exec rm -rf {} +
+
+echo "Cleaned case output: ${OUTPUT_DIR}"

@@ -9,9 +9,6 @@
 
 /*---------------------------------------------------------------------------*\
 
-Copyright (C) 2023 UDESC Geoenergia Lab
-Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
-
 Description
     Passive scalar advection–diffusion kernel and derived field registration
 
@@ -45,13 +42,15 @@ namespace derived
 {
     namespace passive
     {
-        static constexpr auto fields = std::to_array<host::FieldConfig> fields({
+        static constexpr auto fields = std::to_array<host::FieldConfig>({
             {host::FieldID::C, "c", host::FieldDumpShape::Grid3D, true},
         });
 
-        template <dim3 grid, dim3 block, size_t dynamic>
         __host__ static inline void launch(
             cudaStream_t queue,
+            const dim3 &grid,
+            const dim3 &block,
+            const size_t dynamic,
             LBMFields d) noexcept
         {
 #if PASSIVE_SCALAR

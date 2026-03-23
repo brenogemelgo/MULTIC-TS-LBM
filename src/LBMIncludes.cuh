@@ -54,6 +54,7 @@ SourceFiles
 
 #include "cuda/errorCheck.cuh"
 #include "cuda/precision.cuh"
+#include "functions/constexprFor.cuh"
 
 struct LBMFields
 {
@@ -82,21 +83,21 @@ struct LBMFields
 
 #if TIME_AVERAGE
 
-    scalar_t *avg_phi; // phi time average
-    scalar_t *avg_ux;  // x velocity time average
-    scalar_t *avg_uy;  // y velocity time average
-    scalar_t *avg_uz;  // z velocity time average
+    scalar_t *avg_phi;
+    scalar_t *avg_ux;
+    scalar_t *avg_uy;
+    scalar_t *avg_uz;
 
 #endif
 
 #if REYNOLDS_MOMENTS
 
-    scalar_t *avg_uxux; // xx
-    scalar_t *avg_uyuy; // yy
-    scalar_t *avg_uzuz; // zz
-    scalar_t *avg_uxuy; // xy
-    scalar_t *avg_uxuz; // xz
-    scalar_t *avg_uyuz; // yz
+    scalar_t *avg_uxux;
+    scalar_t *avg_uyuy;
+    scalar_t *avg_uzuz;
+    scalar_t *avg_uxuy;
+    scalar_t *avg_uxuz;
+    scalar_t *avg_uyuz;
 
 #endif
 
@@ -124,14 +125,22 @@ namespace lbm
     __global__ void setInitialDensity(LBMFields d);
     __global__ void setDroplet(LBMFields d);
     __global__ void setJet(LBMFields d);
+
+    template <typename HydroVS>
     __global__ void setDistros(LBMFields d);
 
     // Moments and core routines
+    template <typename HydroVS>
     __global__ void computeMoments(LBMFields d);
+
+    template <typename HydroVS, typename CasePolicy>
     __global__ void streamCollide(LBMFields d);
 
     // Boundary conditions
+    template <typename HydroVS>
     __global__ void callInflow(LBMFields d, const label_t t);
+
+    template <typename HydroVS>
     __global__ void callOutflow(LBMFields d);
 }
 
