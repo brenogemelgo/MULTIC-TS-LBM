@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
     Runtime geometry, math, relaxation, and utility functions shared across solver modules
 
@@ -371,17 +374,17 @@ namespace sponge
 
 namespace relaxation
 {
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __device__ __host__ [[nodiscard]] static inline constexpr scalar_t omega_from_nu(const scalar_t nu) noexcept
     {
         return static_cast<scalar_t>(1) /
-               (static_cast<scalar_t>(0.5) + static_cast<scalar_t>(HydroVS::as2()) * nu);
+               (static_cast<scalar_t>(0.5) + static_cast<scalar_t>(VelocitySet::as2()) * nu);
     }
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __device__ __host__ [[nodiscard]] static inline constexpr scalar_t tau_from_nu(const scalar_t nu) noexcept
     {
-        return static_cast<scalar_t>(0.5) + static_cast<scalar_t>(HydroVS::as2()) * nu;
+        return static_cast<scalar_t>(0.5) + static_cast<scalar_t>(VelocitySet::as2()) * nu;
     }
 
     __device__ __host__ [[nodiscard]] static inline constexpr scalar_t omega_from_tau(const scalar_t tau) noexcept

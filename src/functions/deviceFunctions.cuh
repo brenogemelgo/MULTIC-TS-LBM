@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
     Device-side indexing, wrapping, and utility functions for kernel execution
 
@@ -44,13 +47,13 @@ namespace device
         return Q * size::cells() + global3(x, y, z);
     }
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __device__ [[nodiscard]] static inline bool guard(
         const label_t x,
         const label_t y,
         const label_t z) noexcept
     {
-        constexpr label_t r = HydroVS::max_abs_c();
+        constexpr label_t r = VelocitySet::max_abs_c();
 
         return (x < r || y < r || z < r ||
                 x >= mesh::nx() - r ||

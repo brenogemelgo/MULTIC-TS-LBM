@@ -3,11 +3,12 @@ TARGET ?= phaseFieldLBM
 BUILD_DIR ?= build
 PREFIX ?= $(HOME)/.local
 
-CUDA_ARCH ?= $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader -i 0 2>/dev/null | head -n1 | tr -d '.' )
+CUDA_ARCH ?= $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader -i 0 2>/dev/null | head -n1 | tr -d '.')
 CUDA_ARCH := $(if $(CUDA_ARCH),$(CUDA_ARCH),86)
 
 SRC := src/main.cu
 TARGET_PATH := $(BUILD_DIR)/$(TARGET)
+INSTALL_BIN_DIR := $(DESTDIR)$(PREFIX)/bin
 
 NVCC_FLAGS := -O3 --restrict \
 	-gencode arch=compute_$(CUDA_ARCH),code=sm_$(CUDA_ARCH) \
@@ -34,9 +35,9 @@ $(TARGET_PATH): $(SRC) $(shell find src -type f)
 	@mkdir -p $(BUILD_DIR)
 	$(NVCC) $(NVCC_FLAGS) $(CPP_DEFS) $(SRC) -o $(TARGET_PATH)
 
-install: $(TARGET_PATH)
-	install -d $(DESTDIR)$(PREFIX)/bin
-	install -m 0755 $(TARGET_PATH) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+install: all
+	install -d $(INSTALL_BIN_DIR)
+	install -m 0755 $(TARGET_PATH) $(INSTALL_BIN_DIR)/$(TARGET)
 
 clean:
 	rm -rf $(BUILD_DIR)

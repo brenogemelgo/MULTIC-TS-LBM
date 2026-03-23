@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
     CUDA Graph capture of the core phase-field and hydrodynamic LBM kernel sequence
 
@@ -28,7 +31,7 @@ SourceFiles
 
 namespace graph
 {
-    template <typename HydroVS, typename CasePolicy>
+    template <typename VelocitySet, typename CasePolicy>
     __host__ inline void captureGraph(
         cudaGraph_t &graph,
         cudaGraphExec_t &graphExec,
@@ -41,13 +44,13 @@ namespace graph
         checkCudaErrorsOutline(cudaStreamBeginCapture(queue, cudaStreamCaptureModeGlobal));
 
         // Phase field
-        phase::computePhase<HydroVS><<<grid, block, dynamic, queue>>>(fields);
-        phase::computeNormals<HydroVS><<<grid, block, dynamic, queue>>>(fields);
-        phase::computeForces<HydroVS><<<grid, block, dynamic, queue>>>(fields);
+        phase::computePhase<VelocitySet><<<grid, block, dynamic, queue>>>(fields);
+        phase::computeNormals<VelocitySet><<<grid, block, dynamic, queue>>>(fields);
+        phase::computeForces<VelocitySet><<<grid, block, dynamic, queue>>>(fields);
 
         // Hydrodynamics
-        lbm::computeMoments<HydroVS><<<grid, block, dynamic, queue>>>(fields);
-        lbm::streamCollide<HydroVS, CasePolicy><<<grid, block, dynamic, queue>>>(fields);
+        lbm::computeMoments<VelocitySet><<<grid, block, dynamic, queue>>>(fields);
+        lbm::streamCollide<VelocitySet, CasePolicy><<<grid, block, dynamic, queue>>>(fields);
 
         // NOTE: We intentionally DO NOT include boundary conditions or
         // derived fields here, because they depend on STEP and/or other

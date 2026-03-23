@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
    Host-side I/O, diagnostics, and utility routines for simulation setup and data output
 
@@ -147,10 +150,10 @@ namespace host
         return static_cast<size_t>(size::cells()) * sizeof(scalar_t);
     }
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __host__ [[nodiscard]] static inline size_t bytesF() noexcept
     {
-        return static_cast<size_t>(size::cells()) * static_cast<size_t>(HydroVS::Q()) * sizeof(pop_t);
+        return static_cast<size_t>(size::cells()) * static_cast<size_t>(VelocitySet::Q()) * sizeof(pop_t);
     }
 
     __host__ [[nodiscard]] static inline size_t bytesG() noexcept

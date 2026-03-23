@@ -26,11 +26,11 @@ SourceFiles
 
 namespace lbm
 {
-    template <typename HydroVS>
+    template <typename VelocitySet>
     class BoundaryConditions
     {
     public:
-        __device__ __host__ [[nodiscard]] inline consteval BoundaryConditions() {};
+        __device__ __host__ [[nodiscard]] inline consteval BoundaryConditions(){};
 
         __device__ static inline void applyInflow(
             LBMFields d,
@@ -75,26 +75,26 @@ namespace lbm
 
             const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
-            device::constexpr_for<0, HydroVS::Q()>(
+            device::constexpr_for<0, VelocitySet::Q()>(
                 [&](const auto Q)
                 {
-                    if constexpr (HydroVS::template cz<Q>() == 1)
+                    if constexpr (VelocitySet::template cz<Q>() == 1)
                     {
-                        const int xx = static_cast<int>(x) + HydroVS::template cx<Q>();
-                        const int yy = static_cast<int>(y) + HydroVS::template cy<Q>();
+                        const int xx = static_cast<int>(x) + VelocitySet::template cx<Q>();
+                        const int yy = static_cast<int>(y) + VelocitySet::template cy<Q>();
 
                         const label_t fluidNode = device::global3(static_cast<label_t>(xx), static_cast<label_t>(yy), 1);
 
-                        constexpr scalar_t cx = static_cast<scalar_t>(HydroVS::template cx<Q>());
-                        constexpr scalar_t cy = static_cast<scalar_t>(HydroVS::template cy<Q>());
-                        constexpr scalar_t cz = static_cast<scalar_t>(HydroVS::template cz<Q>());
+                        constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::template cx<Q>());
+                        constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::template cy<Q>());
+                        constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::template cz<Q>());
 
-                        const scalar_t cu = HydroVS::as2() * (cx * ux + cy * uy + cz * uz);
+                        const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                        const scalar_t feq = HydroVS::template f_eq<Q>(rho, uu, cu);
-                        const scalar_t fneq = HydroVS::template f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
-                                                                         d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
-                                                                         d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
+                        const scalar_t feq = VelocitySet::template f_eq<Q>(rho, uu, cu);
+                        const scalar_t fneq = VelocitySet::template f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
+                                                                             d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
+                                                                             d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
 
                         d.f[Q * size::cells() + fluidNode] = to_pop(feq + relaxation::omco_zmin() * fneq);
                     }
@@ -135,30 +135,30 @@ namespace lbm
 
             const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
-            device::constexpr_for<0, HydroVS::Q()>(
+            device::constexpr_for<0, VelocitySet::Q()>(
                 [&](const auto Q)
                 {
-                    if constexpr (HydroVS::template cz<Q>() == -1)
+                    if constexpr (VelocitySet::template cz<Q>() == -1)
                     {
-                        const int xi = static_cast<int>(x) + HydroVS::template cx<Q>();
-                        const int yi = static_cast<int>(y) + HydroVS::template cy<Q>();
+                        const int xi = static_cast<int>(x) + VelocitySet::template cx<Q>();
+                        const int yi = static_cast<int>(y) + VelocitySet::template cy<Q>();
 
                         const label_t xx = device::periodic_wrap(static_cast<label_t>(xi), mesh::nx());
                         const label_t yy = device::periodic_wrap(static_cast<label_t>(yi), mesh::ny());
 
                         const label_t fluidNode = device::global3(xx, yy, mesh::nz() - 2);
 
-                        constexpr scalar_t cx = static_cast<scalar_t>(HydroVS::template cx<Q>());
-                        constexpr scalar_t cy = static_cast<scalar_t>(HydroVS::template cy<Q>());
-                        constexpr scalar_t cz = static_cast<scalar_t>(HydroVS::template cz<Q>());
+                        constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::template cx<Q>());
+                        constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::template cy<Q>());
+                        constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::template cz<Q>());
 
-                        const scalar_t cu = HydroVS::as2() * (cx * ux + cy * uy + cz * uz);
+                        const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                        const scalar_t feq = HydroVS::template f_eq<Q>(rho, uu, cu);
-                        const scalar_t fneq = HydroVS::template f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
-                                                                         d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
-                                                                         d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
-                        const scalar_t force = HydroVS::template force<Q>(cu, ux, uy, uz, d.fsx[fluidNode], d.fsy[fluidNode], d.fsz[fluidNode]);
+                        const scalar_t feq = VelocitySet::template f_eq<Q>(rho, uu, cu);
+                        const scalar_t fneq = VelocitySet::template f_neq<Q>(d.pxx[fluidNode], d.pyy[fluidNode], d.pzz[fluidNode],
+                                                                             d.pxy[fluidNode], d.pxz[fluidNode], d.pyz[fluidNode],
+                                                                             d.ux[fluidNode], d.uy[fluidNode], d.uz[fluidNode]);
+                        const scalar_t force = VelocitySet::template force<Q>(cu, ux, uy, uz, d.fsx[fluidNode], d.fsy[fluidNode], d.fsz[fluidNode]);
 
                         d.f[Q * size::cells() + fluidNode] = to_pop(feq + relaxation::omco_zmax(phi) * fneq + static_cast<scalar_t>(0.5) * force);
                     }
@@ -212,16 +212,16 @@ namespace lbm
         }
     };
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void callInflow(LBMFields d, const label_t t)
     {
-        BoundaryConditions<HydroVS>::applyInflow(d, t);
+        BoundaryConditions<VelocitySet>::applyInflow(d, t);
     }
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void callOutflow(LBMFields d)
     {
-        BoundaryConditions<HydroVS>::applyOutflow(d);
+        BoundaryConditions<VelocitySet>::applyOutflow(d);
     }
 }
 

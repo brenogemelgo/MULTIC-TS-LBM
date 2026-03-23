@@ -74,7 +74,7 @@ namespace
         return constants;
     }
 
-    template <typename HydroVS, typename CasePolicy>
+    template <typename VelocitySet, typename CasePolicy>
     int runSimulation(
         const runtime::RuntimeConfig &cfg,
         const runtime::CliOptions &cli,
@@ -103,7 +103,7 @@ namespace
         });
 
         // Device distribution functions
-        const host::FieldDescription<pop_t> f = {"f", &LBMFields::f, host::bytesF<HydroVS>(), true};
+        const host::FieldDescription<pop_t> f = {"f", &LBMFields::f, host::bytesF<VelocitySet>(), true};
         const host::FieldDescription<scalar_t> g = {"g", &LBMFields::g, host::bytesG(), true};
 
         // Allocate all device fields
@@ -140,8 +140,8 @@ namespace
 
         // Initial conditions
         lbm::setInitialDensity<<<grid3D, block3D, dynamic, queue>>>(fields);
-        CasePolicy::template launchInitial<HydroVS>(grid3D, block3D, dynamic, fields, queue);
-        lbm::setDistros<HydroVS><<<grid3D, block3D, dynamic, queue>>>(fields);
+        CasePolicy::template launchInitial<VelocitySet>(grid3D, block3D, dynamic, fields, queue);
+        lbm::setDistros<VelocitySet><<<grid3D, block3D, dynamic, queue>>>(fields);
 
         // Make sure everything is initialized
         checkCudaErrorsOutline(cudaDeviceSynchronize());
@@ -182,7 +182,7 @@ namespace
         // Build CUDA Graph
         cudaGraph_t graph{};
         cudaGraphExec_t graphExec{};
-        graph::captureGraph<HydroVS, CasePolicy>(graph, graphExec, fields, queue, grid3D, block3D, dynamic);
+        graph::captureGraph<VelocitySet, CasePolicy>(graph, graphExec, fields, queue, grid3D, block3D, dynamic);
 
         // Start clock
         const auto START_TIME = std::chrono::high_resolution_clock::now();
@@ -194,7 +194,7 @@ namespace
             cudaGraphLaunch(graphExec, queue);
 
             // Flow case specific boundary conditions
-            CasePolicy::template launchBoundary<HydroVS>(fields, queue, STEP, gridX, blockX, gridY, blockY, gridZ, blockZ, dynamic);
+            CasePolicy::template launchBoundary<VelocitySet>(fields, queue, STEP, gridX, blockX, gridY, blockY, gridZ, blockZ, dynamic);
 
             // Ensure debug output is complete before host logic
             cudaStreamSynchronize(queue);
@@ -242,7 +242,7 @@ namespace
         return 0;
     }
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     int dispatchCase(
         const runtime::CaseKind caseKind,
         const runtime::RuntimeConfig &cfg,
@@ -252,10 +252,10 @@ namespace
         switch (caseKind)
         {
         case runtime::CaseKind::Jet:
-            return runSimulation<HydroVS, case_policy::Jet>(cfg, cli, simDir);
+            return runSimulation<VelocitySet, case_policy::Jet>(cfg, cli, simDir);
 
         case runtime::CaseKind::Droplet:
-            return runSimulation<HydroVS, case_policy::Droplet>(cfg, cli, simDir);
+            return runSimulation<VelocitySet, case_policy::Droplet>(cfg, cli, simDir);
 
         default:
             throw std::runtime_error("Unsupported case kind in startup dispatch.");

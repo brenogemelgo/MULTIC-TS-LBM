@@ -126,21 +126,21 @@ namespace lbm
     __global__ void setDroplet(LBMFields d);
     __global__ void setJet(LBMFields d);
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void setDistros(LBMFields d);
 
     // Moments and core routines
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void computeMoments(LBMFields d);
 
-    template <typename HydroVS, typename CasePolicy>
+    template <typename VelocitySet, typename CasePolicy>
     __global__ void streamCollide(LBMFields d);
 
     // Boundary conditions
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void callInflow(LBMFields d, const label_t t);
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void callOutflow(LBMFields d);
 }
 

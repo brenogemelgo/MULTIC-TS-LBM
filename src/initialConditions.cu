@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
     Initial condition kernels for jet and droplet setups, density initialization, and equilibrium distribution assignment
 
@@ -97,7 +100,7 @@ namespace lbm
         d.rho[idx3] = static_cast<scalar_t>(1);
     }
 
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void setDistros(LBMFields d)
     {
         const label_t x = threadIdx.x + block::nx() * blockIdx.x;
@@ -116,16 +119,16 @@ namespace lbm
         const scalar_t uz = d.uz[idx3];
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
-        device::constexpr_for<0, HydroVS::Q()>(
+        device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
-                constexpr scalar_t cx = static_cast<scalar_t>(HydroVS::template cx<Q>());
-                constexpr scalar_t cy = static_cast<scalar_t>(HydroVS::template cy<Q>());
-                constexpr scalar_t cz = static_cast<scalar_t>(HydroVS::template cz<Q>());
+                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::template cx<Q>());
+                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::template cy<Q>());
+                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::template cz<Q>());
 
-                const scalar_t cu = HydroVS::as2() * (cx * ux + cy * uy + cz * uz);
+                const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = HydroVS::template f_eq<Q>(d.rho[idx3], uu, cu);
+                const scalar_t feq = VelocitySet::template f_eq<Q>(d.rho[idx3], uu, cu);
 
                 d.f[Q * size::cells() + idx3] = to_pop(feq);
             });

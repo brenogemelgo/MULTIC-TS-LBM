@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
     Core LBM kernels for moment computation, collision–streaming, forcing, and coupled phase-field transport
 
@@ -28,14 +31,14 @@ SourceFiles
 
 namespace lbm
 {
-    template <typename HydroVS>
+    template <typename VelocitySet>
     __global__ void computeMoments(LBMFields d)
     {
         const label_t x = threadIdx.x + block::nx() * blockIdx.x;
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
         const label_t z = threadIdx.z + block::nz() * blockIdx.z;
 
-        if (device::guard<HydroVS>(x, y, z))
+        if (device::guard<VelocitySet>(x, y, z))
         {
             return;
         }
@@ -43,9 +46,9 @@ namespace lbm
         const label_t idx3 = device::global3(x, y, z);
 
         scalar_t rho = static_cast<scalar_t>(0);
-        scalar_t pop[HydroVS::Q()];
+        scalar_t pop[VelocitySet::Q()];
 
-        device::constexpr_for<0, HydroVS::Q()>(
+        device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
                 const scalar_t fq = from_pop(d.f[Q * size::cells() + idx3]);
@@ -66,13 +69,13 @@ namespace lbm
         scalar_t uy = static_cast<scalar_t>(0);
         scalar_t uz = static_cast<scalar_t>(0);
 
-        if constexpr (HydroVS::Q() == 19)
+        if constexpr (VelocitySet::Q() == 19)
         {
             ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16]);
             uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18]);
             uz = invRho * (pop[5] - pop[6] + pop[9] - pop[10] + pop[11] - pop[12] + pop[16] - pop[15] + pop[18] - pop[17]);
         }
-        else if constexpr (HydroVS::Q() == 27)
+        else if constexpr (VelocitySet::Q() == 27)
         {
             ux = invRho * (pop[1] - pop[2] + pop[7] - pop[8] + pop[9] - pop[10] + pop[13] - pop[14] + pop[15] - pop[16] + pop[19] - pop[20] + pop[21] - pop[22] + pop[23] - pop[24] + pop[26] - pop[25]);
             uy = invRho * (pop[3] - pop[4] + pop[7] - pop[8] + pop[11] - pop[12] + pop[14] - pop[13] + pop[17] - pop[18] + pop[19] - pop[20] + pop[21] - pop[22] + pop[24] - pop[23] + pop[25] - pop[26]);
@@ -92,17 +95,17 @@ namespace lbm
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
-        device::constexpr_for<0, HydroVS::Q()>(
+        device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
-                constexpr scalar_t cx = static_cast<scalar_t>(HydroVS::template cx<Q>());
-                constexpr scalar_t cy = static_cast<scalar_t>(HydroVS::template cy<Q>());
-                constexpr scalar_t cz = static_cast<scalar_t>(HydroVS::template cz<Q>());
+                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::template cx<Q>());
+                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::template cy<Q>());
+                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::template cz<Q>());
 
-                const scalar_t cu = HydroVS::as2() * (cx * ux + cy * uy + cz * uz);
+                const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = HydroVS::template f_eq<Q>(rho, uu, cu);
-                const scalar_t force = HydroVS::template force<Q>(cu, ux, uy, uz, fsx, fsy, fsz);
+                const scalar_t feq = VelocitySet::template f_eq<Q>(rho, uu, cu);
+                const scalar_t force = VelocitySet::template force<Q>(cu, ux, uy, uz, fsx, fsy, fsz);
                 const scalar_t fneq = pop[Q] - feq + static_cast<scalar_t>(0.5) * force;
 
                 pxx += fneq * cx * cx;
@@ -114,9 +117,9 @@ namespace lbm
             });
 
         const scalar_t trace = pxx + pyy + pzz;
-        pxx -= HydroVS::cs2() * trace;
-        pyy -= HydroVS::cs2() * trace;
-        pzz -= HydroVS::cs2() * trace;
+        pxx -= VelocitySet::cs2() * trace;
+        pyy -= VelocitySet::cs2() * trace;
+        pzz -= VelocitySet::cs2() * trace;
 
         d.pxx[idx3] = pxx;
         d.pyy[idx3] = pyy;
@@ -126,14 +129,14 @@ namespace lbm
         d.pyz[idx3] = pyz;
     }
 
-    template <typename HydroVS, typename CasePolicy>
+    template <typename VelocitySet, typename CasePolicy>
     __global__ void streamCollide(LBMFields d)
     {
         const label_t x = threadIdx.x + block::nx() * blockIdx.x;
         const label_t y = threadIdx.y + block::ny() * blockIdx.y;
         const label_t z = threadIdx.z + block::nz() * blockIdx.z;
 
-        if (device::guard<HydroVS>(x, y, z))
+        if (device::guard<VelocitySet>(x, y, z))
         {
             return;
         }
@@ -155,27 +158,27 @@ namespace lbm
         const scalar_t fsz = d.fsz[idx3];
 
         const scalar_t phi = d.phi[idx3];
-        const scalar_t omega = CasePolicy::template collisionOmega<HydroVS>(phi, z);
+        const scalar_t omega = CasePolicy::template collisionOmega<VelocitySet>(phi, z);
         const scalar_t omco = static_cast<scalar_t>(1) - omega;
 
         const scalar_t uu = static_cast<scalar_t>(1.5) * (ux * ux + uy * uy + uz * uz);
 
-        device::constexpr_for<0, HydroVS::Q()>(
+        device::constexpr_for<0, VelocitySet::Q()>(
             [&](const auto Q)
             {
-                constexpr scalar_t cx = static_cast<scalar_t>(HydroVS::template cx<Q>());
-                constexpr scalar_t cy = static_cast<scalar_t>(HydroVS::template cy<Q>());
-                constexpr scalar_t cz = static_cast<scalar_t>(HydroVS::template cz<Q>());
+                constexpr scalar_t cx = static_cast<scalar_t>(VelocitySet::template cx<Q>());
+                constexpr scalar_t cy = static_cast<scalar_t>(VelocitySet::template cy<Q>());
+                constexpr scalar_t cz = static_cast<scalar_t>(VelocitySet::template cz<Q>());
 
-                const scalar_t cu = HydroVS::as2() * (cx * ux + cy * uy + cz * uz);
+                const scalar_t cu = VelocitySet::as2() * (cx * ux + cy * uy + cz * uz);
 
-                const scalar_t feq = HydroVS::template f_eq<Q>(rho, uu, cu);
-                const scalar_t force = HydroVS::template force<Q>(cu, ux, uy, uz, fsx, fsy, fsz);
-                const scalar_t fneq = HydroVS::template f_neq<Q>(pxx, pyy, pzz, pxy, pxz, pyz, ux, uy, uz);
+                const scalar_t feq = VelocitySet::template f_eq<Q>(rho, uu, cu);
+                const scalar_t force = VelocitySet::template force<Q>(cu, ux, uy, uz, fsx, fsy, fsz);
+                const scalar_t fneq = VelocitySet::template f_neq<Q>(pxx, pyy, pzz, pxy, pxz, pyz, ux, uy, uz);
 
-                label_t xx = x + static_cast<label_t>(HydroVS::template cx<Q>());
-                label_t yy = y + static_cast<label_t>(HydroVS::template cy<Q>());
-                label_t zz = z + static_cast<label_t>(HydroVS::template cz<Q>());
+                label_t xx = x + static_cast<label_t>(VelocitySet::template cx<Q>());
+                label_t yy = y + static_cast<label_t>(VelocitySet::template cy<Q>());
+                label_t zz = z + static_cast<label_t>(VelocitySet::template cz<Q>());
 
                 CasePolicy::applyPeriodic(xx, yy, zz);
 

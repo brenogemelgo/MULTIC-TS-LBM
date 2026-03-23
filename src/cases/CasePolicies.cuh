@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
     Compile-time case policies selected once at startup from runtime case object
 
@@ -26,7 +29,7 @@ namespace case_policy
 {
     struct Jet
     {
-        template <typename HydroVS>
+        template <typename VelocitySet>
         __device__ [[nodiscard]] static inline scalar_t collisionOmega(
             const scalar_t phi,
             const label_t z) noexcept
@@ -44,7 +47,7 @@ namespace case_policy
             (void)zz;
         }
 
-        template <typename HydroVS>
+        template <typename VelocitySet>
         __host__ static inline void launchInitial(
             const dim3 &grid,
             const dim3 &block,
@@ -52,11 +55,11 @@ namespace case_policy
             const LBMFields &fields,
             const cudaStream_t queue)
         {
-            (void)sizeof(HydroVS);
+            (void)sizeof(VelocitySet);
             lbm::setJet<<<grid, block, dynamic, queue>>>(fields);
         }
 
-        template <typename HydroVS>
+        template <typename VelocitySet>
         __host__ static inline void launchBoundary(
             const LBMFields &fields,
             const cudaStream_t queue,
@@ -73,19 +76,19 @@ namespace case_policy
             (void)blockX;
             (void)gridY;
             (void)blockY;
-            lbm::callInflow<HydroVS><<<gridZ, blockZ, dynamic, queue>>>(fields, t);
-            lbm::callOutflow<HydroVS><<<gridZ, blockZ, dynamic, queue>>>(fields);
+            lbm::callInflow<VelocitySet><<<gridZ, blockZ, dynamic, queue>>>(fields, t);
+            lbm::callOutflow<VelocitySet><<<gridZ, blockZ, dynamic, queue>>>(fields);
         }
     };
 
     struct Droplet
     {
-        template <typename HydroVS>
+        template <typename VelocitySet>
         __device__ [[nodiscard]] static inline scalar_t collisionOmega(
             const scalar_t phi,
             const label_t z) noexcept
         {
-            (void)sizeof(HydroVS);
+            (void)sizeof(VelocitySet);
             (void)phi;
             (void)z;
             return relaxation::omega_ref();
@@ -98,7 +101,7 @@ namespace case_policy
             zz = device::periodic_wrap(zz, mesh::nz());
         }
 
-        template <typename HydroVS>
+        template <typename VelocitySet>
         __host__ static inline void launchInitial(
             const dim3 &grid,
             const dim3 &block,
@@ -106,11 +109,11 @@ namespace case_policy
             const LBMFields &fields,
             const cudaStream_t queue)
         {
-            (void)sizeof(HydroVS);
+            (void)sizeof(VelocitySet);
             lbm::setDroplet<<<grid, block, dynamic, queue>>>(fields);
         }
 
-        template <typename HydroVS>
+        template <typename VelocitySet>
         __host__ static inline void launchBoundary(
             const LBMFields &fields,
             const cudaStream_t queue,
@@ -123,7 +126,7 @@ namespace case_policy
             const dim3 &blockZ,
             const size_t dynamic)
         {
-            (void)sizeof(HydroVS);
+            (void)sizeof(VelocitySet);
             (void)fields;
             (void)queue;
             (void)t;
