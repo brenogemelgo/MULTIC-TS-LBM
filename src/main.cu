@@ -23,7 +23,7 @@ SourceFiles
 #include "runtime/RuntimeConfig.cuh"
 #include "runtime/RuntimeState.cuh"
 #include "velocitySet/VelocitySet.cuh"
-#include "cases/CaseFactory.cuh"
+#include "caseConfig/CaseFactory.cuh"
 
 #include "functions/deviceFunctions.cuh"
 #include "fieldAllocate/FieldAllocate.cuh"
@@ -34,7 +34,7 @@ SourceFiles
 #include "BoundaryConditions.cuh"
 #include "phaseField.cuh"
 #include "lbm.cu"
-#include "cases/CasePolicies.cuh"
+#include "caseConfig/CasePolicies.cuh"
 #include "cuda/CUDAGraph.cuh"
 #include "derivedFields/DerivedFields.cuh"
 

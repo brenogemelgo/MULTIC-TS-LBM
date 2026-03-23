@@ -111,10 +111,11 @@ namespace runtime
         while (std::getline(in, line))
         {
             ++lineNumber;
-            const auto commentPos = line.find('#');
-            if (commentPos != std::string::npos)
+
+            const auto hashPos = line.find('#');
+            if (hashPos != std::string::npos)
             {
-                line.erase(commentPos);
+                line.erase(hashPos);
             }
 
             line = trim(line);
@@ -123,20 +124,30 @@ namespace runtime
                 continue;
             }
 
-            const auto eq = line.find('=');
-            if (eq == std::string::npos)
+            // Current case-file style uses decorative banner lines.
+            const char first = line.front();
+            if (first == '/' || first == '|' || first == '\\' || first == '*')
             {
-                throw std::runtime_error(std::string(fileTag) + ": invalid line " + std::to_string(lineNumber) +
-                                         " (expected key = value): " + line);
+                continue;
             }
 
-            std::string key = trim(line.substr(0, eq));
-            std::string value = trim(line.substr(eq + 1));
+            // Current format: key <whitespace> value
+            std::istringstream iss(line);
+            std::string key;
+            std::string value;
+
+            if (!(iss >> key))
+            {
+                continue;
+            }
+
+            std::getline(iss, value);
+            value = trim(value);
 
             if (key.empty() || value.empty())
             {
                 throw std::runtime_error(std::string(fileTag) + ": invalid line " + std::to_string(lineNumber) +
-                                         " (empty key/value): " + line);
+                                         " (expected 'key <whitespace> value'): " + line);
             }
 
             kv[key] = value;
@@ -144,7 +155,6 @@ namespace runtime
 
         return kv;
     }
-
     template <typename T>
     __host__ [[nodiscard]] static inline T parseNumber(
         const std::unordered_map<std::string, std::string> &kv,

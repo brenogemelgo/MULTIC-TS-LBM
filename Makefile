@@ -35,7 +35,9 @@ $(TARGET_PATH): $(SRC) $(shell find src -type f)
 	@mkdir -p $(BUILD_DIR)
 	$(NVCC) $(NVCC_FLAGS) $(CPP_DEFS) $(SRC) -o $(TARGET_PATH)
 
-install: all
+install:
+	$(MAKE) clean
+	$(MAKE) all
 	install -d $(INSTALL_BIN_DIR)
 	install -m 0755 $(TARGET_PATH) $(INSTALL_BIN_DIR)/$(TARGET)
 

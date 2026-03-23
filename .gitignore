@@ -5,5 +5,3 @@ build/
 
 cases/*/output/*
 !cases/*/output/.gitkeep
-
-docs/

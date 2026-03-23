@@ -33,7 +33,7 @@ namespace cases
     {
         const std::string lowered = runtime::toLower(caseName);
 
-        if (lowered == "jet")
+        if (lowered == "jetflow")
         {
             return std::make_unique<JetCase>();
         }
@@ -44,7 +44,7 @@ namespace cases
 
         throw std::runtime_error(
             "Unsupported caseName in programControl: '" + caseName +
-            "'. Supported values: jet, droplet.");
+            "'. Supported values: jetFlow, droplet.");
     }
 }
 

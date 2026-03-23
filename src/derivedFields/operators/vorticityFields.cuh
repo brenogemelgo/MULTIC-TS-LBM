@@ -9,6 +9,9 @@
 
 /*---------------------------------------------------------------------------*\
 
+Copyright (C) 2023 UDESC Geoenergia Lab
+Authors: Breno Gemelgo (Geoenergia Lab, UDESC)
+
 Description
     Vorticity component and magnitude computation via centered velocity gradients
 

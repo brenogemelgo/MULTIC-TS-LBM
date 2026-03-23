@@ -30,7 +30,7 @@ namespace cases
     class JetCase final : public Case
     {
     public:
-        [[nodiscard]] std::string_view name() const noexcept override { return "jet"; }
+        [[nodiscard]] std::string_view name() const noexcept override { return "jetFlow"; }
 
         [[nodiscard]] runtime::CaseKind kind() const noexcept override
         {

@@ -28,32 +28,3 @@ Optional startup-only sanity mode:
 ```bash
 phaseFieldLBM -STENCIL D3Q27 -ID test01 -GPU 0 --dry-run
 ```
-
-## Case Directory Layout
-```text
-cases/
-  jet/
-    latticeMesh
-    programControl
-    output/
-```
-
-## Input Files
-`latticeMesh`:
-```text
-nx = 64
-ny = 64
-nz = 128
-```
-
-`programControl`:
-```text
-caseName = jet
-ReA = 5000
-ReB = 5000
-We = 500
-u_inf = 0.05
-L_char = 10
-nTimeSteps = 100000
-saveInterval = 1000
-```
